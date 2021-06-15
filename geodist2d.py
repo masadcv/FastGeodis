@@ -417,7 +417,7 @@ def generalised_geodesic2d_raster_4scan_vectorised(image, mask, v, lamda, itr):
                 delta_d = math.sqrt(h_dist_z0) / speed
             else:
                 q_l1dist_z0_vec = torch.squeeze(torch.abs(p_val_vec - q_val_z0_vec)) ** 2
-                delta_d = torck.sqrt(h_dist_z0 + (lamda ** 2) * q_l1dist_z0_vec)
+                delta_d = torch.sqrt(h_dist_z0 + (lamda ** 2) * q_l1dist_z0_vec)
             
             new_dist.append(q_dis_z0_vec + delta_d)
             q_dis_m1_vec = distance[..., h_index_m1, w + 1]
