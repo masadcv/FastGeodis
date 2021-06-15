@@ -29,6 +29,7 @@ def get_l1_distance(p_val, q_val, dim=1):
     return torch.sum(torch.abs(p_val - q_val), dim=dim)
 
 
+
 @timing
 def generalised_geodesic2d_raster_scan(image, mask, v, lamda, itr):
     batch, channel, height, width = image.shape
@@ -356,18 +357,3 @@ if __name__ == "__main__":
     plt.imshow(np.squeeze(np.abs(dst1-dst2)))
     plt.show()
 
-    # img = img.detach().cpu().numpy()
-    # msk = (1 - msk).detach().cpu().numpy().astype(np.uint8)
-    # dsttk = geodistk_geodesic_distance_2d(
-    #     np.squeeze(img), np.squeeze(msk), lamb=1.0, iter=2
-    # )
-
-    # print(np.sum(np.abs(dst - dsttk)))
-
-    # plt.subplot(1, 3, 1)
-    # plt.imshow(np.squeeze(img))
-    # plt.subplot(1, 3, 2)
-    # plt.imshow(np.squeeze(dst))
-    # plt.subplot(1, 3, 3)
-    # plt.imshow(np.squeeze(dsttk))
-    # plt.show()
