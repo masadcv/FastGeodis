@@ -25,7 +25,8 @@ torch::Tensor l2distance(torch::Tensor in1, torch::Tensor in2, int dim){
 }
 
 torch::Tensor l1update(torch::Tensor p, torch::Tensor q, float lambda, float dist){
-    return torch::sqrt(pow(dist, 2.0) + lambda * torch::pow(l1distance(p, q, 1), 2));
+    // return torch::sqrt(pow(dist, 2.0) + lambda * torch::pow(l1distance(p, q, 1), 2));
+    return dist/((1.0 - lambda) + lambda / (l1distance(p, q, 1) + 1e-5));
 }
 
 torch::Tensor l2update(torch::Tensor p, torch::Tensor q, float lambda, float dist){
@@ -49,10 +50,8 @@ void geodesic_updown_pass(torch::Tensor image, torch::Tensor &distance, float la
 
     // define distance for each
     float dist_z0, dist_pm1; 
-    // , dist_p1;
     dist_z0 = 1.0;
     dist_pm1 = sqrt(2.0);
-    // dist_p1 = sqrt(2.0);
     
     // create tensor for calculating distance deviation
     torch::Tensor delta_d;
@@ -67,19 +66,22 @@ void geodesic_updown_pass(torch::Tensor image, torch::Tensor &distance, float la
         torch::Tensor q_val_z0_vec = image.index({"...", h - 1, torch::tensor(w_index_z0)});
         torch::Tensor q_dis_z0_vec = distance.index({"...", h - 1, torch::tensor(w_index_z0)});
         delta_d = l1update(p_val_vec, q_val_z0_vec, lambda, dist_z0);
-        new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_z0_vec + delta_d}, 0), 0, true));
+        // new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_z0_vec + delta_d}, 0), 0, true));
+        new_dist_vec = torch::minimum(new_dist_vec, q_dis_z0_vec + delta_d);
 
         // read row-1 at q=-1
         torch::Tensor q_val_m1_vec = image.index({"...", h - 1, torch::tensor(w_index_m1)});
         torch::Tensor q_dis_m1_vec = distance.index({"...", h - 1, torch::tensor(w_index_m1)});
         delta_d = l1update(p_val_vec, q_val_m1_vec, lambda, dist_pm1);
-        new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_m1_vec + delta_d}, 0), 0, true));
+        // new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_m1_vec + delta_d}, 0), 0, true));
+        new_dist_vec = torch::minimum(new_dist_vec, q_dis_m1_vec + delta_d);
 
         // read row-1 at q=+1
         torch::Tensor q_val_p1_vec = image.index({"...", h - 1, torch::tensor(w_index_p1)});
         torch::Tensor q_dis_p1_vec = distance.index({"...", h - 1, torch::tensor(w_index_p1)});
         delta_d = l1update(p_val_vec, q_val_p1_vec, lambda, dist_pm1);
-        new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_p1_vec + delta_d}, 0), 0, true));
+        // new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_p1_vec + delta_d}, 0), 0, true));
+        new_dist_vec = torch::minimum(new_dist_vec, q_dis_p1_vec + delta_d);
 
         // compute minimum distance for this row and update
         distance.index_put_({"...", h, Slice(None)}, new_dist_vec);
@@ -95,19 +97,22 @@ void geodesic_updown_pass(torch::Tensor image, torch::Tensor &distance, float la
         torch::Tensor q_val_z0_vec = image.index({"...", h + 1, torch::tensor(w_index_z0)});
         torch::Tensor q_dis_z0_vec = distance.index({"...", h + 1, torch::tensor(w_index_z0)});
         delta_d = l1update(p_val_vec, q_val_z0_vec, lambda, dist_z0);
-        new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_z0_vec + delta_d}, 0), 0, true));
+        // new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_z0_vec + delta_d}, 0), 0, true));
+        new_dist_vec = torch::minimum(new_dist_vec, q_dis_z0_vec + delta_d);
 
         // read row-1 at q=-1
         torch::Tensor q_val_m1_vec = image.index({"...", h + 1, torch::tensor(w_index_m1)});
         torch::Tensor q_dis_m1_vec = distance.index({"...", h + 1, torch::tensor(w_index_m1)});
         delta_d = l1update(p_val_vec, q_val_m1_vec, lambda, dist_pm1);
-        new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_m1_vec + delta_d}, 0), 0, true));
+        // new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_m1_vec + delta_d}, 0), 0, true));
+        new_dist_vec = torch::minimum(new_dist_vec, q_dis_m1_vec + delta_d);
 
         // read row-1 at q=+1
         torch::Tensor q_val_p1_vec = image.index({"...", h + 1, torch::tensor(w_index_p1)});
         torch::Tensor q_dis_p1_vec = distance.index({"...", h + 1, torch::tensor(w_index_p1)});
         delta_d = l1update(p_val_vec, q_val_p1_vec, lambda, dist_pm1);
-        new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_p1_vec + delta_d}, 0), 0, true));
+        // new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_p1_vec + delta_d}, 0), 0, true));
+        new_dist_vec = torch::minimum(new_dist_vec, q_dis_p1_vec + delta_d);
 
         // compute minimum distance for this row and update
         distance.index_put_({"...", h, Slice(None)}, new_dist_vec);
