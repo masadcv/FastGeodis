@@ -26,11 +26,11 @@ torch::Tensor l2distance(torch::Tensor in1, torch::Tensor in2, int dim){
 
 torch::Tensor l1update(torch::Tensor p, torch::Tensor q, float lambda, float dist){
     // return torch::sqrt(pow(dist, 2.0) + lambda * torch::pow(l1distance(p, q, 1), 2));
-    return dist/((1.0 - lambda) + lambda / (l1distance(p, q, 1) + 1e-5));
+    return sqrt(dist)/((1.0 - lambda) + lambda / (l1distance(p, q, 1) + 1e-5));
 }
 
 torch::Tensor l2update(torch::Tensor p, torch::Tensor q, float lambda, float dist){
-    return dist/((1.0 - lambda) + lambda / (l2distance(p, q, 1) + 1e-5));
+    return sqrt(dist)/((1.0 - lambda) + lambda / (l2distance(p, q, 1) + 1e-5));
 }
 
 void geodesic_updown_pass(torch::Tensor image, torch::Tensor &distance, float lambda){
@@ -48,13 +48,10 @@ void geodesic_updown_pass(torch::Tensor image, torch::Tensor &distance, float la
         w_index_p1.push_back(wxp1);
     }
 
-    // define distance for each
-    float dist_z0, dist_pm1; 
-    dist_z0 = 1.0;
-    dist_pm1 = sqrt(2.0);
-    
-    // create tensor for calculating distance deviation
-    torch::Tensor delta_d;
+    std::vector<std::vector<int>> w_index;
+    w_index.push_back(w_index_m1);
+    w_index.push_back(w_index_z0);
+    w_index.push_back(w_index_p1);
 
     // top-down
     for(int h = 1; h < height; h++){
@@ -62,26 +59,12 @@ void geodesic_updown_pass(torch::Tensor image, torch::Tensor &distance, float la
         torch::Tensor p_val_vec = image.index({"...", h, Slice(None)});
         torch::Tensor new_dist_vec = distance.index({"...", h, Slice(None)});
 
-        // read row-1 at q=0
-        torch::Tensor q_val_z0_vec = image.index({"...", h - 1, torch::tensor(w_index_z0)});
-        torch::Tensor q_dis_z0_vec = distance.index({"...", h - 1, torch::tensor(w_index_z0)});
-        delta_d = l1update(p_val_vec, q_val_z0_vec, lambda, dist_z0);
-        // new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_z0_vec + delta_d}, 0), 0, true));
-        new_dist_vec = torch::minimum(new_dist_vec, q_dis_z0_vec + delta_d);
-
-        // read row-1 at q=-1
-        torch::Tensor q_val_m1_vec = image.index({"...", h - 1, torch::tensor(w_index_m1)});
-        torch::Tensor q_dis_m1_vec = distance.index({"...", h - 1, torch::tensor(w_index_m1)});
-        delta_d = l1update(p_val_vec, q_val_m1_vec, lambda, dist_pm1);
-        // new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_m1_vec + delta_d}, 0), 0, true));
-        new_dist_vec = torch::minimum(new_dist_vec, q_dis_m1_vec + delta_d);
-
-        // read row-1 at q=+1
-        torch::Tensor q_val_p1_vec = image.index({"...", h - 1, torch::tensor(w_index_p1)});
-        torch::Tensor q_dis_p1_vec = distance.index({"...", h - 1, torch::tensor(w_index_p1)});
-        delta_d = l1update(p_val_vec, q_val_p1_vec, lambda, dist_pm1);
-        // new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_p1_vec + delta_d}, 0), 0, true));
-        new_dist_vec = torch::minimum(new_dist_vec, q_dis_p1_vec + delta_d);
+        for(int wi = 0; wi < int(w_index.size()); wi++){
+            float local_dist = 1.0 + abs(float(wi)-1.0);
+            torch::Tensor q_val_vec = image.index({"...", h - 1, torch::tensor(w_index[wi])});
+            torch::Tensor q_dis_vec = distance.index({"...", h - 1, torch::tensor(w_index[wi])});
+            new_dist_vec = torch::minimum(new_dist_vec, q_dis_vec + l1update(p_val_vec, q_val_vec, lambda, local_dist));
+        }
 
         // compute minimum distance for this row and update
         distance.index_put_({"...", h, Slice(None)}, new_dist_vec);
@@ -93,31 +76,16 @@ void geodesic_updown_pass(torch::Tensor image, torch::Tensor &distance, float la
         torch::Tensor p_val_vec = image.index({"...", h, Slice(None)});
         torch::Tensor new_dist_vec = distance.index({"...", h, Slice(None)});
 
-        // read row-1 at q=0
-        torch::Tensor q_val_z0_vec = image.index({"...", h + 1, torch::tensor(w_index_z0)});
-        torch::Tensor q_dis_z0_vec = distance.index({"...", h + 1, torch::tensor(w_index_z0)});
-        delta_d = l1update(p_val_vec, q_val_z0_vec, lambda, dist_z0);
-        // new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_z0_vec + delta_d}, 0), 0, true));
-        new_dist_vec = torch::minimum(new_dist_vec, q_dis_z0_vec + delta_d);
-
-        // read row-1 at q=-1
-        torch::Tensor q_val_m1_vec = image.index({"...", h + 1, torch::tensor(w_index_m1)});
-        torch::Tensor q_dis_m1_vec = distance.index({"...", h + 1, torch::tensor(w_index_m1)});
-        delta_d = l1update(p_val_vec, q_val_m1_vec, lambda, dist_pm1);
-        // new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_m1_vec + delta_d}, 0), 0, true));
-        new_dist_vec = torch::minimum(new_dist_vec, q_dis_m1_vec + delta_d);
-
-        // read row-1 at q=+1
-        torch::Tensor q_val_p1_vec = image.index({"...", h + 1, torch::tensor(w_index_p1)});
-        torch::Tensor q_dis_p1_vec = distance.index({"...", h + 1, torch::tensor(w_index_p1)});
-        delta_d = l1update(p_val_vec, q_val_p1_vec, lambda, dist_pm1);
-        // new_dist_vec = std::get<0>(torch::min(torch::cat({new_dist_vec, q_dis_p1_vec + delta_d}, 0), 0, true));
-        new_dist_vec = torch::minimum(new_dist_vec, q_dis_p1_vec + delta_d);
+        for(int wi = 0; wi < int(w_index.size()); wi++){
+            float local_dist = 1.0 + abs(float(wi)-1.0);
+            torch::Tensor q_val_vec = image.index({"...", h + 1, torch::tensor(w_index[wi])});
+            torch::Tensor q_dis_vec = distance.index({"...", h + 1, torch::tensor(w_index[wi])});
+            new_dist_vec = torch::minimum(new_dist_vec, q_dis_vec + l1update(p_val_vec, q_val_vec, lambda, local_dist));
+        }
 
         // compute minimum distance for this row and update
         distance.index_put_({"...", h, Slice(None)}, new_dist_vec);
     }
-
 }
 
 
@@ -151,5 +119,5 @@ torch::Tensor generalised_geodesic2d(torch::Tensor image, torch::Tensor mask, fl
 
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-  m.def("generalised_geodesic2d", &generalised_geodesic2d, "Geodesic distance");
+  m.def("generalised_geodesic2d", &generalised_geodesic2d, "Geodesic distance 2d");
 }
