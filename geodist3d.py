@@ -189,8 +189,8 @@ def geodesic_frontback_pass(image, distance, spacing, lamda):
         for hi, h_index in enumerate([h_index_m1, h_index_z0, h_index_p1]):
             for wi, w_index in enumerate([w_index_m1, w_index_z0, w_index_p1]):
                 local_dist = spacing[0] * spacing[0]
-                local_dist += abs(hi - 1) * spacing[1] * spacing[1]
-                local_dist += abs(wi - 1) * spacing[2] * spacing[2]
+                local_dist += ((float(hi) - 1.0) ** 2) * spacing[1] * spacing[1]
+                local_dist += ((float(wi) - 1.0) ** 2) * spacing[2] * spacing[2]
 
                 q_dis_vec = distance[..., z - 1, h_index, :][..., w_index]
                 q_val_vec = image[..., z - 1, h_index, :][..., w_index]
@@ -210,8 +210,8 @@ def geodesic_frontback_pass(image, distance, spacing, lamda):
         for hi, h_index in enumerate([h_index_m1, h_index_z0, h_index_p1]):
             for wi, w_index in enumerate([w_index_m1, w_index_z0, w_index_p1]):
                 local_dist = spacing[0] * spacing[0]
-                local_dist += abs(hi - 1) * spacing[1] * spacing[1]
-                local_dist += abs(wi - 1) * spacing[2] * spacing[2]
+                local_dist += ((float(hi) - 1.0) ** 2) * spacing[1] * spacing[1]
+                local_dist += ((float(wi) - 1.0) ** 2) * spacing[2] * spacing[2]
 
                 q_dis_vec = distance[..., z + 1, h_index, :][..., w_index]
                 q_val_vec = image[..., z + 1, h_index, :][..., w_index]
@@ -261,6 +261,11 @@ def generalised_geodesic3d_raster_4scan_vectorised(image, mask, spacing, v, lamd
 
     return distance
 
+# cpp implementation
+@timing
+def generalised_geodesic3d_raster_4scan_cpp(image, mask, spacing, v, lamda, iter):
+    return geodis.generalised_geodesic3d(image, mask, spacing, v, lamda, iter)
+
 
 def test_compare_original_imp():
     input_name = "data/img3d.nii.gz"
@@ -269,7 +274,7 @@ def test_compare_original_imp():
     spacing_raw = img_sitk.GetSpacing()
     spacing = [spacing_raw[2], spacing_raw[1], spacing_raw[0]]
     img_np = np.asarray(img_np, np.float32)
-    img_np = img_np[18:38, 63:183, 93:233]
+    # img_np = img_np[18:38, 63:183, 93:233]
     msk_np = np.zeros_like(img_np, np.float32)
     msk_np[10][60][70] = 1.0
     msk_np = 1.0 - msk_np
@@ -286,21 +291,21 @@ def test_compare_original_imp():
     dst1 = generalised_geodesic_distance_3d(
         img_np, msk_np, spacing, v=1e10, lamb=1.0, iter=2
     )
-    # dst1 = (
-    #     generalised_geodesic3d_raster_2scan(
-    #         image=img.to("cpu"),
-    #         mask=msk.to("cpu"),
-    #         spacing=spacing,
-    #         v=1e10,
-    #         lamda=1.0,
-    #         iter=2,
-    #     )
-    #     .squeeze_()
-    #     .detach()
-    #     .cpu()
-    #     .numpy()
-    # )
-    # dst2 = dst1
+
+    dst1 = (
+        generalised_geodesic3d_raster_4scan_cpp(
+            image=img.to("cpu"),
+            mask=msk.to("cpu"),
+            spacing=spacing,
+            v=1e10,
+            lamda=1.0,
+            iter=2,
+        )
+        .squeeze_()
+        .detach()
+        .cpu()
+        .numpy()
+    )
 
     dst2 = (
         generalised_geodesic3d_raster_4scan_vectorised(

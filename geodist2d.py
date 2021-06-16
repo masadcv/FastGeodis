@@ -6,8 +6,9 @@ import GeodisTK
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from PIL import Image
 import geodis
+from PIL import Image
+
 
 def timing(f):
     @wraps(f)
