@@ -210,13 +210,13 @@ def test_compare():
     dst1 = generalised_geodesic_distance_2d_geodistk(
         img_np, msk_np, v=1e10, lamda=1.0, iter=2
     )
-    dst1 = (
-        generalised_geodesic2d_raster_4scan(img, msk, v=1e10, lamda=1.0, iter=2)
-        .squeeze_()
-        .detach()
-        .cpu()
-        .numpy()
-    )
+    # dst1 = (
+    #     generalised_geodesic2d_raster_4scan(img, msk, v=1e10, lamda=1.0, iter=2)
+    #     .squeeze_()
+    #     .detach()
+    #     .cpu()
+    #     .numpy()
+    # )
 
     dst2 = (
         generalised_geodesic2d_raster_4scan_cpp(img, msk, v=1e10, lamda=1.0, iter=2)
