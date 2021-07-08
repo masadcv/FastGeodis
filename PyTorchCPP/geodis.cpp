@@ -1,19 +1,9 @@
 #include <torch/extension.h>
 #include <vector>
 #include <iostream>
-// #include <algorithm>
 
 #ifdef _OPENMP
-#define USE_OPENMP 1
-#else
-#define USE_OPENMP 0
-#endif
-
-#if USE_OPENMP!=0
 #include <omp.h>
-// #define cimg_pragma_openmp(p) cimg_pragma(omp p)
-// #else
-// #define cimg_pragma_openmp(p)
 #endif
 
 using namespace torch::indexing;
@@ -124,51 +114,68 @@ void geodesic_updown_pass_openmp(torch::Tensor image, torch::Tensor &distance, f
 
     // top-down
     for(int h = 1; h < height; h++){
-        
-        #pragma omp parallel for
+        // use openmp to parallelise the loop over width
+        #ifdef _OPENMP
+           #pragma omp parallel for
+        #endif
         for(int w = 0; w < width; w++)
         {
-            float new_dist_vec = distanceptr[0][0][h][w];
-            // #pragma omp parallel for private(new_dist_vec)
+            float pval = imageptr[0][0][h][w];
+            float new_dist = distanceptr[0][0][h][w];
+
             for(int wi = -1; wi < 2; wi++)
             {
                 int wind = w + wi;
                 if(wind < 0 || wind >= width) continue;
-                new_dist_vec = std::min(new_dist_vec, distanceptr[0][0][h-1][wind] + l1update(imageptr[0][0][h][w], imageptr[0][0][h-1][wind], lambda, 1.0 + abs(float(wind))));
+
+                float local_dist = 1.0 + float(std::abs(wi));
+                
+                float qval = imageptr[0][0][h-1][wind];
+                float qdist = distanceptr[0][0][h-1][wind];
+
+                new_dist = std::min(new_dist, qdist + l1update(pval, qval, lambda, local_dist));
 
             }
-            distanceptr[0][0][h][w] = new_dist_vec;
+            distanceptr[0][0][h][w] = new_dist;
         }
     }
 
     // bottom-up
     for(int h = height-2; h >= 0; h--){
-        #pragma omp parallel for
+        // use openmp to parallelise the loop over width
+        #ifdef _OPENMP
+           #pragma omp parallel for
+        #endif
         for(int w = 0; w < width; w++)
         {
-            float new_dist_vec = distanceptr[0][0][h][w];
-            // #pragma omp parallel for private(new_dist_vec)
+            float pval = imageptr[0][0][h][w];
+            float new_dist = distanceptr[0][0][h][w];
+
             for(int wi = -1; wi < 2; wi++)
             {
                 int wind = w + wi;
                 if(wind < 0 || wind >= width) continue;
-                new_dist_vec = std::min(new_dist_vec, distanceptr[0][0][h+1][wind] + l1update(imageptr[0][0][h][w], imageptr[0][0][h+1][wind], lambda, 1.0 + abs(float(wind))));
+
+                float local_dist = 1.0 + float(std::abs(wi));
+                
+                float qval = imageptr[0][0][h+1][wind];
+                float qdist = distanceptr[0][0][h+1][wind];
+
+                new_dist = std::min(new_dist, qdist + l1update(pval, qval, lambda, local_dist));
 
             }
-            distanceptr[0][0][h][w] = new_dist_vec;
+            distanceptr[0][0][h][w] = new_dist;
         }
     }
 }
 
 torch::Tensor generalised_geodesic2d(torch::Tensor image, torch::Tensor mask, float v, float lambda, int iterations) {
-    if(USE_OPENMP==1)
-    {
+    #ifdef _OPENMP
         std::cout << "OpenMP present, using OpenMP" << std::endl;
-    }
-    else
-    {
+    #else
         std::cout << "OpenP not present" << std::endl;
-    }
+    #endif
+
     // initialise distance with soft mask
     torch::Tensor distance = v * mask.clone();
 
@@ -197,7 +204,7 @@ torch::Tensor generalised_geodesic2d(torch::Tensor image, torch::Tensor mask, fl
     return distance;
 }
 
-void geodesic_frontback_pass(torch::Tensor image, torch::Tensor &distance, std::vector<float> spacing, float lambda){
+void geodesic_frontback_pass(torch::Tensor image, torch::Tensor &distance, std::vector<float> spacingsq, float lambda){
     // batch, channel, height, width
     int depth = distance.size(2);
     int height = distance.size(3);
@@ -238,12 +245,11 @@ void geodesic_frontback_pass(torch::Tensor image, torch::Tensor &distance, std::
         // slice pixel and distance at p
         p_val_vec = image.index({"...", z, Slice(None), Slice(None)});
         new_dist_vec = distance.index({"...", z, Slice(None), Slice(None)});
-     
         for(int hi = 0; hi < int(h_index.size()); hi++){
             for(int wi = 0; wi < int(w_index.size()); wi++){
-                local_dist = spacing[0] * spacing[0];
-                local_dist += pow(float(hi)-1.0, 2.0) * spacing[1] * spacing[1];
-                local_dist += pow(float(wi)-1.0, 2.0) * spacing[2] * spacing[2];
+                local_dist = spacingsq[0];
+                local_dist += pow(float(hi)-1.0, 2.0) * spacingsq[1];
+                local_dist += pow(float(wi)-1.0, 2.0) * spacingsq[2];
 
                 q_val_vec = image.index({"...", z - 1, torch::tensor(h_index[hi]), Slice(None)}).index({"...", torch::tensor(w_index[wi])});
                 q_dis_vec = distance.index({"...", z - 1, torch::tensor(h_index[hi]), Slice(None)}).index({"...", torch::tensor(w_index[wi])});
@@ -259,12 +265,11 @@ void geodesic_frontback_pass(torch::Tensor image, torch::Tensor &distance, std::
         // slice pixel and distance at p
         p_val_vec = image.index({"...", z, Slice(None), Slice(None)});
         new_dist_vec = distance.index({"...", z, Slice(None), Slice(None)});
-     
         for(int hi = 0; hi < int(h_index.size()); hi++){
             for(int wi = 0; wi < int(w_index.size()); wi++){
-                local_dist = spacing[0] * spacing[0];
-                local_dist += pow(float(hi)-1.0, 2.0) * spacing[1] * spacing[1];
-                local_dist += pow(float(wi)-1.0, 2.0) * spacing[2] * spacing[2];
+                local_dist = spacingsq[0];
+                local_dist += pow(float(hi)-1.0, 2.0) * spacingsq[1];
+                local_dist += pow(float(wi)-1.0, 2.0) * spacingsq[2];
 
                 q_val_vec = image.index({"...", z + 1, torch::tensor(h_index[hi]), Slice(None)}).index({"...", torch::tensor(w_index[wi])});
                 q_dis_vec = distance.index({"...", z + 1, torch::tensor(h_index[hi]), Slice(None)}).index({"...", torch::tensor(w_index[wi])});
@@ -276,8 +281,8 @@ void geodesic_frontback_pass(torch::Tensor image, torch::Tensor &distance, std::
     }
 }
 
-void geodesic_frontback_pass_openmp(torch::Tensor image, torch::Tensor &distance, std::vector<float> spacing, float lambda){
-    // batch, channel, height, width
+void geodesic_frontback_pass_openmp(torch::Tensor image, torch::Tensor &distance, std::vector<float> spacingsq, float lambda){
+    // batch, channel, depth, height, width
     int depth = distance.size(2);
     int height = distance.size(3);
     int width = distance.size(4);
@@ -285,62 +290,84 @@ void geodesic_frontback_pass_openmp(torch::Tensor image, torch::Tensor &distance
     auto imageptr = image.accessor<float, 5>();
     auto distanceptr = distance.accessor<float, 5>();
 
+    std::vector<float> local_distances;
+    for(int hi = -1; hi < 2; hi++)
+    {
+        for(int wi = -1; wi < 2; wi++)
+        {
+            float local_dist = spacingsq[0];
+            local_dist += float(std::abs(hi)) * spacingsq[1];
+            local_dist += float(std::abs(wi)) * spacingsq[2];
+
+            local_distances.push_back(local_dist);
+        }
+    }
+
     // front-back
     for(int z = 1; z < depth; z++){
-        #pragma omp parallel for collapse(2)
+        // use openmp to parallelise the loops over height and width
+        #ifdef _OPENMP
+           #pragma omp parallel for collapse(2)
+        #endif
         for(int h = 0; h < height; h++)
         {
             for(int w = 0; w < width; w++)
             {
-                float new_dist_vec = distanceptr[0][0][z][h][w];
-                // #pragma omp parallel for private(new_dist_vec)
-                // #pragma omp parallel for collapse(2)
-                for(int hi=-1; hi < 2; hi++)
-                for(int wi=-1; wi < 2; wi++)
-                {   
-                    int hind = h + hi;
-                    int wind = w + wi;
-                    
-                    if(hind < 0 || hind >= height) continue;
-                    if(wind < 0 || wind >= width) continue;
+                float pval = imageptr[0][0][z][h][w];
+                float new_dist = distanceptr[0][0][z][h][w];
+                for(int hi = 0; hi < 3; hi++)
+                {
+                    for(int wi = 0; wi < 3; wi++)
+                    {   
+                        int hind = h + hi - 1;
+                        int wind = w + wi - 1;
+                        
+                        if(hind < 0 || hind >= height) continue;
+                        if(wind < 0 || wind >= width) continue;
+                        float local_dist = local_distances[hi * 3 + wi];
 
-                    float local_dist = spacing[0] * spacing[0];
-                    local_dist += pow(float(hind), 2.0) * spacing[1] * spacing[1];
-                    local_dist += pow(float(wind), 2.0) * spacing[2] * spacing[2];
-                    
-                    new_dist_vec = std::min(new_dist_vec, distanceptr[0][0][z-1][hind][wind] + l1update(imageptr[0][0][z][h][w], imageptr[0][0][z-1][hind][wind], lambda, local_dist));
+                        float qval = imageptr[0][0][z-1][hind][wind];
+                        float qdist = distanceptr[0][0][z-1][hind][wind];
+                        
+                        new_dist = std::min(new_dist, qdist + l1update(pval, qval, lambda, local_dist));
+                    }
                 }
-                distanceptr[0][0][z][h][w] = new_dist_vec;
+                distanceptr[0][0][z][h][w] = new_dist;
             }
         }
     }
 
     // back-front
-    for(int z = depth-2; z >= depth; z--){
-        #pragma omp parallel for collapse(2)
+    for(int z = depth-2; z >= 0; z--){
+        // use openmp to parallelise the loops over height and width
+        #ifdef _OPENMP
+           #pragma omp parallel for collapse(2)
+        #endif
         for(int h = 0; h < height; h++)
         {
             for(int w = 0; w < width; w++)
             {
-                float new_dist_vec = distanceptr[0][0][z][h][w];
-                // #pragma omp parallel for private(new_dist_vec)
-                // #pragma omp parallel for collapse(2)
-                for(int hi=-1; hi < 2; hi++)
-                for(int wi=-1; wi < 2; wi++)
-                {   
-                    int hind = h + hi;
-                    int wind = w + wi;
+                float pval = imageptr[0][0][z][h][w];
+                float new_dist = distanceptr[0][0][z][h][w];
+                for(int hi = 0; hi < 3; hi++)
+                {
+                    for(int wi = 0; wi < 3; wi++)
+                    {   
+                        int hind = h + hi - 1;
+                        int wind = w + wi - 1;
 
-                    if(hind < 0 || hind >= height) continue;
-                    if(wind < 0 || wind >= width) continue;
+                        if(hind < 0 || hind >= height) continue;
+                        if(wind < 0 || wind >= width) continue;
 
-                    float local_dist = spacing[0] * spacing[0];
-                    local_dist += pow(float(hind), 2.0) * spacing[1] * spacing[1];
-                    local_dist += pow(float(wind), 2.0) * spacing[2] * spacing[2];
+                        float local_dist = local_distances[hi * 3 + wi];
 
-                    new_dist_vec = std::min(new_dist_vec, distanceptr[0][0][z+1][hind][wind] + l1update(imageptr[0][0][z][h][w], imageptr[0][0][z+1][hind][wind], lambda, local_dist));
+                        float qval = imageptr[0][0][z+1][hind][wind];
+                        float qdist = distanceptr[0][0][z+1][hind][wind];
+                        
+                        new_dist = std::min(new_dist, qdist + l1update(pval, qval, lambda, local_dist));
+                    }
                 }
-                distanceptr[0][0][z][h][w] = new_dist_vec;
+               distanceptr[0][0][z][h][w] = new_dist;
             }
         }
     }
@@ -348,14 +375,12 @@ void geodesic_frontback_pass_openmp(torch::Tensor image, torch::Tensor &distance
 
 
 torch::Tensor generalised_geodesic3d(torch::Tensor image, torch::Tensor mask, std::vector<float> spacing, float v, float lambda, int iterations) {
-    if(USE_OPENMP==1)
-    {
+    #ifdef _OPENMP
         std::cout << "OpenMP present, using OpenMP" << std::endl;
-    }
-    else
-    {
+    #else
         std::cout << "OpenP not present" << std::endl;
-    }
+    #endif
+
     // initialise distance with soft mask
     torch::Tensor distance = v * mask.clone();
 
@@ -370,6 +395,10 @@ torch::Tensor generalised_geodesic3d(torch::Tensor image, torch::Tensor mask, st
         throw std::runtime_error(
           "function only supports 3D spacing inputs, received " + std::to_string(spacing.size()));
     }
+
+    // square spacing
+    for(int t = 0; t < int(spacing.size()); t++)
+        spacing[t] = spacing[t] * spacing[t];
     
     // iteratively run the distance transform
     for(int itr = 0; itr < iterations; itr++){

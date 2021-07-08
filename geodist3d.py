@@ -241,21 +241,21 @@ def generalised_geodesic3d_raster_4scan_vectorised(image, mask, spacing, v, lamd
         # front-back - depth*, height, width
         distance = geodesic_frontback_pass(image, distance, spacing, lamda)
 
-        # # top-bottom - height*, depth, width
-        # image = torch.transpose(image, dim0=3, dim1=2)
-        # distance = torch.transpose(distance, dim0=3, dim1=2)
-        # distance = geodesic_frontback_pass(image, distance, spacing, lamda)
-        # # transpose back to original depth, height, width
-        # image = torch.transpose(image, dim0=3, dim1=2)
-        # distance = torch.transpose(distance, dim0=3, dim1=2)
+        # top-bottom - height*, depth, width
+        image = torch.transpose(image, dim0=3, dim1=2)
+        distance = torch.transpose(distance, dim0=3, dim1=2)
+        distance = geodesic_frontback_pass(image, distance, spacing, lamda)
+        # transpose back to original depth, height, width
+        image = torch.transpose(image, dim0=3, dim1=2)
+        distance = torch.transpose(distance, dim0=3, dim1=2)
 
-        # # left-right -  width*, height, depth
-        # image = torch.transpose(image, dim0=4, dim1=2)
-        # distance = torch.transpose(distance, dim0=4, dim1=2)
-        # distance = geodesic_frontback_pass(image, distance, spacing, lamda)
-        # # transpose back to original depth, height, width
-        # image = torch.transpose(image, dim0=4, dim1=2)
-        # distance = torch.transpose(distance, dim0=4, dim1=2)
+        # left-right -  width*, height, depth
+        image = torch.transpose(image, dim0=4, dim1=2)
+        distance = torch.transpose(distance, dim0=4, dim1=2)
+        distance = geodesic_frontback_pass(image, distance, spacing, lamda)
+        # transpose back to original depth, height, width
+        image = torch.transpose(image, dim0=4, dim1=2)
+        distance = torch.transpose(distance, dim0=4, dim1=2)
 
         # * indicates the current direction of pass
 
@@ -335,9 +335,9 @@ def test_compare_original_imp():
     plt.subplot(1, 3, 1)
     plt.imshow(np.squeeze(dst1))
     plt.subplot(1, 3, 2)
-    # plt.imshow(np.squeeze(dst2))
+    plt.imshow(np.squeeze(dst2))
     plt.subplot(1, 3, 3)
-    # plt.imshow(np.squeeze(np.abs(dst1 - dst2)))
+    plt.imshow(np.squeeze(np.abs(dst1 - dst2)))
     plt.show()
 
     assert diff < 1

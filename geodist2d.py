@@ -96,8 +96,6 @@ def generalised_geodesic2d_raster_2scan(image, mask, v, lamda, iter):
                         continue
                     q_dis = distance[..., h_d_td, w_d_td]
                     q_val = image[..., h_d_td, w_d_td]
-                    l2dis = get_l2_distance(p_val, q_val)
-                    speed = (1.0 - lamda) + lamda / (l2dis + 1e-5)
                     if use_speed:
                         l2dis = get_l2_distance(p_val, q_val)
                         speed = (1.0 - lamda) + lamda / (l2dis + 1e-5)
@@ -128,7 +126,7 @@ def geodesic_topdown_pass(image, distance, lamda):
             q_dis_vec = distance[..., h - 1, w_index]
             q_val_vec = image[..., h - 1, w_index]
             if use_speed:
-                l2dist = get_l2_distance(p_val_vec, q_val_vec, 1)
+                l2dist = get_l1_distance(p_val_vec, q_val_vec, 1)
                 speed = (1.0 - lamda) + lamda / (l2dist + 1e-5)
                 delta_d = math.sqrt(local_dist) / speed
             else:
@@ -144,7 +142,7 @@ def geodesic_topdown_pass(image, distance, lamda):
             q_dis_vec = distance[..., h + 1, w_index]
             q_val_vec = image[..., h + 1, w_index]
             if use_speed:
-                l2dist = get_l2_distance(p_val_vec, q_val_vec, 1)
+                l2dist = get_l1_distance(p_val_vec, q_val_vec, 1)
                 speed = (1.0 - lamda) + lamda / (l2dist + 1e-5)
                 delta_d = math.sqrt(local_dist) / speed
             else:
