@@ -155,12 +155,18 @@ torch::Tensor generalised_geodesic2d(torch::Tensor image, torch::Tensor mask, fl
     // iteratively run the distance transform
     for (int itr = 0; itr < iterations; itr++)
     {
+        image = image.contiguous();
+        distance = distance.contiguous();
+
         // top-bottom - width*, height
         geodesic_updown_pass(image, distance, lambda);
 
         // left-right - height*, width
         image = image.transpose(2, 3);
         distance = distance.transpose(2, 3);
+
+        image = image.contiguous();
+        distance = distance.contiguous();
         geodesic_updown_pass(image, distance, lambda);
         
         // tranpose back to original - width, height
@@ -329,21 +335,32 @@ torch::Tensor generalised_geodesic3d(torch::Tensor image, torch::Tensor mask, st
     // iteratively run the distance transform
     for (int itr = 0; itr < iterations; itr++)
     {
+        image = image.contiguous();
+        distance = distance.contiguous();
+
         // front-back - depth*, height, width
         geodesic_frontback_pass(image, distance, spacing, lambda);
 
         // top-bottom - height*, depth, width
         image = torch::transpose(image, 3, 2);
         distance = torch::transpose(distance, 3, 2);
+        
+        image = image.contiguous();
+        distance = distance.contiguous();
         geodesic_frontback_pass(image, distance, spacing, lambda);
+        
         // transpose back to original depth, height, width
         image = torch::transpose(image, 3, 2);
         distance = torch::transpose(distance, 3, 2);
-
+        
         // left-right - width*, height, depth
         image = torch::transpose(image, 4, 2);
         distance = torch::transpose(distance, 4, 2);
+        
+        image = image.contiguous();
+        distance = distance.contiguous();
         geodesic_frontback_pass(image, distance, spacing, lambda);
+        
         // transpose back to original depth, height, width
         image = torch::transpose(image, 4, 2);
         distance = torch::transpose(distance, 4, 2);
