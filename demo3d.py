@@ -34,7 +34,7 @@ def demo_geodesic_distance3d():
     dt2 = time.time() - t1
     It = torch.from_numpy(I).unsqueeze_(0).unsqueeze_(0)
     St = torch.from_numpy(1-S.astype(np.float32)).unsqueeze_(0).unsqueeze_(0)
-    D3 = np.squeeze(fastgeodis_generalised_geodesic_distance_3d(It,St, spacing, 1e10, 1.0, 4).numpy())
+    D3 = np.squeeze(fastgeodis_generalised_geodesic_distance_3d(It, St, spacing, 1e10, 1.0, 4).numpy())
     print("runtime(s) fast marching {0:}".format(dt1))
     print("runtime(s) raster scan   {0:}".format(dt2))
 
@@ -75,7 +75,7 @@ def demo_geodesic_distance3d():
     plt.subplot(1,5,4); plt.imshow(D3_slice)
     plt.axis('off'); plt.title('(d) FastGeodis')
     
-    plt.subplot(1,5,5); plt.imshow(np.abs(D1_slice-D3_slice))
+    plt.subplot(1,5,5); plt.imshow(D1_slice-D3_slice)
     plt.axis('off'); plt.title('(d) Fast Marching \nvs. FastGeodis\n max diff: {}'.format(np.max(np.abs(D1-D3))))
     plt.show()
 

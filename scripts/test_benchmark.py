@@ -4,7 +4,7 @@ import torch
 import matplotlib.pyplot as plt
 from functools import wraps
 import SimpleITK as sitk
-import geodis
+import FastGeodis
 import time
 import os
 
@@ -25,7 +25,7 @@ def generalised_geodesic_distance_2d(I, S, v, lamda, iter):
 
 @timing
 def generalised_geodesic2d_raster_omp(I, S, v, lamda, iter):
-    return geodis.generalised_geodesic2d(I, S, v, lamda, iter)
+    return FastGeodis.generalised_geodesic2d(I, S, v, lamda, iter)
 
 @timing
 def generalised_geodesic_distance_3d(I, S, spacing, v, lamb, iter):
@@ -33,7 +33,7 @@ def generalised_geodesic_distance_3d(I, S, spacing, v, lamb, iter):
 
 @timing
 def generalised_geodesic3d_raster_omp(image, mask, spacing, v, lamda, iter):
-    return geodis.generalised_geodesic3d(image, mask, spacing, v, lamda, iter)
+    return FastGeodis.generalised_geodesic3d(image, mask, spacing, v, lamda, iter)
 
 func_to_test_2d = [generalised_geodesic_distance_2d, generalised_geodesic2d_raster_omp]
 func_to_test_3d = [generalised_geodesic_distance_3d, generalised_geodesic3d_raster_omp]
