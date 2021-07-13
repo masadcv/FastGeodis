@@ -61,10 +61,10 @@ def test2d():
     return sizes_to_test, time_taken_dict
 
 def test3d():
-    num_runs = 5
+    num_runs = 2
     spacing = [1.0, 1.0, 1.0]
 
-    sizes_to_test = [64*(2**0), 64*(2**1), 64*(2**2), 64*(2**3)] #, 64*(2**4), 64*(2**5), 64*(2**6)]
+    sizes_to_test = [64*(2**0), 64*(2**1), 64*(2**2), 64*(2**3), 64*(2**4)]#, 64*(2**5), 64*(2**6)]
     print(sizes_to_test)
     time_taken_dict = dict()
     for func in func_to_test_3d:
@@ -92,6 +92,11 @@ def save_plot(sizes, time_taken_dict, figname):
         else:
             plt.plot(sizes, time_taken_dict[key], 'r-o', label='GeodisTK')
     plt.legend()
+    plt.xticks(sizes, [str(s) for s in sizes], rotation=45)
+    plt.title(figname)
+    plt.xlabel('Spatial size')
+    plt.ylabel('Execution time (seconds)')
+    plt.tight_layout()
     plt.savefig(os.path.join('figures', figname + '.png'))
 
 

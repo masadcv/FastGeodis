@@ -1,9 +1,9 @@
 from setuptools import setup, Extension
 from torch.utils import cpp_extension
 
-setup(name='geodis',
+setup(name='FastGeodis',
       ext_modules=[cpp_extension.CppExtension(
-            name='geodis', 
-            sources=['geodis.cpp'],
+            name='FastGeodis', 
+            sources=['fastgeodis.cpp'],
             extra_compile_args=['-fopenmp'])],
       cmdclass={'build_ext': cpp_extension.BuildExtension})

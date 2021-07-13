@@ -347,7 +347,7 @@ torch::Tensor generalised_geodesic3d(torch::Tensor image, torch::Tensor mask, st
         
         image = image.contiguous();
         distance = distance.contiguous();
-        geodesic_frontback_pass(image, distance, spacing, lambda);
+        geodesic_frontback_pass(image, distance, {spacing[1], spacing[0], spacing[2]}, lambda);
         
         // transpose back to original depth, height, width
         image = torch::transpose(image, 3, 2);
@@ -359,7 +359,7 @@ torch::Tensor generalised_geodesic3d(torch::Tensor image, torch::Tensor mask, st
         
         image = image.contiguous();
         distance = distance.contiguous();
-        geodesic_frontback_pass(image, distance, spacing, lambda);
+        geodesic_frontback_pass(image, distance, {spacing[2], spacing[1], spacing[0]}, lambda);
         
         // transpose back to original depth, height, width
         image = torch::transpose(image, 4, 2);

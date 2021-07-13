@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from functools import wraps
 from time import time
 import SimpleITK as sitk
-import geodis
+import FastGeodis
 
 def timing(f):
     @wraps(f)
@@ -264,7 +264,7 @@ def generalised_geodesic3d_raster_4scan_vectorised(image, mask, spacing, v, lamd
 # cpp implementation
 @timing
 def generalised_geodesic3d_raster_4scan_cpp(image, mask, spacing, v, lamda, iter):
-    return geodis.generalised_geodesic3d(image, mask, spacing, v, lamda, iter)
+    return FastGeodis.generalised_geodesic3d(image, mask, spacing, v, lamda, iter)
 
 
 def test_compare_original_imp():

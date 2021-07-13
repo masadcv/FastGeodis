@@ -6,7 +6,7 @@ import GeodisTK
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import geodis
+import FastGeodis
 from PIL import Image
 
 
@@ -183,7 +183,7 @@ def generalised_geodesic2d_raster_4scan(image, mask, v, lamda, iter):
 # cpp implementation
 @timing
 def generalised_geodesic2d_raster_4scan_cpp(I, S, v, lamda, iter):
-    return geodis.generalised_geodesic2d(I, S, v, lamda, iter)
+    return FastGeodis.generalised_geodesic2d(I, S, v, lamda, iter)
 
 
 def test_compare():
