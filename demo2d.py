@@ -68,59 +68,12 @@ if __name__ == '__main__':
     print(" 0 -- example for gray scale image")
     print(" 1 -- example for RB image")
     print("please enter the index of an example:")
-    method = input()
-    method = '{0:}'.format(method)
+    # method = input()
+    # method = '{0:}'.format(method)
+    method = '0'
     if(method == '0'):
         demo_geodesic_distance2d_gray_scale_image()
     elif(method == '1'):
         demo_geodesic_distance2d_RGB_image()
     else:
         print("invalid number : {0:}".format(method))
-
-# def demo_geodesic_distance2d(img, seed_pos):
-#     I = np.asanyarray(img, np.float32)
-#     S = np.zeros((I.shape[0], I.shape[1]), np.uint8)
-#     S[seed_pos[0]][seed_pos[1]] = 1
-#     SF = S.astype(np.float32)
-
-#     D1 = GeodisTK.generalised_geodesic2d_fast_marching(I,1-SF, 1e10)
-    
-#     tic = time.time()
-#     D2 = geodistk_generalised_geodesic_distance_2d(I, 1-SF, 1e10, 1.0, 4)
-#     geodistkt = time.time() - tic
-
-#     if I.ndim == 3:
-#         I = np.moveaxis(I, -1, 0)
-#     else:
-#         I = np.expand_dims(I, 0)
-
-#     It = torch.from_numpy(I).unsqueeze_(0)
-#     SFt = torch.from_numpy(SF).unsqueeze_(0).unsqueeze_(0)
-
-#     tic = time.time()
-#     D3 = np.squeeze(fastgeodis_generalised_geodesic_distance_2d(It, 1-SFt, 1e10, 1.0, 4).numpy())
-#     fastgeodist = time.time() - tic
-
-#     print('GeodisTK raster scan took {}'.format(geodistkt))
-#     print('FastGeodis raster scan took {}'.format(fastgeodist))
-
-#     plt.figure(figsize=(20,5))
-#     plt.subplot(1,4,1); plt.imshow(img)
-#     plt.autoscale(False);  plt.plot([seed_pos[0]], [seed_pos[1]], 'ro')
-#     plt.axis('off'); plt.title('(a) input image \n with a seed point')
-    
-#     plt.subplot(1,4,2); plt.imshow(D1)
-#     plt.axis('off'); plt.title('(b) Fast Marching \n Generalised Geodesic distance')
-
-#     plt.subplot(1,4,3); plt.imshow(D2)
-#     plt.axis('off'); plt.title('(c) GeodisTK\'s \nGeodesic distance')
-
-#     plt.subplot(1,4,4); plt.imshow(D3)
-#     plt.axis('off'); plt.title('(d) FastGeodis\'s \nGeneralised Geodesic distance')
-
-#     # plt.subplot(1,5,5); plt.imshow(np.abs(D1-D3))
-#     # plt.axis('off'); plt.title('(d) Difference \nFast Marching vs FastGeodis')
-#     print(np.max(np.abs(D1-D2)))
-#     plt.show()
-
-

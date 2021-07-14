@@ -46,13 +46,13 @@ float l2distance(const float *in1, const float *in2, int size)
 void geodesic_updown_pass(const torch::Tensor &image, torch::Tensor &distance, const float &lambda)
 {
     // batch, channel, height, width
-    int channel = image.size(1);
-    int height = image.size(2);
-    int width = image.size(3);
+    const int channel = image.size(1);
+    const int height = image.size(2);
+    const int width = image.size(3);
 
     auto imageptr = image.accessor<float, 4>();
     auto distanceptr = distance.accessor<float, 4>();
-    float local_dist[] = {sqrt(2.), 1., sqrt(2.)};
+    constexpr float local_dist[] = {sqrt(2.), 1., sqrt(2.)};
 
     // top-down
     for (int h = 1; h < height; h++)
@@ -80,7 +80,7 @@ void geodesic_updown_pass(const torch::Tensor &image, torch::Tensor &distance, c
 
             for (int wi = 0; wi < 3; wi++)
             {
-                int wind = w + wi - 1;
+                const int wind = w + wi - 1;
                 if (wind < 0 || wind >= width)
                     continue;
 
@@ -98,7 +98,7 @@ void geodesic_updown_pass(const torch::Tensor &image, torch::Tensor &distance, c
                     }
                     ldist = l2distance(pval_v, qval_v, channel);
                 }
-                float cur_dist = distanceptr[0][0][h - 1][wind] + local_dist[wi] / ((1.0 - lambda) + lambda / (ldist + 1e-5));
+                const float cur_dist = distanceptr[0][0][h - 1][wind] + local_dist[wi] / ((1.0 - lambda) + lambda / (ldist + 1e-5));
                 new_dist = std::min(new_dist, cur_dist);
             }
             distanceptr[0][0][h][w] = new_dist;
@@ -131,7 +131,7 @@ void geodesic_updown_pass(const torch::Tensor &image, torch::Tensor &distance, c
 
             for (int wi = 0; wi < 3; wi++)
             {
-                int wind = w + wi - 1;
+                const int wind = w + wi - 1;
                 if (wind < 0 || wind >= width)
                     continue;
 
@@ -149,7 +149,7 @@ void geodesic_updown_pass(const torch::Tensor &image, torch::Tensor &distance, c
                     }
                     ldist = l2distance(pval_v, qval_v, channel);
                 }
-                float cur_dist = distanceptr[0][0][h + 1][wind] + local_dist[wi] / ((1.0 - lambda) + lambda / (ldist + 1e-5));
+                const float cur_dist = distanceptr[0][0][h + 1][wind] + local_dist[wi] / ((1.0 - lambda) + lambda / (ldist + 1e-5));
                 new_dist = std::min(new_dist, cur_dist);
             }
             distanceptr[0][0][h][w] = new_dist;
@@ -171,7 +171,7 @@ torch::Tensor generalised_geodesic2d(torch::Tensor image, torch::Tensor mask, fl
     torch::Tensor distance = v * mask.clone();
 
     // check input dimensions
-    int num_dims = distance.dim();
+    const int num_dims = distance.dim();
     if (num_dims != 4)
     {
         throw std::runtime_error(
@@ -204,13 +204,13 @@ torch::Tensor generalised_geodesic2d(torch::Tensor image, torch::Tensor mask, fl
     return distance;
 }
 
-void geodesic_frontback_pass(const torch::Tensor &image, torch::Tensor &distance, const std::vector<float> &spacingsq, float lambda)
+void geodesic_frontback_pass(const torch::Tensor &image, torch::Tensor &distance, const std::vector<float> &spacingsq, const float &lambda)
 {
     // batch, channel, depth, height, width
-    int channel = image.size(1);
-    int depth = image.size(2);
-    int height = image.size(3);
-    int width = image.size(4);
+    const int channel = image.size(1);
+    const int depth = image.size(2);
+    const int height = image.size(3);
+    const int width = image.size(4);
 
     auto imageptr = image.accessor<float, 5>();
     auto distanceptr = distance.accessor<float, 5>();
@@ -258,8 +258,8 @@ void geodesic_frontback_pass(const torch::Tensor &image, torch::Tensor &distance
                 {
                     for (int wi = 0; wi < 3; wi++)
                     {
-                        int hind = h + hi - 1;
-                        int wind = w + wi - 1;
+                        const int hind = h + hi - 1;
+                        const int wind = w + wi - 1;
 
                         if (wind < 0 || wind >= width || hind < 0 || hind >= height)
                             continue;
@@ -278,7 +278,7 @@ void geodesic_frontback_pass(const torch::Tensor &image, torch::Tensor &distance
                             }
                             ldist = l2distance(pval_v, qval_v, channel);
                         }
-                        float cur_dist = distanceptr[0][0][z - 1][hind][wind] + local_dist[hi * 3 + wi] / ((1.0 - lambda) + lambda / (ldist + 1e-5));
+                        const float cur_dist = distanceptr[0][0][z - 1][hind][wind] + local_dist[hi * 3 + wi] / ((1.0 - lambda) + lambda / (ldist + 1e-5));
                         new_dist = std::min(new_dist, cur_dist);
                     }
                 }
@@ -317,8 +317,8 @@ void geodesic_frontback_pass(const torch::Tensor &image, torch::Tensor &distance
                 {
                     for (int wi = 0; wi < 3; wi++)
                     {
-                        int hind = h + hi - 1;
-                        int wind = w + wi - 1;
+                        const int hind = h + hi - 1;
+                        const int wind = w + wi - 1;
 
                         if (wind < 0 || wind >= width || hind < 0 || hind >= height)
                             continue;
@@ -337,7 +337,7 @@ void geodesic_frontback_pass(const torch::Tensor &image, torch::Tensor &distance
                             }
                             ldist = l2distance(pval_v, qval_v, channel);
                         }
-                        float cur_dist = distanceptr[0][0][z + 1][hind][wind] + local_dist[hi * 3 + wi] / ((1.0 - lambda) + lambda / (ldist + 1e-5));
+                        const float cur_dist = distanceptr[0][0][z + 1][hind][wind] + local_dist[hi * 3 + wi] / ((1.0 - lambda) + lambda / (ldist + 1e-5));
                         new_dist = std::min(new_dist, cur_dist);
                     }
                 }
@@ -347,7 +347,7 @@ void geodesic_frontback_pass(const torch::Tensor &image, torch::Tensor &distance
     }
 }
 
-torch::Tensor generalised_geodesic3d(torch::Tensor image, torch::Tensor mask, std::vector<float> spacing, float v, float lambda, int iterations)
+torch::Tensor generalised_geodesic3d(torch::Tensor image, const torch::Tensor &mask, std::vector<float> spacing, const float &v, const float &lambda, const int &iterations)
 {
     #if VERBOSE
         #ifdef _OPENMP
@@ -361,7 +361,7 @@ torch::Tensor generalised_geodesic3d(torch::Tensor image, torch::Tensor mask, st
     torch::Tensor distance = v * mask.clone();
 
     // check input dimensions
-    int num_dims = distance.dim();
+    const int num_dims = distance.dim();
     if (num_dims != 5)
     {
         throw std::runtime_error(
