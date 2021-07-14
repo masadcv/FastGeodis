@@ -38,7 +38,7 @@ def demo_geodesic_distance2d(img, seed_pos):
     plt.figure(figsize=(15,5))
     plt.subplot(1,5,1); plt.imshow(img)
     plt.autoscale(False);  plt.plot([seed_pos[0]], [seed_pos[1]], 'ro')
-    plt.axis('off'); plt.title('(a) input image')
+    plt.axis('off'); plt.title('(a) Input image')
     
     plt.subplot(1,5,2); plt.imshow(D1)
     plt.axis('off'); plt.title('(b) Fast Marching')
@@ -49,8 +49,27 @@ def demo_geodesic_distance2d(img, seed_pos):
     plt.subplot(1,5,4); plt.imshow(D3)
     plt.axis('off'); plt.title('(d) FastGeodis')
 
-    plt.subplot(1,5,5); plt.imshow(np.abs(D1-D3))
-    plt.axis('off'); plt.title('(e) Fast Marching\nvs. FastGeodis\n max diff: {}'.format(np.max(np.abs(D1-D3))))
+    diff = D1-D3
+    plt.subplot(1,5,5); plt.imshow(diff)
+    plt.axis('off'); plt.title('(e) Fast Marching\nvs. FastGeodis\nmax diff: {}\nmin diff: {}'.format(np.max(diff), np.min(diff)))
+    plt.show()
+
+    plt.figure()
+    plt.subplot(1, 2, 1)
+    plt.hist2d(D1.flatten(), D2.flatten(), bins=50)
+    plt.xlabel("Fast Marching")
+    plt.ylabel("GeodisTK")
+    plt.title("Joint histogram\nFast Marching vs. GeodisTK")
+    # plt.gca().set_aspect("equal", adjustable="box")
+
+    plt.subplot(1, 2, 2)
+    plt.hist2d(D1.flatten(), D3.flatten(), bins=50)
+    plt.xlabel("Fast Marching")
+    plt.ylabel("FastGeodis")
+    plt.title("Joint histogram\nFast Marching vs. FastGeodis")
+    # plt.gca().set_aspect("equal", adjustable="box")
+
+    plt.tight_layout()
     plt.show()
 
 def demo_geodesic_distance2d_gray_scale_image():
