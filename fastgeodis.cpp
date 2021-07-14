@@ -8,8 +8,6 @@
 
 #define VERBOSE 0
 
-using namespace torch::indexing;
-
 void print_shape(torch::Tensor data)
 {
     auto num_dims = data.dim();
