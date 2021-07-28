@@ -195,11 +195,11 @@ def geodesic_frontback_pass(image, distance, spacing, lamda):
                 q_dis_vec = distance[..., z - 1, h_index, :][..., w_index]
                 q_val_vec = image[..., z - 1, h_index, :][..., w_index]
                 if 1 == 1:
-                    l2dist = get_l1_distance(p_val_vec, q_val_vec, 1)
+                    l2dist = get_l2_distance(p_val_vec, q_val_vec, 1)
                     speed = (1.0 - lamda) + lamda / (l2dist + 1e-5)
                     delta_d = math.sqrt(local_dist) / speed
                 else:
-                    q_l1dist_z0_vec = get_l1_distance(p_val_vec, q_val_vec, 1) ** 2
+                    q_l1dist_z0_vec = get_l2_distance(p_val_vec, q_val_vec, 1) ** 2
                     delta_d = torch.sqrt(local_dist + (lamda ** 2) * q_l1dist_z0_vec)
 
                 distance[..., z, :, :] = torch.minimum(distance[..., z, :, :], (q_dis_vec + delta_d))
@@ -216,11 +216,11 @@ def geodesic_frontback_pass(image, distance, spacing, lamda):
                 q_dis_vec = distance[..., z + 1, h_index, :][..., w_index]
                 q_val_vec = image[..., z + 1, h_index, :][..., w_index]
                 if 1 == 1:
-                    l2dist = get_l1_distance(p_val_vec, q_val_vec, 1)
+                    l2dist = get_l2_distance(p_val_vec, q_val_vec, 1)
                     speed = (1.0 - lamda) + lamda / (l2dist + 1e-5)
                     delta_d = math.sqrt(local_dist) / speed
                 else:
-                    q_l1dist_z0_vec = get_l1_distance(p_val_vec, q_val_vec, 1) ** 2
+                    q_l1dist_z0_vec = get_l2_distance(p_val_vec, q_val_vec, 1) ** 2
                     delta_d = torch.sqrt(local_dist + (lamda ** 2) * q_l1dist_z0_vec)
                 distance[..., z, :, :] = torch.minimum(distance[..., z, :, :], (q_dis_vec + delta_d))
 
@@ -244,7 +244,7 @@ def generalised_geodesic3d_raster_4scan_vectorised(image, mask, spacing, v, lamd
         # top-bottom - height*, depth, width
         image = torch.transpose(image, dim0=3, dim1=2)
         distance = torch.transpose(distance, dim0=3, dim1=2)
-        distance = geodesic_frontback_pass(image, distance, spacing, lamda)
+        distance = geodesic_frontback_pass(image, distance, [spacing[1], spacing[0], spacing[2]], lamda)
         # transpose back to original depth, height, width
         image = torch.transpose(image, dim0=3, dim1=2)
         distance = torch.transpose(distance, dim0=3, dim1=2)
@@ -252,7 +252,7 @@ def generalised_geodesic3d_raster_4scan_vectorised(image, mask, spacing, v, lamd
         # left-right -  width*, height, depth
         image = torch.transpose(image, dim0=4, dim1=2)
         distance = torch.transpose(distance, dim0=4, dim1=2)
-        distance = geodesic_frontback_pass(image, distance, spacing, lamda)
+        distance = geodesic_frontback_pass(image, distance, [spacing[2], spacing[1], spacing[0]], lamda)
         # transpose back to original depth, height, width
         image = torch.transpose(image, dim0=4, dim1=2)
         distance = torch.transpose(distance, dim0=4, dim1=2)
