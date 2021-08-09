@@ -1,20 +1,16 @@
-import GeodisTK
-import math
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-from functools import wraps
 import time
 import SimpleITK as sitk
 import FastGeodis
+import dijkstra3d
 
-
-def geodistk_generalised_geodesic_distance_3d(I, S, spacing, v, lamb, iter):
-    return GeodisTK.generalised_geodesic3d_raster_scan(I, S, spacing, v, lamb, iter)
-
-
-def fastgeodis_generalised_geodesic_distance_3d(I, S, spacing, v, lamda, iter):
-    return FastGeodis.generalised_geodesic3d(I, S, spacing, v, lamda, iter)
+lam = 1.0
+l_eucl = (1-lam)
+l_grad = lam
+def fastgeodis_generalised_geodesic_distance_3d(I, S, spacing, v, l_grad, l_eucl, iter):
+    return FastGeodis.generalised_geodesic3d(I, S, spacing, v, l_grad, l_eucl, iter)
 
 
 def demo_geodesic_distance3d():
@@ -27,101 +23,131 @@ def demo_geodesic_distance3d():
     I = I[18:38, 63:183, 93:233]
     S = np.zeros_like(I, np.uint8)
     S[10][60][70] = 1
-    t0 = time.time()
-    D1 = GeodisTK.generalised_geodesic3d_fast_marching(
-        I, 1 - S.astype(np.float32), spacing, 1e10
-    )
-    t1 = time.time()
-    D2 = geodistk_generalised_geodesic_distance_3d(
-        I, 1 - S.astype(np.float32), spacing, 1e10, 1.0, 4
-    )
-    dt1 = t1 - t0
-    dt2 = time.time() - t1
-    It = torch.from_numpy(I).unsqueeze_(0).unsqueeze_(0)
+
+
+    It = torch.from_numpy(I).unsqueeze_(0).unsqueeze_(0).float()
     St = torch.from_numpy(1 - S.astype(np.float32)).unsqueeze_(0).unsqueeze_(0)
-    D3 = np.squeeze(
+    
+    time_raster = time.time()
+    D_raster = np.squeeze(
         fastgeodis_generalised_geodesic_distance_3d(
-            It, St, spacing, 1e10, 1.0, 4
+            It, St, spacing, 1e10, l_grad, l_eucl, 4
         ).numpy()
     )
-    print("runtime(s) fast marching {0:}".format(dt1))
-    print("runtime(s) raster scan   {0:}".format(dt2))
+    time_raster = time.time() - time_raster
+    
+    
+    I_np = It.squeeze().numpy()
+    time_dijkstra = time.time()
+    D_dijkstra3d = dijkstra3d.distance_field(
+                    data=I_np,
+                    prob=np.zeros_like(I_np),
+                    source=[10,60,70], 
+                    connectivity=26, 
+                    spacing=spacing, 
+                    l_grad=l_grad, 
+                    l_eucl=l_eucl,
+                    l_prob=0.0)
+    time_dijkstra = time.time() - time_dijkstra
 
-    img_d1 = sitk.GetImageFromArray(D1)
-    img_d1.SetSpacing(spacing_raw)
-    sitk.WriteImage(img_d1, "data/image3d_dis1.nii.gz")
 
-    img_d2 = sitk.GetImageFromArray(D2)
-    img_d2.SetSpacing(spacing_raw)
-    sitk.WriteImage(img_d2, "data/image3d_dis2.nii.gz")
-
-    img_d3 = sitk.GetImageFromArray(D3)
-    img_d3.SetSpacing(spacing_raw)
-    sitk.WriteImage(img_d3, "data/image3d_dis3.nii.gz")
-
-    I_sub = sitk.GetImageFromArray(I)
-    I_sub.SetSpacing(spacing_raw)
-    sitk.WriteImage(I_sub, "data/image3d_sub.nii.gz")
 
     I = I * 255 / I.max()
     I = np.asarray(I, np.uint8)
 
-    I_slice = I[10]
-    D1_slice = D1[10]
-    D2_slice = D2[10]
-    D3_slice = D3[10]
-    plt.figure(figsize=(15, 5))
-    plt.subplot(1, 5, 1)
-    plt.imshow(I_slice, cmap="gray")
+    ## Coronal Figure
+    I_slice = I[:,60,:]
+    D_raster_slice = D_raster[:,60,:]
+    D_dijkstra3d_slice = D_dijkstra3d[:,60,:]
+    
+    plt.figure(figsize=(15, 3))
+    plt.suptitle(f"Comparision with l_eucl={l_eucl}, l_grad={l_grad}")
+    plt.subplot(1, 4, 1)
+    plt.imshow(I_slice, cmap="gray", aspect=spacing[0]/spacing[2])
+    plt.autoscale(False)
+    plt.plot([70], [10], "ro")
+    plt.axis("off")
+    plt.title("(a) Input image")
+
+    plt.subplot(1, 4, 2)
+    plt.imshow(D_raster_slice, aspect=spacing[0]/spacing[2])
+    plt.axis("off")
+    plt.title(f"(b) FastGeodis ({time_raster*1000:.2f}ms)")
+
+    plt.subplot(1, 4, 3)
+    plt.imshow(D_dijkstra3d_slice, aspect=spacing[0]/spacing[2])
+    plt.axis("off")
+    plt.title(f"(c) dijkstra3d {time_dijkstra*1000:.2f}ms")    
+
+    diff = abs(D_raster - D_dijkstra3d)/(D_dijkstra3d+1e-7)*100
+    diff_slice = diff[:,60,:]
+    plt.subplot(1, 4, 4)
+    plt.imshow(diff_slice, aspect=spacing[0]/spacing[2])
+    plt.axis("off")
+    plt.title(
+        "(d) FastGeodis \nvs. dijkstra3d \nmax relative diff (%): {}\nmin relative diff (%)): {}".format(
+            np.max(diff), np.min(diff)
+        )
+    )
+    plt.colorbar()
+    #plt.show()
+    plt.savefig("figures/3d_coronal.png")
+
+    ## Axial Figure
+    I_slice = I[10,:,:]
+    D_raster_slice = D_raster[10,:,:]
+    D_dijkstra3d_slice = D_dijkstra3d[10,:,:]
+
+    plt.figure(figsize=(15, 3))
+    plt.suptitle(f"Comparision with l_eucl={l_eucl}, l_grad={l_grad}")
+    plt.subplot(1, 4, 1)
+    plt.imshow(I_slice, cmap="gray", aspect=spacing[1]/spacing[2])
     plt.autoscale(False)
     plt.plot([70], [60], "ro")
     plt.axis("off")
     plt.title("(a) Input image")
 
-    plt.subplot(1, 5, 2)
-    plt.imshow(D1_slice)
+    plt.subplot(1, 4, 2)
+    plt.imshow(D_raster_slice, aspect=spacing[1]/spacing[2])
     plt.axis("off")
-    plt.title("(b) Fast Marching")
+    plt.title(f"(b) FastGeodis ({time_raster*1000:.2f}ms)")
 
-    plt.subplot(1, 5, 3)
-    plt.imshow(D2_slice)
+    plt.subplot(1, 4, 3)
+    plt.imshow(D_dijkstra3d_slice, aspect=spacing[1]/spacing[2])
     plt.axis("off")
-    plt.title("(c) GeodisTK")
+    plt.title(f"(c) dijkstra3d {time_dijkstra*1000:.2f}ms")    
 
-    plt.subplot(1, 5, 4)
-    plt.imshow(D3_slice)
-    plt.axis("off")
-    plt.title("(d) FastGeodis")
-
-    diff = D1 - D3
-    diff_slice = diff[10]
-    plt.subplot(1, 5, 5)
-    plt.imshow(diff_slice)
+    diff = abs(D_raster - D_dijkstra3d)/(D_dijkstra3d+1e-7)*100
+    diff_slice = diff[10,:,:]
+    plt.subplot(1, 4, 4)
+    plt.imshow(diff_slice, aspect=spacing[1]/spacing[2])
     plt.axis("off")
     plt.title(
-        "(d) Fast Marching \nvs. FastGeodis\nmax diff: {}\nmin diff: {}".format(
+        "(d) FastGeodis \nvs. dijkstra3d \nmax relative diff (%): {}\nmin relative diff (%)): {}".format(
             np.max(diff), np.min(diff)
         )
     )
-    plt.show()
+    plt.colorbar()
+    #plt.show()
+    plt.savefig("figures/3d_axial.png")
 
-    plt.figure()
-    plt.subplot(1, 2, 1)
-    plt.hist2d(D1.flatten(), D2.flatten(), bins=50)
-    plt.xlabel("Fast Marching")
-    plt.ylabel("GeodisTK")
-    plt.title("Joint histogram\nFast Marching vs. GeodisTK")
-    # plt.gca().set_aspect("equal", adjustable="box")
+    # plt.figure()
+    # plt.subplot(1, 2, 1)
+    # plt.hist2d(D1.flatten(), D2.flatten(), bins=50)
+    # plt.xlabel("Fast Marching")
+    # plt.ylabel("GeodisTK")
+    # plt.title("Joint histogram\nFast Marching vs. GeodisTK")
+    # # plt.gca().set_aspect("equal", adjustable="box")
 
-    plt.subplot(1, 2, 2)
-    plt.hist2d(D1.flatten(), D3.flatten(), bins=50)
-    plt.xlabel("Fast Marching")
-    plt.ylabel("FastGeodis")
-    plt.title("Joint histogram\nFast Marching vs. FastGeodis")
-    # plt.gca().set_aspect("equal", adjustable="box")
+    # plt.subplot(1, 2, 2)
+    # plt.hist2d(D1.flatten(), D3.flatten(), bins=50)
+    # plt.xlabel("Fast Marching")
+    # plt.ylabel("FastGeodis")
+    # plt.title("Joint histogram\nFast Marching vs. FastGeodis")
+    # # plt.gca().set_aspect("equal", adjustable="box")
 
-    plt.tight_layout()
-    plt.show()
+    # plt.tight_layout()
+    # plt.show()
 
 
 if __name__ == "__main__":
