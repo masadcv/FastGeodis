@@ -10,7 +10,7 @@ def geodistk_generalised_geodesic_distance_2d(I, S, v, lamb, iter):
     return GeodisTK.generalised_geodesic2d_raster_scan(I, S, v, lamb, iter)
 
 def fastgeodis_generalised_geodesic_distance_2d(I, S, v, lamb, iter):
-    return FastGeodis.generalised_geodesic2d(I, S, v, lamb, iter)
+    return FastGeodis.generalised_geodesic2d(I, S, v, lamb, 1-lamb, iter)
 
 
 def demo_geodesic_distance2d(img, seed_pos):
