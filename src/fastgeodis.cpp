@@ -34,7 +34,7 @@ torch::Tensor generalised_geodesic2d(torch::Tensor image, const torch::Tensor &m
         CHECK_CONTIGUOUS_CUDA(image);
         CHECK_CONTIGUOUS_CUDA(mask);
 
-        return generalised_geodesic2d_cpu(image, distance, l_grad, l_eucl, iterations);
+        return generalised_geodesic2d_cpu(image, mask, v, l_grad, l_eucl, iterations);
 
     #else
         AT_ERROR("Not compiled with GPU support.");
