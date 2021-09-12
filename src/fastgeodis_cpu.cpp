@@ -1,7 +1,6 @@
 #include <torch/extension.h>
 #include <vector>
 // #include <iostream>
-#include "fastgeodis_cpu.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -53,7 +52,7 @@ float l1distance(const float *in1, const float *in2, int size)
 // }
 
 
-void geodesic_updown_pass(const torch::Tensor &image, torch::Tensor &distance, const float &l_grad,  const float &l_eucl)
+void geodesic_updown_pass_cpu(const torch::Tensor &image, torch::Tensor &distance, const float &l_grad,  const float &l_eucl)
 {
     // batch, channel, height, width
     const int channel = image.size(1);
@@ -167,8 +166,10 @@ void geodesic_updown_pass(const torch::Tensor &image, torch::Tensor &distance, c
     }
 }
 
-void generalised_geodesic2d_cpu(torch::Tensor &image, torch::Tensor &distance, const float &l_grad, const float &l_eucl, const int &iterations)
+torch::Tensor generalised_geodesic2d_cpu(torch::Tensor &image, const torch::Tensor &mask, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
 {
+    torch::Tensor distance = v * mask.clone();
+
     // iteratively run the distance transform
     for (int itr = 0; itr < iterations; itr++)
     {
@@ -176,7 +177,7 @@ void generalised_geodesic2d_cpu(torch::Tensor &image, torch::Tensor &distance, c
         distance = distance.contiguous();
 
         // top-bottom - width*, height
-        geodesic_updown_pass(image, distance, l_grad, l_eucl);
+        geodesic_updown_pass_cpu(image, distance, l_grad, l_eucl);
 
         // left-right - height*, width
         image = image.transpose(2, 3);
@@ -184,7 +185,7 @@ void generalised_geodesic2d_cpu(torch::Tensor &image, torch::Tensor &distance, c
 
         image = image.contiguous();
         distance = distance.contiguous();
-        geodesic_updown_pass(image, distance, l_grad, l_eucl);
+        geodesic_updown_pass_cpu(image, distance, l_grad, l_eucl);
         
         // tranpose back to original - width, height
         image = image.transpose(2, 3);
@@ -192,9 +193,11 @@ void generalised_geodesic2d_cpu(torch::Tensor &image, torch::Tensor &distance, c
 
         // * indicates the current direction of pass
     }
+
+    return distance;
 }
 
-void geodesic_frontback_pass(const torch::Tensor &image, torch::Tensor &distance, const std::vector<float> &spacing, const float &l_grad, const float &l_eucl)
+void geodesic_frontback_pass_cpu(const torch::Tensor &image, torch::Tensor &distance, const std::vector<float> &spacing, const float &l_grad, const float &l_eucl)
 {
     // batch, channel, depth, height, width
     const int channel = image.size(1);
@@ -337,8 +340,10 @@ void geodesic_frontback_pass(const torch::Tensor &image, torch::Tensor &distance
     }
 }
 
-void generalised_geodesic3d_cpu(torch::Tensor &image, torch::Tensor &distance, const std::vector<float> &spacing, const float &l_grad, const float &l_eucl, const int &iterations)
+torch::Tensor generalised_geodesic3d_cpu(torch::Tensor &image, const torch::Tensor &mask, const std::vector<float> &spacing, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
 {
+    torch::Tensor distance = v * mask.clone();
+
     // iteratively run the distance transform
     for (int itr = 0; itr < iterations; itr++)
     {
@@ -346,7 +351,7 @@ void generalised_geodesic3d_cpu(torch::Tensor &image, torch::Tensor &distance, c
         distance = distance.contiguous();
 
         // front-back - depth*, height, width
-        geodesic_frontback_pass(image, distance, spacing, l_grad, l_eucl);
+        geodesic_frontback_pass_cpu(image, distance, spacing, l_grad, l_eucl);
 
         // top-bottom - height*, depth, width
         image = torch::transpose(image, 3, 2);
@@ -354,7 +359,7 @@ void generalised_geodesic3d_cpu(torch::Tensor &image, torch::Tensor &distance, c
         
         image = image.contiguous();
         distance = distance.contiguous();
-        geodesic_frontback_pass(image, distance, {spacing[1], spacing[0], spacing[2]}, l_grad, l_eucl);
+        geodesic_frontback_pass_cpu(image, distance, {spacing[1], spacing[0], spacing[2]}, l_grad, l_eucl);
         
         // transpose back to original depth, height, width
         image = torch::transpose(image, 3, 2);
@@ -366,7 +371,7 @@ void generalised_geodesic3d_cpu(torch::Tensor &image, torch::Tensor &distance, c
         
         image = image.contiguous();
         distance = distance.contiguous();
-        geodesic_frontback_pass(image, distance, {spacing[2], spacing[1], spacing[0]}, l_grad, l_eucl);
+        geodesic_frontback_pass_cpu(image, distance, {spacing[2], spacing[1], spacing[0]}, l_grad, l_eucl);
         
         // transpose back to original depth, height, width
         image = torch::transpose(image, 4, 2);
@@ -374,4 +379,6 @@ void generalised_geodesic3d_cpu(torch::Tensor &image, torch::Tensor &distance, c
 
         // * indicates the current direction of pass
     }
+
+    return distance;
 }
