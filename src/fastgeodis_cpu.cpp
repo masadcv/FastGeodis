@@ -61,7 +61,7 @@ void geodesic_updown_pass_cpu(const torch::Tensor &image, torch::Tensor &distanc
 
     auto image_ptr = image.accessor<float, 4>();
     auto distance_ptr = distance.accessor<float, 4>();
-    constexpr float local_dist[] = {sqrt(2.), 1., sqrt(2.)};
+    constexpr float local_dist[] = {sqrt(float(2.)), float(1.), sqrt(float(2.))};
 
     // top-down
     for (int h = 1; h < height; h++)

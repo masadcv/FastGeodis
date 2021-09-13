@@ -5,6 +5,10 @@
 #include <omp.h>
 #endif
 
+#define TILE_DIM     24
+#define THREAD_COUNT 512
+#define STRIP_HEIGHT 16
+
 // void print_shape(torch::Tensor data)
 // {
 //     auto num_dims = data.dim();
@@ -23,9 +27,9 @@
 //     }
 // }
 
-float l1distance_cuda(const float &in1, const float &in2)
+__device__ __forceinline__ float l1distance_cuda(const float &in1, const float &in2)
 {
-    return std::abs(in1 - in2);
+    return abs(in1 - in2);
 }
 
 
@@ -51,6 +55,119 @@ float l1distance_cuda(const float *in1, const float *in2, int size)
 //     return std::sqrt(ret_sum);
 // }
 
+template <typename scalar_t>
+__global__ void geodesic_updown_pass_kernel(
+    const torch::PackedTensorAccessor32<scalar_t, 4, torch::RestrictPtrTraits> image_ptr, 
+    torch::PackedTensorAccessor32<scalar_t, 4, torch::RestrictPtrTraits> distance_ptr,
+    const float &l_grad, 
+    const float &l_eucl,
+    const float *local_dist,
+    const int index,
+    const int height,
+    const int width)
+{
+    __shared__ float lastRow[THREAD_COUNT+2];
+    __shared__ float curRow[THREAD_COUNT+2];
+
+    // overlap
+    int blockStartX = (blockIdx.x * THREAD_COUNT) - (blockIdx.x * STRIP_HEIGHT * 2);
+    int blockSafeX = blockStartX + THREAD_COUNT - (2 * STRIP_HEIGHT);
+
+    int kernelX = blockStartX + threadIdx.x;
+
+    lastRow[threadIdx.x + 1] = distance_ptr[0][0][index-1][kernelX];
+    curRow[threadIdx.x + 1] = distance_ptr[0][0][index][kernelX];
+    if (threadIdx.x == 0)
+    {
+        lastRow[0] = -1;
+        curRow[0] = -1;
+        if ((kernelX - 1) >= 0)
+        { 
+            lastRow[0] = distance_ptr[0][0][index-1][kernelX-1];
+            curRow[0] = distance_ptr[0][0][index][kernelX-1];
+        }
+    }
+    else if(threadIdx.x == THREAD_COUNT - 1)
+    {
+        lastRow[threadIdx.x + 1] = -1;
+        curRow[threadIdx.x + 1] = -1;
+        if ((kernelX + 1) < width)
+        {
+            lastRow[threadIdx.x + 1] = distance_ptr[0][0][index-1][kernelX+1];
+            curRow[threadIdx.x + 1] = distance_ptr[0][0][index][kernelX+1];
+        }
+    }
+
+    __syncthreads();
+
+    // top-down pass for each row in strip
+    for (int i = 0; i < STRIP_HEIGHT; i++)
+    {
+        int currentHeightIdx = index + i;
+        if (currentHeightIdx < height and kernelX < width)
+        {
+            int currentInnerIdx = (int)threadIdx.x + 1;
+            float new_dist = -1;
+            if (currentInnerIdx >= 0  && currentInnerIdx < THREAD_COUNT+2)
+            {
+                new_dist = curRow[currentInnerIdx];
+            }
+            float pval = image_ptr[0][0][currentHeightIdx][kernelX];
+
+            for(int w_i = 0; w_i < 3; w_i++)
+            {
+                if (currentInnerIdx >= 0 && currentInnerIdx < THREAD_COUNT+2)
+                {
+                    const float cur_dist = lastRow[currentInnerIdx];
+                    if (cur_dist >= 0)
+                    {
+                        const int w_ind = kernelX + w_i -1;
+                        float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
+
+                        float l_dist = l1distance_cuda(pval, qval);
+                        new_dist = std::min(new_dist, (cur_dist + l_eucl * local_dist[w_i] + l_grad * l_dist));
+                    }
+                }
+            }
+            
+            __syncthreads();
+            if (new_dist >= 0.0 && kernelX < blockSafeX && (curRow[threadIdx.x] < 0.0 || new_dist < curRow[threadIdx.x]))
+            {
+                distance_ptr[0][0][currentHeightIdx][kernelX];
+            }
+
+            lastRow[threadIdx.x] = curRow[threadIdx.x];
+            curRow[threadIdx.x] = -1;
+            if((currentHeightIdx+1) < height)
+            {
+                curRow[threadIdx.x] = distance_ptr[0][0][currentHeightIdx + 1][kernelX];
+            }
+            
+            if (threadIdx.x == 0)
+            {
+                curRow[0] = -1;
+                if((kernelX - 1) >= 0 && (currentHeightIdx+1) < height)
+                {
+                    curRow[0] = distance_ptr[0][0][currentHeightIdx + 1][kernelX - 1];
+                }
+            }
+            else if (threadIdx.x == THREAD_COUNT - 1)
+            {
+                curRow[THREAD_COUNT + 1] = -1;
+                if((kernelX + 1) >= 0 && (currentHeightIdx+1) < height)
+                {
+                    curRow[THREAD_COUNT + 1] = distance_ptr[0][0][currentHeightIdx + 1][kernelX + 1];
+                }
+            }
+
+            __syncthreads();
+            
+            // TODO: bottom up pass
+        }
+    }
+    
+
+}
 
 void geodesic_updown_pass_cuda(const torch::Tensor &image, torch::Tensor &distance, const float &l_grad,  const float &l_eucl)
 {
@@ -59,112 +176,139 @@ void geodesic_updown_pass_cuda(const torch::Tensor &image, torch::Tensor &distan
     const int height = image.size(2);
     const int width = image.size(3);
 
-    auto image_ptr = image.accessor<float, 4>();
-    auto distance_ptr = distance.accessor<float, 4>();
+    // auto image_ptr = image.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>();
+    // auto distance_ptr = distance.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>();
+    
     // constexpr float local_dist[] = {sqrt(2.), 1., sqrt(2.)};
     const float local_dist[] = {sqrt(float(2.)), float(1.), sqrt(float(2.))};
 
-    // top-down
-    for (int h = 1; h < height; h++)
+    int blockSafeZone = (THREAD_COUNT - (STRIP_HEIGHT * 2));
+	int blockCountUpDown = width / blockSafeZone;
+	int blockCountLeftRight = height / blockSafeZone;
+
+	if (width % blockSafeZone != 0)
+		blockCountUpDown++;
+	if (height % blockSafeZone != 0)
+		blockCountLeftRight++;
+
+    // process each strip
+    for (int i = 0; i < height; i += STRIP_HEIGHT)
     {
-        // use openmp to parallelise the loop over width
-        #ifdef _OPENMP
-            #pragma omp parallel for
-        #endif
-        for (int w = 0; w < width; w++)
-        {
-            float pval;
-            float pval_v[channel];
-            if (channel == 1)
-            {
-                pval = image_ptr[0][0][h][w];
-            }
-            else
-            {
-                for (int c_i = 0; c_i < channel; c_i++)
-                {
-                    pval_v[c_i] = image_ptr[0][c_i][h][w];
-                }
-            }
-            float new_dist = distance_ptr[0][0][h][w];
-
-            for (int w_i = 0; w_i < 3; w_i++)
-            {
-                const int w_ind = w + w_i - 1;
-                if (w_ind < 0 || w_ind >= width)
-                    continue;
-
-                float l_dist;
-                if (channel == 1)
-                {
-                    l_dist = l1distance_cuda(pval, image_ptr[0][0][h - 1][w_ind]);
-                }
-                else
-                {
-                    float qval_v[channel];
-                    for (int c_i = 0; c_i < channel; c_i++)
-                    {
-                        qval_v[c_i] = image_ptr[0][c_i][h - 1][w_ind];
-                    }
-                    l_dist = l1distance_cuda(pval_v, qval_v, channel);
-                }
-                const float cur_dist = distance_ptr[0][0][h - 1][w_ind] + l_eucl * local_dist[w_i] + l_grad * l_dist;
-                new_dist = std::min(new_dist, cur_dist);
-            }
-            distance_ptr[0][0][h][w] = new_dist;
-        }
+        // call kernel
+        AT_DISPATCH_FLOATING_TYPES(image.scalar_type(), "geodesic_updown_pass_kernel", ([&] {
+            geodesic_updown_pass_kernel<scalar_t><<<blockCountUpDown, THREAD_COUNT>>>(
+                image.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(), 
+                distance.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(), 
+                l_grad, 
+                l_eucl, 
+                local_dist, 
+                i, 
+                height, 
+                width);
+            }));
     }
 
-    // bottom-up
-    for (int h = height - 2; h >= 0; h--)
-    {
-        // use openmp to parallelise the loop over width
-        #ifdef _OPENMP
-            #pragma omp parallel for
-        #endif
-        for (int w = 0; w < width; w++)
-        {
-            float pval;
-            float pval_v[channel];
-            if (channel == 1)
-            {
-                pval = image_ptr[0][0][h][w];
-            }
-            else
-            {
-                for (int c_i = 0; c_i < channel; c_i++)
-                {
-                    pval_v[c_i] = image_ptr[0][c_i][h][w];
-                }
-            }
-            float new_dist = distance_ptr[0][0][h][w];
+    // // top-down
+    // for (int h = 1; h < height; h++)
+    // {
+    //     // use openmp to parallelise the loop over width
+    //     #ifdef _OPENMP
+    //         #pragma omp parallel for
+    //     #endif
+    //     for (int w = 0; w < width; w++)
+    //     {
+    //         float pval;
+    //         float pval_v[channel];
+    //         if (channel == 1)
+    //         {
+    //             pval = image_ptr[0][0][h][w];
+    //         }
+    //         else
+    //         {
+    //             for (int c_i = 0; c_i < channel; c_i++)
+    //             {
+    //                 pval_v[c_i] = image_ptr[0][c_i][h][w];
+    //             }
+    //         }
+    //         float new_dist = distance_ptr[0][0][h][w];
 
-            for (int w_i = 0; w_i < 3; w_i++)
-            {
-                const int w_ind = w + w_i - 1;
-                if (w_ind < 0 || w_ind >= width)
-                    continue;
+    //         for (int w_i = 0; w_i < 3; w_i++)
+    //         {
+    //             const int w_ind = w + w_i - 1;
+    //             if (w_ind < 0 || w_ind >= width)
+    //                 continue;
 
-                float l_dist;
-                if (channel == 1)
-                {
-                    l_dist = l1distance_cuda(pval, image_ptr[0][0][h + 1][w_ind]);
-                }
-                else
-                {
-                    float qval_v[channel];
-                    for (int c_i = 0; c_i < channel; c_i++)
-                    {
-                        qval_v[c_i] = image_ptr[0][c_i][h + 1][w_ind];
-                    }
-                    l_dist = l1distance_cuda(pval_v, qval_v, channel);
-                }
-                const float cur_dist = distance_ptr[0][0][h + 1][w_ind] + l_eucl * local_dist[w_i] + l_grad * l_dist;
-                new_dist = std::min(new_dist, cur_dist);
-            }
-            distance_ptr[0][0][h][w] = new_dist;
-        }
-    }
+    //             float l_dist;
+    //             if (channel == 1)
+    //             {
+    //                 l_dist = l1distance_cuda(pval, image_ptr[0][0][h - 1][w_ind]);
+    //             }
+    //             else
+    //             {
+    //                 float qval_v[channel];
+    //                 for (int c_i = 0; c_i < channel; c_i++)
+    //                 {
+    //                     qval_v[c_i] = image_ptr[0][c_i][h - 1][w_ind];
+    //                 }
+    //                 l_dist = l1distance_cuda(pval_v, qval_v, channel);
+    //             }
+    //             const float cur_dist = distance_ptr[0][0][h - 1][w_ind] + l_eucl * local_dist[w_i] + l_grad * l_dist;
+    //             new_dist = std::min(new_dist, cur_dist);
+    //         }
+    //         distance_ptr[0][0][h][w] = new_dist;
+    //     }
+    // }
+
+    // // bottom-up
+    // for (int h = height - 2; h >= 0; h--)
+    // {
+    //     // use openmp to parallelise the loop over width
+    //     #ifdef _OPENMP
+    //         #pragma omp parallel for
+    //     #endif
+    //     for (int w = 0; w < width; w++)
+    //     {
+    //         float pval;
+    //         float pval_v[channel];
+    //         if (channel == 1)
+    //         {
+    //             pval = image_ptr[0][0][h][w];
+    //         }
+    //         else
+    //         {
+    //             for (int c_i = 0; c_i < channel; c_i++)
+    //             {
+    //                 pval_v[c_i] = image_ptr[0][c_i][h][w];
+    //             }
+    //         }
+    //         float new_dist = distance_ptr[0][0][h][w];
+
+    //         for (int w_i = 0; w_i < 3; w_i++)
+    //         {
+    //             const int w_ind = w + w_i - 1;
+    //             if (w_ind < 0 || w_ind >= width)
+    //                 continue;
+
+    //             float l_dist;
+    //             if (channel == 1)
+    //             {
+    //                 l_dist = l1distance_cuda(pval, image_ptr[0][0][h + 1][w_ind]);
+    //             }
+    //             else
+    //             {
+    //                 float qval_v[channel];
+    //                 for (int c_i = 0; c_i < channel; c_i++)
+    //                 {
+    //                     qval_v[c_i] = image_ptr[0][c_i][h + 1][w_ind];
+    //                 }
+    //                 l_dist = l1distance_cuda(pval_v, qval_v, channel);
+    //             }
+    //             const float cur_dist = distance_ptr[0][0][h + 1][w_ind] + l_eucl * local_dist[w_i] + l_grad * l_dist;
+    //             new_dist = std::min(new_dist, cur_dist);
+    //         }
+    //         distance_ptr[0][0][h][w] = new_dist;
+    //     }
+    // }
 }
 
 torch::Tensor generalised_geodesic2d_cuda(torch::Tensor &image, const torch::Tensor &mask, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
