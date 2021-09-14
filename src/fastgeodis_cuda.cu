@@ -110,136 +110,174 @@ __global__ void geodesic_updown_pass_kernel(
 
     __syncthreads();
 
-    // top-down pass for each row in strip
-    for (int i = 0; i < STRIP_HEIGHT; i++)
+    if (1==1)
     {
-        float solution = -1;
-        int currentHeightIdx = row + i;
-
-        if (currentHeightIdx < height and kernelX < width)
-        {
-            int localKernelX = (int)threadIdx.x + 1;
-            // solution = curRow[localKernelX];
-
-            float pval = image_ptr[0][0][currentHeightIdx][kernelX];
-            
-            int w_i, w_ind;
-            float cur_dist;
-
-            // left back
-            w_i = 0;
-            w_ind = kernelX + w_i - 1;
-            cur_dist = lastRow[localKernelX + w_i - 1];
-            float left_solution=-1;
-            if (cur_dist >= 0 && (w_ind >= 0 && w_ind < width))
-            {
-                float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
-                float l_dist = abs(pval - qval);
-                left_solution = (cur_dist + l_eucl * local_dist[w_i] + l_grad * l_dist);
-            }
-
-            // center back
-            w_i = 1;
-            w_ind = kernelX + w_i - 1;
-            cur_dist = lastRow[localKernelX + w_i - 1];
-            float center_solution=-1;
-            if (cur_dist >= 0 && (w_ind >= 0 && w_ind < width))
-            {
-                float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
-                float l_dist = abs(pval - qval);
-                center_solution = (cur_dist + l_eucl * local_dist[w_i] + l_grad * l_dist);
-            }
-
-            // right back
-            w_i = 2;
-            w_ind = kernelX + w_i - 1;
-            cur_dist = lastRow[localKernelX + w_i - 1];
-            float right_solution=-1;
-            if (cur_dist >= 0 && (w_ind >= 0 && w_ind < width))
-            {
-                float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
-                float l_dist = abs(pval - qval);
-                right_solution = (cur_dist + l_eucl * local_dist[w_i] + l_grad * l_dist);
-            }
-
-            // for(int w_i = 0; w_i < 3; w_i++)
-            // {
-            //     const int w_ind = kernelX + w_i - 1;
-            //     const float cur_dist = lastRow[localKernelX + w_i - 1];
-            //     if (cur_dist >= 0 && (w_ind >= 0 && w_ind < width))
-            //     {
-            //         float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
-            //         float l_dist = l1distance_cuda(pval, qval);
-            //         float cur_solution = (cur_dist + l_eucl * local_dist[w_i] + l_grad * l_dist);
-            //         if(w_i == 0)
-            //         {
-            //             solution = cur_solution;
-            //         }
-            //         else
-            //         {
-            //             if(cur_solution < solution)
-            //             {
-            //                 solution = cur_solution;
-            //             }
-            //         }
-            //    }
-            // }
-            solution = left_solution;
-            if(center_solution < left_solution)
-            {
-                solution = center_solution;
-            }
-            else if(right_solution < left_solution && right_solution < center_solution)
-            {
-                solution = right_solution;
-            }
-        }
-        printf("%d ",kernelX);
         
-        __syncthreads();
-        
-        // if(currentHeightIdx >= 0 && currentHeightIdx < height && kernelX >= 0 && kernelX < width && kernelX < blockSafeX-2)
-        // {
-        //     distance_ptr[0][0][currentHeightIdx][kernelX] = solution;
-        //     // curRow[threadIdx.x + 1] = solution;
-
-        // }
-        // if (solution >= 0.0 && kernelX < blockSafeX && (curRow[threadIdx.x] < 0.0 || solution < curRow[threadIdx.x]))
-        if (solution >= 0.0 && kernelX < blockSafeX-10 &&  solution < curRow[threadIdx.x + 1])
+        // top-down pass for each row in strip
+        for (int i = 0; i < STRIP_HEIGHT; i++)
         {
-            printf("%d ",kernelX);
-            distance_ptr[0][0][currentHeightIdx][kernelX] = solution;
-            curRow[threadIdx.x + 1] = solution;
-        }
+            float solution = -1;
+            int currentHeightIdx = row + i;
 
-        lastRow[threadIdx.x] = curRow[threadIdx.x];
-        curRow[threadIdx.x] = -1;
-        if((currentHeightIdx+1) < height)
-        {
-            curRow[threadIdx.x] = distance_ptr[0][0][currentHeightIdx + 1][kernelX];     
-            if (threadIdx.x == 0)
+            if (currentHeightIdx < height and kernelX < width)
             {
-                curRow[0] = -1;
-                if((kernelX - 1) >= 0)
+                int localKernelX = (int)threadIdx.x + 1;
+                // solution = curRow[localKernelX];
+
+                float pval = image_ptr[0][0][currentHeightIdx][kernelX];
+                
+                int w_i, w_ind;
+                float cur_dist;
+
+                // left back
+                w_i = 0;
+                w_ind = kernelX + w_i - 1;
+                cur_dist = lastRow[localKernelX + w_i - 1];
+                float left_solution=-1;
+                if (cur_dist >= 0 && (w_ind >= 0 && w_ind < width))
                 {
-                    curRow[0] = distance_ptr[0][0][currentHeightIdx + 1][kernelX - 1];
+                    float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
+                    float l_dist = abs(pval - qval);
+                    left_solution = cur_dist + l_eucl * local_dist[w_i];// + l_grad * l_dist;
+                }
+
+                // center back
+                w_i = 1;
+                w_ind = kernelX + w_i - 1;
+                cur_dist = lastRow[localKernelX + w_i - 1];
+                float center_solution=-1;
+                if (cur_dist >= 0 && (w_ind >= 0 && w_ind < width))
+                {
+                    float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
+                    float l_dist = abs(pval - qval);
+                    center_solution = cur_dist + l_eucl * local_dist[w_i];// + l_grad * l_dist;
+                }
+
+                // right back
+                w_i = 2;
+                w_ind = kernelX + w_i - 1;
+                cur_dist = lastRow[localKernelX + w_i - 1];
+                float right_solution=-1;
+                if (cur_dist >= 0 && (w_ind >= 0 && w_ind < width))
+                {
+                    float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
+                    float l_dist = abs(pval - qval);
+                    right_solution = cur_dist + l_eucl * local_dist[w_i];// + l_grad * l_dist;
+                }
+
+                // for(int w_i = 0; w_i < 3; w_i++)
+                // {
+                //     const int w_ind = kernelX + w_i - 1;
+                //     const float cur_dist = lastRow[localKernelX + w_i - 1];
+                //     if (cur_dist >= 0 && (w_ind >= 0 && w_ind < width))
+                //     {
+                //         float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
+                //         float l_dist = l1distance_cuda(pval, qval);
+                //         float cur_solution = (cur_dist + l_eucl * local_dist[w_i] + l_grad * l_dist);
+                //         if(w_i == 0)
+                //         {
+                //             solution = cur_solution;
+                //         }
+                //         else
+                //         {
+                //             if(cur_solution < solution)
+                //             {
+                //                 solution = cur_solution;
+                //             }
+                //         }
+                //    }
+                // }
+                solution = left_solution;
+                if(center_solution < left_solution)
+                {
+                    solution = center_solution;
+                }
+                else if(right_solution < left_solution && right_solution < center_solution)
+                {
+                    solution = right_solution;
                 }
             }
-            else if (threadIdx.x == THREAD_COUNT + 1)
+            
+            __syncthreads();
+
+            // if (solution >= 0.0 && kernelX < blockSafeX && (curRow[threadIdx.x] < 0.0 || solution < curRow[threadIdx.x]))
+            if (solution >= 0.0 && kernelX < blockSafeX)// && solution < curRow[threadIdx.x + 1])
             {
-                curRow[THREAD_COUNT + 1] = -1;
-                if((kernelX + 1) < width)
+                if(currentHeightIdx >= 0 && currentHeightIdx < height && kernelX >= 0 && kernelX < width)
                 {
-                    curRow[THREAD_COUNT + 1] = distance_ptr[0][0][currentHeightIdx + 1][kernelX + 1];
+                    distance_ptr[0][0][currentHeightIdx][kernelX] = solution;
+                    // curRow[threadIdx.x + 1] = solution;
                 }
             }
-        }
 
-        __syncthreads();
-            
-            // TODO: bottom up pass
+            lastRow[threadIdx.x] = curRow[threadIdx.x];
+            curRow[threadIdx.x] = -1;
+            if((currentHeightIdx+1) < height)
+            {
+                curRow[threadIdx.x] = distance_ptr[0][0][currentHeightIdx + 1][kernelX];     
+                if (threadIdx.x == 0)
+                {
+                    curRow[0] = -1;
+                    if((kernelX - 1) >= 0)
+                    {
+                        curRow[0] = distance_ptr[0][0][currentHeightIdx + 1][kernelX - 1];
+                    }
+                }
+                else if (threadIdx.x == THREAD_COUNT + 1)
+                {
+                    curRow[THREAD_COUNT + 1] = -1;
+                    if((kernelX + 1) < width)
+                    {
+                        curRow[THREAD_COUNT + 1] = distance_ptr[0][0][currentHeightIdx + 1][kernelX + 1];
+                    }
+                }
+            }
+
+            __syncthreads();
+                
+                // TODO: bottom up pass
+        }
     }
-    
+    else{
+        // top-down pass for each row in strip
+        for (int i = 0; i < STRIP_HEIGHT; i++)
+        {
+            __syncthreads();
+            int currentHeightIdx = row + i;
+            if(currentHeightIdx >= 0 && currentHeightIdx < height && kernelX >= 0 && kernelX < width && kernelX < blockSafeX)
+            {
+                distance_ptr[0][0][currentHeightIdx][kernelX] = kernelX;
+                // curRow[threadIdx.x + 1] = solution;
+
+            }
+
+            lastRow[threadIdx.x] = curRow[threadIdx.x];
+            curRow[threadIdx.x] = -1;
+            if((currentHeightIdx+1) < height)
+            {
+                curRow[threadIdx.x] = distance_ptr[0][0][currentHeightIdx + 1][kernelX];     
+                if (threadIdx.x == 0)
+                {
+                    curRow[0] = -1;
+                    if((kernelX - 1) >= 0)
+                    {
+                        curRow[0] = distance_ptr[0][0][currentHeightIdx + 1][kernelX - 1];
+                    }
+                }
+                else if (threadIdx.x == THREAD_COUNT + 1)
+                {
+                    curRow[THREAD_COUNT + 1] = -1;
+                    if((kernelX + 1) < width)
+                    {
+                        curRow[THREAD_COUNT + 1] = distance_ptr[0][0][currentHeightIdx + 1][kernelX + 1];
+                    }
+                }
+            }
+
+            __syncthreads();
+        }
+
+    }    
 
 }
 
