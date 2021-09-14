@@ -138,7 +138,7 @@ __global__ void geodesic_updown_pass_kernel(
                 {
                     float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
                     float l_dist = abs(pval - qval);
-                    left_solution = cur_dist + l_eucl * local_dist[w_i];// + l_grad * l_dist;
+                    left_solution = cur_dist + l_eucl * local_dist[w_i] + l_grad * l_dist;
                 }
 
                 // center back
@@ -150,7 +150,7 @@ __global__ void geodesic_updown_pass_kernel(
                 {
                     float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
                     float l_dist = abs(pval - qval);
-                    center_solution = cur_dist + l_eucl * local_dist[w_i];// + l_grad * l_dist;
+                    center_solution = cur_dist + l_eucl * local_dist[w_i] + l_grad * l_dist;
                 }
 
                 // right back
@@ -162,7 +162,7 @@ __global__ void geodesic_updown_pass_kernel(
                 {
                     float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
                     float l_dist = abs(pval - qval);
-                    right_solution = cur_dist + l_eucl * local_dist[w_i];// + l_grad * l_dist;
+                    right_solution = cur_dist + l_eucl * local_dist[w_i]; + l_grad * l_dist;
                 }
 
                 // for(int w_i = 0; w_i < 3; w_i++)
