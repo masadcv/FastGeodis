@@ -14,6 +14,7 @@ def fastgeodis_generalised_geodesic_distance_2d(I, S, v, lamb, iter):
 
 
 def demo_geodesic_distance2d(img, seed_pos):
+    device = 'cuda'
     I = np.asanyarray(img, np.float32)
     S = np.zeros((I.shape[0], I.shape[1]), np.uint8)
     S[seed_pos[0]][seed_pos[1]] = 1
@@ -28,10 +29,10 @@ def demo_geodesic_distance2d(img, seed_pos):
         I = np.moveaxis(I, -1, 0)
     else:
         I = np.expand_dims(I, 0)
-    It = torch.from_numpy(I).unsqueeze_(0)
-    St = torch.from_numpy(1-S.astype(np.float32)).unsqueeze_(0).unsqueeze_(0)
+    It = torch.from_numpy(I).unsqueeze_(0).to(device)
+    St = torch.from_numpy(1-S.astype(np.float32)).unsqueeze_(0).unsqueeze_(0).to(device)
 
-    D3 = np.squeeze(fastgeodis_generalised_geodesic_distance_2d(It, St, 1e10, 1.0, 2).numpy())
+    D3 = np.squeeze(fastgeodis_generalised_geodesic_distance_2d(It, St, 1e10, 1.0, 2).cpu().numpy())
     print("runtime(s) of fast marching {0:}".format(dt1))
     print("runtime(s) of raster  scan  {0:}".format(dt2))
 

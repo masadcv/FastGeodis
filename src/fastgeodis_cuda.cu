@@ -1,6 +1,9 @@
 #include <torch/extension.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
+
 #include <vector>
-// #include <iostream>
+#include <iostream>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -27,7 +30,7 @@
 //     }
 // }
 
-__device__ __forceinline__ float l1distance_cuda(const float &in1, const float &in2)
+__device__ float l1distance_cuda(const float &in1, const float &in2)
 {
     return abs(in1 - in2);
 }
@@ -57,12 +60,12 @@ float l1distance_cuda(const float *in1, const float *in2, int size)
 
 template <typename scalar_t>
 __global__ void geodesic_updown_pass_kernel(
-    const torch::PackedTensorAccessor32<scalar_t, 4, torch::RestrictPtrTraits> image_ptr, 
+    torch::PackedTensorAccessor32<scalar_t, 4, torch::RestrictPtrTraits> image_ptr, 
     torch::PackedTensorAccessor32<scalar_t, 4, torch::RestrictPtrTraits> distance_ptr,
     const float &l_grad, 
     const float &l_eucl,
     const float *local_dist,
-    const int index,
+    const int row,
     const int height,
     const int width)
 {
@@ -75,26 +78,33 @@ __global__ void geodesic_updown_pass_kernel(
 
     int kernelX = blockStartX + threadIdx.x;
 
-    lastRow[threadIdx.x + 1] = distance_ptr[0][0][index-1][kernelX];
-    curRow[threadIdx.x + 1] = distance_ptr[0][0][index][kernelX];
+    // copy last and current row into shared memory using each thread
+    lastRow[threadIdx.x + 1] = -1;// distance_ptr[0][0][row-1][kernelX];
+    curRow[threadIdx.x + 1] = -1;// distance_ptr[0][0][row][kernelX];
+    if(kernelX < width)
+    {
+        lastRow[threadIdx.x + 1] = distance_ptr[0][0][row-1][kernelX];
+        curRow[threadIdx.x + 1] = distance_ptr[0][0][row][kernelX];
+    }
+    
     if (threadIdx.x == 0)
     {
         lastRow[0] = -1;
         curRow[0] = -1;
-        if ((kernelX - 1) >= 0)
+        if ((kernelX - 1) >= 0 && (kernelX-1) < width)
         { 
-            lastRow[0] = distance_ptr[0][0][index-1][kernelX-1];
-            curRow[0] = distance_ptr[0][0][index][kernelX-1];
+            lastRow[0] = distance_ptr[0][0][row-1][kernelX-1];
+            curRow[0] = distance_ptr[0][0][row][kernelX-1];
         }
     }
-    else if(threadIdx.x == THREAD_COUNT - 1)
+    else if(threadIdx.x == THREAD_COUNT + 1)
     {
         lastRow[threadIdx.x + 1] = -1;
         curRow[threadIdx.x + 1] = -1;
-        if ((kernelX + 1) < width)
+        if ((kernelX+1) >= 0 && (kernelX + 1) < width)
         {
-            lastRow[threadIdx.x + 1] = distance_ptr[0][0][index-1][kernelX+1];
-            curRow[threadIdx.x + 1] = distance_ptr[0][0][index][kernelX+1];
+            lastRow[threadIdx.x + 1] = distance_ptr[0][0][row-1][kernelX+1];
+            curRow[threadIdx.x + 1] = distance_ptr[0][0][row][kernelX+1];
         }
     }
 
@@ -103,67 +113,131 @@ __global__ void geodesic_updown_pass_kernel(
     // top-down pass for each row in strip
     for (int i = 0; i < STRIP_HEIGHT; i++)
     {
-        int currentHeightIdx = index + i;
+        float solution = -1;
+        int currentHeightIdx = row + i;
+
         if (currentHeightIdx < height and kernelX < width)
         {
-            int currentInnerIdx = (int)threadIdx.x + 1;
-            float new_dist = -1;
-            if (currentInnerIdx >= 0  && currentInnerIdx < THREAD_COUNT+2)
-            {
-                new_dist = curRow[currentInnerIdx];
-            }
+            int localKernelX = (int)threadIdx.x + 1;
+            // solution = curRow[localKernelX];
+
             float pval = image_ptr[0][0][currentHeightIdx][kernelX];
-
-            for(int w_i = 0; w_i < 3; w_i++)
-            {
-                if (currentInnerIdx >= 0 && currentInnerIdx < THREAD_COUNT+2)
-                {
-                    const float cur_dist = lastRow[currentInnerIdx];
-                    if (cur_dist >= 0)
-                    {
-                        const int w_ind = kernelX + w_i -1;
-                        float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
-
-                        float l_dist = l1distance_cuda(pval, qval);
-                        new_dist = std::min(new_dist, (cur_dist + l_eucl * local_dist[w_i] + l_grad * l_dist));
-                    }
-                }
-            }
             
-            __syncthreads();
-            if (new_dist >= 0.0 && kernelX < blockSafeX && (curRow[threadIdx.x] < 0.0 || new_dist < curRow[threadIdx.x]))
+            int w_i, w_ind;
+            float cur_dist;
+
+            // left back
+            w_i = 0;
+            w_ind = kernelX + w_i - 1;
+            cur_dist = lastRow[localKernelX + w_i - 1];
+            float left_solution=-1;
+            if (cur_dist >= 0 && (w_ind >= 0 && w_ind < width))
             {
-                distance_ptr[0][0][currentHeightIdx][kernelX];
+                float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
+                float l_dist = abs(pval - qval);
+                left_solution = (cur_dist + l_eucl * local_dist[w_i] + l_grad * l_dist);
             }
 
-            lastRow[threadIdx.x] = curRow[threadIdx.x];
-            curRow[threadIdx.x] = -1;
-            if((currentHeightIdx+1) < height)
+            // center back
+            w_i = 1;
+            w_ind = kernelX + w_i - 1;
+            cur_dist = lastRow[localKernelX + w_i - 1];
+            float center_solution=-1;
+            if (cur_dist >= 0 && (w_ind >= 0 && w_ind < width))
             {
-                curRow[threadIdx.x] = distance_ptr[0][0][currentHeightIdx + 1][kernelX];
+                float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
+                float l_dist = abs(pval - qval);
+                center_solution = (cur_dist + l_eucl * local_dist[w_i] + l_grad * l_dist);
             }
-            
+
+            // right back
+            w_i = 2;
+            w_ind = kernelX + w_i - 1;
+            cur_dist = lastRow[localKernelX + w_i - 1];
+            float right_solution=-1;
+            if (cur_dist >= 0 && (w_ind >= 0 && w_ind < width))
+            {
+                float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
+                float l_dist = abs(pval - qval);
+                right_solution = (cur_dist + l_eucl * local_dist[w_i] + l_grad * l_dist);
+            }
+
+            // for(int w_i = 0; w_i < 3; w_i++)
+            // {
+            //     const int w_ind = kernelX + w_i - 1;
+            //     const float cur_dist = lastRow[localKernelX + w_i - 1];
+            //     if (cur_dist >= 0 && (w_ind >= 0 && w_ind < width))
+            //     {
+            //         float qval = image_ptr[0][0][currentHeightIdx-1][w_ind];
+            //         float l_dist = l1distance_cuda(pval, qval);
+            //         float cur_solution = (cur_dist + l_eucl * local_dist[w_i] + l_grad * l_dist);
+            //         if(w_i == 0)
+            //         {
+            //             solution = cur_solution;
+            //         }
+            //         else
+            //         {
+            //             if(cur_solution < solution)
+            //             {
+            //                 solution = cur_solution;
+            //             }
+            //         }
+            //    }
+            // }
+            solution = left_solution;
+            if(center_solution < left_solution)
+            {
+                solution = center_solution;
+            }
+            else if(right_solution < left_solution && right_solution < center_solution)
+            {
+                solution = right_solution;
+            }
+        }
+        printf("%d ",kernelX);
+        
+        __syncthreads();
+        
+        // if(currentHeightIdx >= 0 && currentHeightIdx < height && kernelX >= 0 && kernelX < width && kernelX < blockSafeX-2)
+        // {
+        //     distance_ptr[0][0][currentHeightIdx][kernelX] = solution;
+        //     // curRow[threadIdx.x + 1] = solution;
+
+        // }
+        // if (solution >= 0.0 && kernelX < blockSafeX && (curRow[threadIdx.x] < 0.0 || solution < curRow[threadIdx.x]))
+        if (solution >= 0.0 && kernelX < blockSafeX-10 &&  solution < curRow[threadIdx.x + 1])
+        {
+            printf("%d ",kernelX);
+            distance_ptr[0][0][currentHeightIdx][kernelX] = solution;
+            curRow[threadIdx.x + 1] = solution;
+        }
+
+        lastRow[threadIdx.x] = curRow[threadIdx.x];
+        curRow[threadIdx.x] = -1;
+        if((currentHeightIdx+1) < height)
+        {
+            curRow[threadIdx.x] = distance_ptr[0][0][currentHeightIdx + 1][kernelX];     
             if (threadIdx.x == 0)
             {
                 curRow[0] = -1;
-                if((kernelX - 1) >= 0 && (currentHeightIdx+1) < height)
+                if((kernelX - 1) >= 0)
                 {
                     curRow[0] = distance_ptr[0][0][currentHeightIdx + 1][kernelX - 1];
                 }
             }
-            else if (threadIdx.x == THREAD_COUNT - 1)
+            else if (threadIdx.x == THREAD_COUNT + 1)
             {
                 curRow[THREAD_COUNT + 1] = -1;
-                if((kernelX + 1) >= 0 && (currentHeightIdx+1) < height)
+                if((kernelX + 1) < width)
                 {
                     curRow[THREAD_COUNT + 1] = distance_ptr[0][0][currentHeightIdx + 1][kernelX + 1];
                 }
             }
+        }
 
-            __syncthreads();
+        __syncthreads();
             
             // TODO: bottom up pass
-        }
     }
     
 
@@ -176,9 +250,6 @@ void geodesic_updown_pass_cuda(const torch::Tensor &image, torch::Tensor &distan
     const int height = image.size(2);
     const int width = image.size(3);
 
-    // auto image_ptr = image.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>();
-    // auto distance_ptr = distance.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>();
-    
     // constexpr float local_dist[] = {sqrt(2.), 1., sqrt(2.)};
     const float local_dist[] = {sqrt(float(2.)), float(1.), sqrt(float(2.))};
 
@@ -192,152 +263,59 @@ void geodesic_updown_pass_cuda(const torch::Tensor &image, torch::Tensor &distan
 		blockCountLeftRight++;
 
     // process each strip
-    for (int i = 0; i < height; i += STRIP_HEIGHT)
+    for (int row = 1; row < height; row += STRIP_HEIGHT)
     {
         // call kernel
-        AT_DISPATCH_FLOATING_TYPES(image.scalar_type(), "geodesic_updown_pass_kernel", ([&] {
+        AT_DISPATCH_FLOATING_TYPES(image.type(), "geodesic_updown_pass_kernel_call", ([&] {
             geodesic_updown_pass_kernel<scalar_t><<<blockCountUpDown, THREAD_COUNT>>>(
                 image.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(), 
                 distance.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(), 
                 l_grad, 
                 l_eucl, 
                 local_dist, 
-                i, 
+                row, 
                 height, 
                 width);
             }));
     }
-
-    // // top-down
-    // for (int h = 1; h < height; h++)
-    // {
-    //     // use openmp to parallelise the loop over width
-    //     #ifdef _OPENMP
-    //         #pragma omp parallel for
-    //     #endif
-    //     for (int w = 0; w < width; w++)
-    //     {
-    //         float pval;
-    //         float pval_v[channel];
-    //         if (channel == 1)
-    //         {
-    //             pval = image_ptr[0][0][h][w];
-    //         }
-    //         else
-    //         {
-    //             for (int c_i = 0; c_i < channel; c_i++)
-    //             {
-    //                 pval_v[c_i] = image_ptr[0][c_i][h][w];
-    //             }
-    //         }
-    //         float new_dist = distance_ptr[0][0][h][w];
-
-    //         for (int w_i = 0; w_i < 3; w_i++)
-    //         {
-    //             const int w_ind = w + w_i - 1;
-    //             if (w_ind < 0 || w_ind >= width)
-    //                 continue;
-
-    //             float l_dist;
-    //             if (channel == 1)
-    //             {
-    //                 l_dist = l1distance_cuda(pval, image_ptr[0][0][h - 1][w_ind]);
-    //             }
-    //             else
-    //             {
-    //                 float qval_v[channel];
-    //                 for (int c_i = 0; c_i < channel; c_i++)
-    //                 {
-    //                     qval_v[c_i] = image_ptr[0][c_i][h - 1][w_ind];
-    //                 }
-    //                 l_dist = l1distance_cuda(pval_v, qval_v, channel);
-    //             }
-    //             const float cur_dist = distance_ptr[0][0][h - 1][w_ind] + l_eucl * local_dist[w_i] + l_grad * l_dist;
-    //             new_dist = std::min(new_dist, cur_dist);
-    //         }
-    //         distance_ptr[0][0][h][w] = new_dist;
-    //     }
-    // }
-
-    // // bottom-up
-    // for (int h = height - 2; h >= 0; h--)
-    // {
-    //     // use openmp to parallelise the loop over width
-    //     #ifdef _OPENMP
-    //         #pragma omp parallel for
-    //     #endif
-    //     for (int w = 0; w < width; w++)
-    //     {
-    //         float pval;
-    //         float pval_v[channel];
-    //         if (channel == 1)
-    //         {
-    //             pval = image_ptr[0][0][h][w];
-    //         }
-    //         else
-    //         {
-    //             for (int c_i = 0; c_i < channel; c_i++)
-    //             {
-    //                 pval_v[c_i] = image_ptr[0][c_i][h][w];
-    //             }
-    //         }
-    //         float new_dist = distance_ptr[0][0][h][w];
-
-    //         for (int w_i = 0; w_i < 3; w_i++)
-    //         {
-    //             const int w_ind = w + w_i - 1;
-    //             if (w_ind < 0 || w_ind >= width)
-    //                 continue;
-
-    //             float l_dist;
-    //             if (channel == 1)
-    //             {
-    //                 l_dist = l1distance_cuda(pval, image_ptr[0][0][h + 1][w_ind]);
-    //             }
-    //             else
-    //             {
-    //                 float qval_v[channel];
-    //                 for (int c_i = 0; c_i < channel; c_i++)
-    //                 {
-    //                     qval_v[c_i] = image_ptr[0][c_i][h + 1][w_ind];
-    //                 }
-    //                 l_dist = l1distance_cuda(pval_v, qval_v, channel);
-    //             }
-    //             const float cur_dist = distance_ptr[0][0][h + 1][w_ind] + l_eucl * local_dist[w_i] + l_grad * l_dist;
-    //             new_dist = std::min(new_dist, cur_dist);
-    //         }
-    //         distance_ptr[0][0][h][w] = new_dist;
-    //     }
-    // }
 }
 
 torch::Tensor generalised_geodesic2d_cuda(torch::Tensor &image, const torch::Tensor &mask, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
 {
     torch::Tensor distance = v * mask.clone();
+    image = image.contiguous();
+    distance = distance.contiguous();
 
-    // iteratively run the distance transform
-    for (int itr = 0; itr < iterations; itr++)
-    {
-        image = image.contiguous();
-        distance = distance.contiguous();
+    std::cout << "Reached here2" << std::endl;
 
-        // top-bottom - width*, height
-        geodesic_updown_pass_cuda(image, distance, l_grad, l_eucl);
+    // top-bottom - width*, height
+    geodesic_updown_pass_cuda(image, distance, l_grad, l_eucl);
 
-        // left-right - height*, width
-        image = image.transpose(2, 3);
-        distance = distance.transpose(2, 3);
+    // // iteratively run the distance transform
+    // for (int itr = 0; itr < iterations; itr++)
+    // {
+    //     image = image.contiguous();
+    //     distance = distance.contiguous();
 
-        image = image.contiguous();
-        distance = distance.contiguous();
-        geodesic_updown_pass_cuda(image, distance, l_grad, l_eucl);
+    //     std::cout << "Reached here2" << std::endl;
+
+    //     // top-bottom - width*, height
+    //     geodesic_updown_pass_cuda(image, distance, l_grad, l_eucl);
+
+    //     // // left-right - height*, width
+    //     // image = image.transpose(2, 3);
+    //     // distance = distance.transpose(2, 3);
+
+    //     // image = image.contiguous();
+    //     // distance = distance.contiguous();
+    //     // geodesic_updown_pass_cuda(image, distance, l_grad, l_eucl);
         
-        // tranpose back to original - width, height
-        image = image.transpose(2, 3);
-        distance = distance.transpose(2, 3);
+    //     // // tranpose back to original - width, height
+    //     // image = image.transpose(2, 3);
+    //     // distance = distance.transpose(2, 3);
 
-        // * indicates the current direction of pass
-    }
+    //     // * indicates the current direction of pass
+    // }
 
     return distance;
 }

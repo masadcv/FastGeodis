@@ -94,7 +94,7 @@ def get_extensions():
 
     ext_modules = [
         extension(
-            name="lltm",
+            name="FastGeodis",
             sources=sources,
             include_dirs=include_dirs,
             define_macros=define_macros,

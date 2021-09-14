@@ -1,5 +1,5 @@
-#include <iostream>
 #include <torch/extension.h>
+#include <iostream>
 #include <vector>
 #include "fastgeodis.h"
 #include "common.h"
@@ -10,7 +10,7 @@
 
 #define VERBOSE 1
 
-torch::Tensor generalised_geodesic2d(torch::Tensor image, const torch::Tensor &mask, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
+torch::Tensor generalised_geodesic2d(torch::Tensor &image, const torch::Tensor &mask, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
 {
     #if VERBOSE
         #ifdef _OPENMP
@@ -19,7 +19,11 @@ torch::Tensor generalised_geodesic2d(torch::Tensor image, const torch::Tensor &m
             std::cout << "OpenMP not found" << std::endl;
         #endif
     #endif
-
+    #ifdef WITH_CUDA
+            std::cout << "Compiled with cuda";
+        #else
+            std::cout << "Not Compiled with cuda";
+        #endif
     // check input dimensions
     const int num_dims = mask.dim();
     if (num_dims != 4)
@@ -34,7 +38,7 @@ torch::Tensor generalised_geodesic2d(torch::Tensor image, const torch::Tensor &m
         CHECK_CONTIGUOUS_CUDA(image);
         CHECK_CONTIGUOUS_CUDA(mask);
 
-        return generalised_geodesic2d_cpu(image, mask, v, l_grad, l_eucl, iterations);
+        return generalised_geodesic2d_cuda(image, mask, v, l_grad, l_eucl, iterations);
 
     #else
         AT_ERROR("Not compiled with GPU support.");
@@ -43,7 +47,7 @@ torch::Tensor generalised_geodesic2d(torch::Tensor image, const torch::Tensor &m
     return generalised_geodesic2d_cpu(image, mask, v, l_grad, l_eucl, iterations);
 }
 
-torch::Tensor generalised_geodesic3d(torch::Tensor image, const torch::Tensor &mask, const std::vector<float> &spacing, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
+torch::Tensor generalised_geodesic3d(torch::Tensor &image, const torch::Tensor &mask, const std::vector<float> &spacing, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
 {
     #if VERBOSE
         #ifdef _OPENMP
