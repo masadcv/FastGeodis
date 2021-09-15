@@ -44,8 +44,6 @@ __global__ void geodesic_updown_single_row_pass_kernel(
     const float height = image_ptr.size(2);
     const float width = image_ptr.size(3);
 
-    // const float local_dist[] = {sqrt(float(2.)), float(1.), sqrt(float(2.))};
-
     int kernelW = blockIdx.x * blockDim.x + threadIdx.x;
     
     // if outside, then skip distance calculation - dont use the thread
@@ -82,8 +80,6 @@ __global__ void geodesic_updown_single_row_pass_ptr_kernel(
     const int width
     )
 {
-    // const float local_dist[] = {sqrt(float(2.)), float(1.), sqrt(float(2.))};
-
     int kernelW = blockIdx.x * blockDim.x + threadIdx.x;
     
     // if outside, then skip distance calculation - dont use the thread
@@ -246,22 +242,6 @@ __global__ void geodesic_frontback_single_plane_pass_kernel(
     const int height = image_ptr.size(3);
     const int width = image_ptr.size(4);
 
-    // float spacing[] = {1.0, 1.0, 1.0};
-
-    // // make local distances
-    // float local_dist[3*3];
-    // for (int h_i = 0; h_i < 3; h_i++)
-    // {
-    //     for (int w_i = 0; w_i < 3; w_i++)
-    //     {
-    //         float ld = spacing[0];
-    //         ld += float(std::abs(h_i-1)) * spacing[1];
-    //         ld += float(std::abs(w_i-1)) * spacing[2];
-
-    //         local_dist[h_i * 3 + w_i] = ld;
-    //     }
-    // }
-
     int kernelW = blockIdx.x * blockDim.x + threadIdx.x;
     int kernelH = blockIdx.y * blockDim.y + threadIdx.y;
     
@@ -305,22 +285,6 @@ __global__ void geodesic_frontback_single_plane_pass_kernel(
     const int width
     )
 {
-
-    // float spacing[] = {1.0, 1.0, 1.0};
-
-    // // make local distances
-    // float local_dist[3*3];
-    // for (int h_i = 0; h_i < 3; h_i++)
-    // {
-    //     for (int w_i = 0; w_i < 3; w_i++)
-    //     {
-    //         float ld = spacing[0];
-    //         ld += float(std::abs(h_i-1)) * spacing[1];
-    //         ld += float(std::abs(w_i-1)) * spacing[2];
-
-    //         local_dist[h_i * 3 + w_i] = ld;
-    //     }
-    // }
 
     int kernelW = blockIdx.x * blockDim.x + threadIdx.x;
     int kernelH = blockIdx.y * blockDim.y + threadIdx.y;
@@ -394,7 +358,6 @@ void geodesic_frontback_pass_cuda(const torch::Tensor &image, torch::Tensor &dis
     }
     // copy local distances to GPU __constant__ memory
     cudaMemcpyToSymbol(local_dist3d, local_dist, sizeof(float) * 3*3);
-
 
     dim3 dimGrid(blockCountUpDown, blockCountLeftRight);
     dim3 dimBlock(THREAD_COUNT_2D, THREAD_COUNT_2D);

@@ -62,33 +62,34 @@ def demo_geodesic_distance2d(img, seed_pos):
         print('FastGeodis GPU raster: {:.6f} s'.format(fastraster_time_gpu))
 
     plt.figure(figsize=(18,6))
-    plt.subplot(2,4,1); plt.imshow(img)
+    plt.subplot(2,4,1); plt.imshow(img, cmap="gray")
     plt.autoscale(False);  plt.plot([seed_pos[0]], [seed_pos[1]], 'ro')
     plt.axis('off'); plt.title('(a) Input image')
     
     plt.subplot(2,4,2); plt.imshow(fastmarch_output)
-    plt.axis('off'); plt.title('(b) Fast Marching | time: {:.4f} s'.format(fastmarch_time))
+    plt.axis('off'); plt.title('(b) Fast Marching | ({:.4f} s)'.format(fastmarch_time))
 
     plt.subplot(2,4,3); plt.imshow(fastraster_output_cpu)
-    plt.axis('off'); plt.title('(c) FastGeodis (cpu) | time: {:.4f} s'.format(fastraster_time_cpu))
+    plt.axis('off'); plt.title('(c) FastGeodis (cpu) | ({:.4f} s)'.format(fastraster_time_cpu))
 
     plt.subplot(2,4,6); plt.imshow(geodistkraster_output)
-    plt.axis('off'); plt.title('(d) GeodisTK | time: {:.4f} s'.format(geodistkraster_time))
+    plt.axis('off'); plt.title('(d) GeodisTK | ({:.4f} s)'.format(geodistkraster_time))
 
 
     if device:
         plt.subplot(2,4,7); plt.imshow(fastraster_output_gpu)
-        plt.axis('off'); plt.title('(e) FastGeodis (gpu) | time: {:.4f} s'.format(fastraster_time_gpu))
+        plt.axis('off'); plt.title('(e) FastGeodis (gpu) | ({:.4f} s)'.format(fastraster_time_gpu))
 
-    diff = fastmarch_output-fastraster_output_cpu
+    diff = abs(fastmarch_output-fastraster_output_cpu)/(fastmarch_output+1e-7)*100
     plt.subplot(2,4,4); plt.imshow(diff)
     plt.axis('off'); plt.title('(f) Fast Marching vs. FastGeodis (cpu)\ndiff: max: {:.4f} | min: {:.4f}'.format(np.max(diff), np.min(diff)))
     
     if device:
-        diff = fastmarch_output-fastraster_output_gpu
+        diff = abs(fastmarch_output-fastraster_output_gpu)/(fastmarch_output+1e-7)*100
         plt.subplot(2,4,8); plt.imshow(diff)
         plt.axis('off'); plt.title('(g) Fast Marching vs. FastGeodis (gpu)\ndiff: max: {:.4f} | min: {:.4f}'.format(np.max(diff), np.min(diff)))
     
+    # plt.colorbar()
     plt.show()
 
     plt.figure(figsize=(14,4))
@@ -115,6 +116,7 @@ def demo_geodesic_distance2d(img, seed_pos):
         # plt.gca().set_aspect("equal", adjustable="box")
 
     plt.tight_layout()
+    # plt.colorbar()
     plt.show()
 
 def demo_geodesic_distance2d_gray_scale_image():
@@ -144,7 +146,7 @@ if __name__ == '__main__':
     print("please enter the index of an example:")
     # method = input()
     # method = '{0:}'.format(method)
-    method = '1'
+    method = '0'
     if(method == '0'):
         demo_geodesic_distance2d_gray_scale_image()
     elif(method == '1'):
