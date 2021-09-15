@@ -11,11 +11,13 @@
 #define THREAD_COUNT 512
 #define STRIP_HEIGHT 32
 
+// whether to use float* or Pytorch accessors in CUDA kernels
+#define USE_PTR 0
+
 __device__ float l1distance_cuda(const float &in1, const float &in2)
 {
     return abs(in1 - in2);
 }
-
 
 float l1distance_cuda(const float *in1, const float *in2, int size)
 {
@@ -258,34 +260,31 @@ __global__ void geodesic_updown_single_row_pass_kernel(
     torch::PackedTensorAccessor32<scalar_t, 4, torch::RestrictPtrTraits> distance_ptr,
     const float l_grad,
     const float l_eucl,
-    // const float *local_dist,
     const int direction,
-    const int h,
-    const int height,
-    const int width)
+    const int h
+    )
 {
+    const float height = image_ptr.size(2);
+    const float width = image_ptr.size(3);
+
     const float local_dist[] = {sqrt(float(2.)), float(1.), sqrt(float(2.))};
 
     int kernelW = blockIdx.x * blockDim.x + threadIdx.x;
     
-    // if outside, then skip distance calculation
-    if(kernelW >= 0 && kernelW < width)
+    // if outside, then skip distance calculation - dont use the thread
+    if(kernelW < width)
     {
         float pval = image_ptr[0][0][h][kernelW];
         float new_dist = distance_ptr[0][0][h][kernelW];
-        float cur_dist = 0;
+        float cur_dist = 0.0;
         for (int w_i = 0; w_i < 3; w_i++)
         {
             const int kernelW_ind = kernelW + w_i - 1;
-            if (kernelW_ind < 0 || kernelW_ind >= width)
+            if (kernelW_ind >= 0 && kernelW_ind < width)
             {
-                continue;
-            }
-            float l_dist = l1distance_cuda(pval, image_ptr[0][0][h + direction][kernelW_ind]);
-            cur_dist =  distance_ptr[0][0][h + direction][kernelW_ind] + l_eucl * local_dist[w_i] + l_grad * l_dist;
-            if(cur_dist < new_dist)
-            {
-                new_dist = cur_dist;
+                float l_dist = l1distance_cuda(pval, image_ptr[0][0][h + direction][kernelW_ind]);
+                cur_dist =  distance_ptr[0][0][h + direction][kernelW_ind] + l_eucl * local_dist[w_i] + l_grad * l_dist;
+                new_dist = std::min(new_dist, cur_dist);
             }
         }
         if(new_dist < distance_ptr[0][0][h][kernelW])
@@ -295,53 +294,40 @@ __global__ void geodesic_updown_single_row_pass_kernel(
     }
 }
 
-
 __global__ void geodesic_updown_single_row_pass_ptr_kernel(
     float* image_ptr, 
     float* distance_ptr,
     float l_grad,
     float l_eucl,
-    // const float *local_dist,
     const int direction,
     const int h,
     const int height,
-    const int width)
+    const int width
+    )
 {
     const float local_dist[] = {sqrt(float(2.)), float(1.), sqrt(float(2.))};
+
     int kernelW = blockIdx.x * THREAD_COUNT + threadIdx.x;
     
-    if(kernelW >= 0 && kernelW < width)
+    // if outside, then skip distance calculation - dont use the thread
+    if(kernelW < width)
     {
-        // float pval = image_ptr[0][0][h][kernelW];
         float pval = image_ptr[h * width + kernelW];
-        // float new_dist = distance_ptr[0][0][h + direction][kernelW];
         float new_dist = distance_ptr[h * width + kernelW];
-
         float cur_dist = 0.0;
+
         for (int w_i = 0; w_i < 3; w_i++)
         {
             const int kernelW_ind = kernelW + w_i - 1;
-            if (kernelW_ind < 0 || kernelW_ind >= width)
+            if (kernelW_ind >= 0 && kernelW_ind < width)
             {
-                continue;
+                float l_dist = l1distance_cuda(pval, image_ptr[(h + direction) * width + kernelW_ind]);
+                cur_dist = distance_ptr[(h + direction) * width + kernelW_ind] + l_eucl * local_dist[w_i] + l_grad * l_dist;
+                new_dist = std::min(new_dist, cur_dist);
             }
-            // float qval = ;
-            // float l_dist = l1distance_cuda(pval, image_ptr[0][0][h + direction][kernelW_ind]);
-            float l_dist = l1distance_cuda(pval, image_ptr[(h + direction) * width + kernelW_ind]);
-            // float cur_dist =  distance_ptr[0][0][h + direction][kernelW_ind] + l_eucl * local_dist[w_i] + l_grad * l_dist;
-            // float cur_dist =  distance_ptr[(h + direction) * width + kernelW_ind] + l_eucl * local_dist[w_i] + l_grad * l_dist;
-            float qdist = distance_ptr[(h + direction) * width + kernelW_ind];
-            cur_dist = qdist + l_eucl * local_dist[w_i] + l_grad * l_dist;
-            new_dist = std::min(new_dist, cur_dist);
-            // if(cur_dist < new_dist)
-            // {
-            //     new_dist = cur_dist;
-            // }
         }
-        // if(new_dist-1 < distance_ptr[0][0][h][kernelW])
         if(new_dist < distance_ptr[h * width + kernelW])
         {
-            // distance_ptr[0][0][h][kernelW] = cur_dist;
             distance_ptr[h * width + kernelW] = new_dist;
         } 
     }
@@ -350,7 +336,6 @@ __global__ void geodesic_updown_single_row_pass_ptr_kernel(
 void geodesic_updown_pass_cuda(const torch::Tensor image, torch::Tensor distance, const float &l_grad,  const float &l_eucl)
 {
     // batch, channel, height, width
-    const int channel = image.size(1);
     const int height = image.size(2);
     const int width = image.size(3);
 
@@ -358,12 +343,6 @@ void geodesic_updown_pass_cuda(const torch::Tensor image, torch::Tensor distance
     // float local_dist[] = {sqrt(float(2.)), float(1.), sqrt(float(2.))};
 
 	int blockCountUpDown = (width + 1)/THREAD_COUNT + 1;
-	int blockCountLeftRight = (height + 1)/THREAD_COUNT + 1;
-
-	// if (width % THREAD_COUNT != 0)
-		// blockCountUpDown++;
-	// if (height % THREAD_COUNT != 0)
-		// blockCountLeftRight++;
 
     int direction;
 
@@ -373,104 +352,64 @@ void geodesic_updown_pass_cuda(const torch::Tensor image, torch::Tensor distance
     {
         // each distance calculation in down pass require previous row i.e. -1
         // process each row in parallel with CUDA kernel
-        AT_DISPATCH_FLOATING_TYPES(image.type(), "geodesic_updown_single_row_pass_kernel", ([&] {
-            geodesic_updown_single_row_pass_kernel<scalar_t><<<blockCountUpDown, THREAD_COUNT>>>(
-                image.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(), 
-                distance.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(), 
+        if(~USE_PTR)
+        {
+            AT_DISPATCH_FLOATING_TYPES(image.type(), "geodesic_updown_single_row_pass_kernel", ([&] {
+                geodesic_updown_single_row_pass_kernel<scalar_t><<<blockCountUpDown, THREAD_COUNT>>>(
+                    image.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(), 
+                    distance.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(), 
+                    l_grad, 
+                    l_eucl, 
+                    direction,
+                    h
+                    );
+                }));
+        }
+        else
+        {    
+            geodesic_updown_single_row_pass_ptr_kernel<<<blockCountUpDown, THREAD_COUNT>>>(
+                image.data_ptr<float>(), 
+                distance.data_ptr<float>(), 
                 l_grad, 
                 l_eucl, 
-                // local_dist,
                 direction,
                 h, 
                 height, 
-                width);
-            }));
-        
-        // AT_DISPATCH_FLOATING_TYPES(image.type(), "geodesic_updown_single_row_pass_kernel", ([&] {
-        //     geodesic_updown_single_row_pass_ptr_kernel<scalar_t><<<blockCountUpDown, THREAD_COUNT>>>(
-        //         image.data_ptr<scalar_t>(), 
-        //         distance.data_ptr<scalar_t>(), 
-        //         l_grad, 
-        //         l_eucl, 
-        //         local_dist,
-        //         direction,
-        //         h, 
-        //         height, 
-        //         width);
-        //     }));
-
-        // geodesic_updown_single_row_pass_ptr_kernel<<<blockCountUpDown, THREAD_COUNT>>>(
-        //     image.data_ptr<float>(), 
-        //     distance.data_ptr<float>(), 
-        //     l_grad, 
-        //     l_eucl, 
-        //     // local_dist,
-        //     direction,
-        //     h, 
-        //     height, 
-        //     width);
-            
+                width
+                );
+        }    
     }
 
     direction = +1;
     for (int h = height - 2; h >= 0; h--)
     {
-        AT_DISPATCH_FLOATING_TYPES(image.type(), "geodesic_updown_single_row_pass_kernel", ([&] {
-            geodesic_updown_single_row_pass_kernel<scalar_t><<<blockCountUpDown, THREAD_COUNT>>>(
-                image.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(), 
-                distance.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(), 
+        if(~USE_PTR)
+        {
+            AT_DISPATCH_FLOATING_TYPES(image.type(), "geodesic_updown_single_row_pass_kernel", ([&] {
+                geodesic_updown_single_row_pass_kernel<scalar_t><<<blockCountUpDown, THREAD_COUNT>>>(
+                    image.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(), 
+                    distance.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(), 
+                    l_grad, 
+                    l_eucl, 
+                    direction,
+                    h
+                    );
+            }));
+        }
+        else
+        {
+            geodesic_updown_single_row_pass_ptr_kernel<<<blockCountUpDown, THREAD_COUNT>>>(
+                image.data_ptr<float>(), 
+                distance.data_ptr<float>(), 
                 l_grad, 
                 l_eucl, 
-                // local_dist,
                 direction,
                 h, 
                 height, 
-                 width);
-        }));
-        // AT_DISPATCH_FLOATING_TYPES(image.type(), "geodesic_updown_single_row_pass_kernel", ([&] {
-        // geodesic_updown_single_row_pass_ptr_kernel<scalar_t><<<blockCountUpDown, THREAD_COUNT>>>(
-        //     image.data_ptr<scalar_t>(), 
-        //     distance.data_ptr<scalar_t>(), 
-        //     l_grad, 
-        //     l_eucl, 
-        //     local_dist,
-        //     direction,
-        //     h, 
-        //     height, 
-        //     width);
-        // }));
-
-        // geodesic_updown_single_row_pass_ptr_kernel<<<blockCountUpDown, THREAD_COUNT>>>(
-        //     image.data_ptr<float>(), 
-        //     distance.data_ptr<float>(), 
-        //     l_grad, 
-        //     l_eucl, 
-        //     // local_dist,
-        //     direction,
-        //     h, 
-        //     height, 
-        //     width);
-        
+                width
+                );
+        }
     }
-
-    // // bottom-up
-    // for (int h = height - 2; h >= 0; h--)
-    // {
-    //     direction = +1; // each distance calculation in up pass require next row i.e. +1
-    //     // process each row in parallel with CUDA kernel
-    //     AT_DISPATCH_FLOATING_TYPES(image.type(), "geodesic_updown_single_row_pass_kernel", ([&] {
-    //         geodesic_updown_single_row_pass_kernel<scalar_t><<<blockCountUpDown, THREAD_COUNT>>>(
-    //             image.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(), 
-    //             distance.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(), 
-    //             l_grad, 
-    //             l_eucl, 
-    //             local_dist,
-    //             direction,
-    //             h, 
-    //             height, 
-    //             width);
-    //         }));
-    // }
 }
 
 torch::Tensor generalised_geodesic2d_cuda(torch::Tensor &image, const torch::Tensor &mask, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
