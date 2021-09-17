@@ -14,14 +14,14 @@ torch::Tensor generalised_geodesic2d(torch::Tensor &image, const torch::Tensor &
 {
     #if VERBOSE
         #ifdef _OPENMP
-            std::cout << "OpenMP found, using OpenMP" << std::endl;
+            std::cout << "Compiled with OpenMP support" << std::endl;
         #else
-            std::cout << "OpenMP not found" << std::endl;
+            std::cout << "Not compiled with OpenMP support" << std::endl;
         #endif
         #ifdef WITH_CUDA
-            std::cout << "Compiled with CUDA" << std::endl;
+            std::cout << "Compiled with CUDA support" << std::endl;
         #else
-            std::cout << "Not Compiled with CUDA" << std::endl;
+            std::cout << "Not compiled with CUDA support" << std::endl;
         #endif
     #endif
 
@@ -35,16 +35,19 @@ torch::Tensor generalised_geodesic2d(torch::Tensor &image, const torch::Tensor &
 
     if (image.is_cuda()) 
     {
-    #ifdef WITH_CUDA        
-        // CHECK_CONTIGUOUS_CUDA(image);
-        // CHECK_CONTIGUOUS_CUDA(mask);
+    #ifdef WITH_CUDA
+        if (!torch::cuda::is_available())
+        {
+            throw std::runtime_error(
+                "cuda.is_available() returned false, please check if the library was compiled successfully with CUDA support");
+        }
         CHECK_CUDA(image);
         CHECK_CUDA(mask);
 
         return generalised_geodesic2d_cuda(image, mask, v, l_grad, l_eucl, iterations);
 
     #else
-        AT_ERROR("Not compiled with GPU support.");
+        AT_ERROR("Not compiled with CUDA support.");
     #endif
     }
     return generalised_geodesic2d_cpu(image, mask, v, l_grad, l_eucl, iterations);
@@ -54,14 +57,14 @@ torch::Tensor generalised_geodesic3d(torch::Tensor &image, const torch::Tensor &
 {
     #if VERBOSE
         #ifdef _OPENMP
-            std::cout << "OpenMP found, using OpenMP" << std::endl;
+            std::cout << "Compiled with OpenMP support" << std::endl;
         #else
-            std::cout << "OpenMP not found" << std::endl;
+            std::cout << "Not compiled with OpenMP support" << std::endl;
         #endif
         #ifdef WITH_CUDA
-            std::cout << "Compiled with CUDA" << std::endl;
+            std::cout << "Compiled with CUDA support" << std::endl;
         #else
-            std::cout << "Not Compiled with CUDA" << std::endl;
+            std::cout << "Not compiled with CUDA support" << std::endl;
         #endif
     #endif
 
@@ -85,15 +88,18 @@ torch::Tensor generalised_geodesic3d(torch::Tensor &image, const torch::Tensor &
     if (image.is_cuda()) 
     {
     #ifdef WITH_CUDA
-        // CHECK_CONTIGUOUS_CUDA(image);
-        // CHECK_CONTIGUOUS_CUDA(mask);
+        if (!torch::cuda::is_available())
+        {   
+            throw std::runtime_error(
+                "cuda.is_available() returned false, please check if the library was compiled successfully with CUDA support");
+        }
         CHECK_CUDA(image);
         CHECK_CUDA(mask);
         
         return generalised_geodesic3d_cuda(image, mask, spacing, v, l_grad, l_eucl, iterations);
 
     #else
-        AT_ERROR("Not compiled with GPU support.");
+        AT_ERROR("Not compiled with CUDA support.");
     #endif
     }
     return generalised_geodesic3d_cpu(image, mask, spacing, v, l_grad, l_eucl, iterations);

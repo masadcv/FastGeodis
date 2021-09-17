@@ -7,7 +7,7 @@ import warnings
 import pkg_resources
 from setuptools import find_packages, setup
 
-FORCE_CUDA = True#os.getenv("FORCE_CUDA", "0") == "1" 
+FORCE_CUDA = os.getenv("FORCE_CUDA", "0") == "1" 
 
 BUILD_CPP = BUILD_CUDA = False
 TORCH_VERSION = 0
