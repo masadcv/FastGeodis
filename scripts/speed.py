@@ -19,6 +19,10 @@ if __name__ == "__main__":
     # Reproducibility purposes
     np.random.seed(0)
 
+    # run on GPU when available
+    run_cuda = torch.cuda.is_available()
+
+
     connectivity = 26
     l_eucl = 1
     l_grad = 1
@@ -27,7 +31,9 @@ if __name__ == "__main__":
     
     for N_seed in [1,10, 100, 1000]:
         times_dijkstra3d = []
-        times_fastgeodis = []
+        times_fastgeodis_cpu = []
+        times_fastgeodis_gpu = []
+
         score_relative = []
         for shape in tqdm([(k,k,k) for k in range(10,210,10)]):
 
@@ -63,18 +69,32 @@ if __name__ == "__main__":
             times_dijkstra3d.append(time.time() - t)
 
             
-            It = torch.from_numpy(img).unsqueeze_(0).unsqueeze_(0).float()
-            St = torch.from_numpy(1 - S.astype(np.float32)).unsqueeze_(0).unsqueeze_(0)
+            It = torch.from_numpy(img).unsqueeze_(0).unsqueeze_(0).float().to("cpu")
+            St = torch.from_numpy(1 - S.astype(np.float32)).unsqueeze_(0).unsqueeze_(0).to("cpu")
             
             t = time.time()
-            D_raster = np.squeeze(
+            D_raster_cpu = np.squeeze(
                 fastgeodis_generalised_geodesic_distance_3d(
                     It, St, spacing, 1e10, l_grad, l_eucl, 4
                 ).numpy()
             )
-            times_fastgeodis.append(time.time() - t)
+            times_fastgeodis_cpu.append(time.time() - t)
 
-            score_relative.append((abs(field_dijkstra3d-D_raster)/(D_raster+1e-7)*100).mean())
+            if run_cuda:
+                It = It.to("cuda")# torch.from_numpy(img).unsqueeze_(0).unsqueeze_(0).float().to("cpu")
+                St = St.to("cuda")
+                
+                t = time.time()
+                D_raster_gpu = np.squeeze(
+                    fastgeodis_generalised_geodesic_distance_3d(
+                        It, St, spacing, 1e10, l_grad, l_eucl, 4
+                    ).cpu().numpy()
+                )
+                times_fastgeodis_gpu.append(time.time() - t)
+
+                np.testing.assert_equal(D_raster_cpu, D_raster_gpu)
+
+            score_relative.append((abs(field_dijkstra3d-D_raster_gpu)/(D_raster_gpu+1e-7)*100).mean())
             
         
 
@@ -86,8 +106,11 @@ if __name__ == "__main__":
         ax.set_title(f'Time in (s) per number of voxels - Seeds: {N_seed} random points')
         ax.set_xlabel('Spatial size')
         ax.set_ylabel('Execution time (seconds)')
-        ax.plot(list_x, times_fastgeodis, marker='o', color='g',  label='FastGeodesic')
+        ax.plot(list_x, times_fastgeodis_cpu, marker='o', color='m',  label='FastGeodesic (cpu)')
+        if run_cuda:
+            ax.plot(list_x, times_fastgeodis_gpu, marker='o', color='g',  label='FastGeodesic (gpu)')
         ax.plot(list_x, times_dijkstra3d, marker='o', color='r', label='Djikstra3D')
+
         ax.legend()
 
 

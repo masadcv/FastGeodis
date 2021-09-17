@@ -1,30 +1,27 @@
 #include <torch/extension.h>
 #include <vector>
-#include <iostream>
-
+// #include <iostream>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 
-#define VERBOSE 0
-
-void print_shape(torch::Tensor data)
-{
-    auto num_dims = data.dim();
-    std::cout << "Shape: (";
-    for (int dim = 0; dim < num_dims; dim++)
-    {
-        std::cout << data.size(dim);
-        if (dim != num_dims - 1)
-        {
-            std::cout << ", ";
-        }
-        else
-        {
-            std::cout << ")" << std::endl;
-        }
-    }
-}
+// void print_shape(torch::Tensor data)
+// {
+//     auto num_dims = data.dim();
+//     std::cout << "Shape: (";
+//     for (int dim = 0; dim < num_dims; dim++)
+//     {
+//         std::cout << data.size(dim);
+//         if (dim != num_dims - 1)
+//         {
+//             std::cout << ", ";
+//         }
+//         else
+//         {
+//             std::cout << ")" << std::endl;
+//         }
+//     }
+// }
 
 float l1distance(const float &in1, const float &in2)
 {
@@ -55,7 +52,7 @@ float l1distance(const float *in1, const float *in2, int size)
 // }
 
 
-void geodesic_updown_pass(const torch::Tensor &image, torch::Tensor &distance, const float &l_grad,  const float &l_eucl)
+void geodesic_updown_pass_cpu(const torch::Tensor &image, torch::Tensor &distance, const float &l_grad,  const float &l_eucl)
 {
     // batch, channel, height, width
     const int channel = image.size(1);
@@ -64,7 +61,7 @@ void geodesic_updown_pass(const torch::Tensor &image, torch::Tensor &distance, c
 
     auto image_ptr = image.accessor<float, 4>();
     auto distance_ptr = distance.accessor<float, 4>();
-    constexpr float local_dist[] = {sqrt(2.), 1., sqrt(2.)};
+    constexpr float local_dist[] = {sqrt(float(2.)), float(1.), sqrt(float(2.))};
 
     // top-down
     for (int h = 1; h < height; h++)
@@ -169,26 +166,9 @@ void geodesic_updown_pass(const torch::Tensor &image, torch::Tensor &distance, c
     }
 }
 
-torch::Tensor generalised_geodesic2d(torch::Tensor image, torch::Tensor mask, float v, float l_grad, float l_eucl, int iterations)
+torch::Tensor generalised_geodesic2d_cpu(torch::Tensor &image, const torch::Tensor &mask, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
 {
-    #if VERBOSE
-        #ifdef _OPENMP
-            std::cout << "OpenMP found, using OpenMP" << std::endl;
-        #else
-            std::cout << "OpenMP not found" << std::endl;
-        #endif
-    #endif
-
-    // initialise distance with soft mask
     torch::Tensor distance = v * mask.clone();
-
-    // check input dimensions
-    const int num_dims = distance.dim();
-    if (num_dims != 4)
-    {
-        throw std::runtime_error(
-            "function only supports 2D spatial inputs, received " + std::to_string(num_dims - 2));
-    }
 
     // iteratively run the distance transform
     for (int itr = 0; itr < iterations; itr++)
@@ -197,7 +177,7 @@ torch::Tensor generalised_geodesic2d(torch::Tensor image, torch::Tensor mask, fl
         distance = distance.contiguous();
 
         // top-bottom - width*, height
-        geodesic_updown_pass(image, distance, l_grad, l_eucl);
+        geodesic_updown_pass_cpu(image, distance, l_grad, l_eucl);
 
         // left-right - height*, width
         image = image.transpose(2, 3);
@@ -205,7 +185,7 @@ torch::Tensor generalised_geodesic2d(torch::Tensor image, torch::Tensor mask, fl
 
         image = image.contiguous();
         distance = distance.contiguous();
-        geodesic_updown_pass(image, distance, l_grad, l_eucl);
+        geodesic_updown_pass_cpu(image, distance, l_grad, l_eucl);
         
         // tranpose back to original - width, height
         image = image.transpose(2, 3);
@@ -213,10 +193,11 @@ torch::Tensor generalised_geodesic2d(torch::Tensor image, torch::Tensor mask, fl
 
         // * indicates the current direction of pass
     }
+
     return distance;
 }
 
-void geodesic_frontback_pass(const torch::Tensor &image, torch::Tensor &distance, const std::vector<float> &spacing, const float &l_grad, const float &l_eucl)
+void geodesic_frontback_pass_cpu(const torch::Tensor &image, torch::Tensor &distance, const std::vector<float> &spacing, const float &l_grad, const float &l_eucl)
 {
     // batch, channel, depth, height, width
     const int channel = image.size(1);
@@ -359,35 +340,9 @@ void geodesic_frontback_pass(const torch::Tensor &image, torch::Tensor &distance
     }
 }
 
-torch::Tensor generalised_geodesic3d(torch::Tensor image, const torch::Tensor &mask, std::vector<float> spacing, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
+torch::Tensor generalised_geodesic3d_cpu(torch::Tensor &image, const torch::Tensor &mask, const std::vector<float> &spacing, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
 {
-    #if VERBOSE
-        #ifdef _OPENMP
-            std::cout << "OpenMP found, using OpenMP" << std::endl;
-        #else
-            std::cout << "OpenMP not found" << std::endl;
-        #endif
-    #endif
-
-    // initialise distance with soft mask
     torch::Tensor distance = v * mask.clone();
-
-    // check input dimensions
-    const int num_dims = distance.dim();
-    if (num_dims != 5)
-    {
-        throw std::runtime_error(
-            "function only supports 3D spatial inputs, received " + std::to_string(num_dims - 2));
-    }
-
-    if (spacing.size() != 3)
-    {
-        throw std::runtime_error(
-            "function only supports 3D spacing inputs, received " + std::to_string(spacing.size()));
-    }
-
-    // square spacing with transform
-    // std::transform(spacing.begin(), spacing.end(), spacing.begin(), spacing.begin(), std::multiplies<float>());
 
     // iteratively run the distance transform
     for (int itr = 0; itr < iterations; itr++)
@@ -396,7 +351,7 @@ torch::Tensor generalised_geodesic3d(torch::Tensor image, const torch::Tensor &m
         distance = distance.contiguous();
 
         // front-back - depth*, height, width
-        geodesic_frontback_pass(image, distance, spacing, l_grad, l_eucl);
+        geodesic_frontback_pass_cpu(image, distance, spacing, l_grad, l_eucl);
 
         // top-bottom - height*, depth, width
         image = torch::transpose(image, 3, 2);
@@ -404,7 +359,7 @@ torch::Tensor generalised_geodesic3d(torch::Tensor image, const torch::Tensor &m
         
         image = image.contiguous();
         distance = distance.contiguous();
-        geodesic_frontback_pass(image, distance, {spacing[1], spacing[0], spacing[2]}, l_grad, l_eucl);
+        geodesic_frontback_pass_cpu(image, distance, {spacing[1], spacing[0], spacing[2]}, l_grad, l_eucl);
         
         // transpose back to original depth, height, width
         image = torch::transpose(image, 3, 2);
@@ -416,7 +371,7 @@ torch::Tensor generalised_geodesic3d(torch::Tensor image, const torch::Tensor &m
         
         image = image.contiguous();
         distance = distance.contiguous();
-        geodesic_frontback_pass(image, distance, {spacing[2], spacing[1], spacing[0]}, l_grad, l_eucl);
+        geodesic_frontback_pass_cpu(image, distance, {spacing[2], spacing[1], spacing[0]}, l_grad, l_eucl);
         
         // transpose back to original depth, height, width
         image = torch::transpose(image, 4, 2);
@@ -424,11 +379,6 @@ torch::Tensor generalised_geodesic3d(torch::Tensor image, const torch::Tensor &m
 
         // * indicates the current direction of pass
     }
-    return distance;
-}
 
-PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
-{
-    m.def("generalised_geodesic2d", &generalised_geodesic2d, "Generalised Geodesic distance 2d");
-    m.def("generalised_geodesic3d", &generalised_geodesic3d, "Generalised Geodesic distance 3d");
+    return distance;
 }

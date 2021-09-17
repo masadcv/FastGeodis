@@ -14,78 +14,135 @@ def fastgeodis_generalised_geodesic_distance_2d(I, S, v, lamb, iter):
 
 
 def demo_geodesic_distance2d(img, seed_pos):
+    # get image and create seed image
     I = np.asanyarray(img, np.float32)
-    S = np.zeros((I.shape[0], I.shape[1]), np.uint8)
+    S = np.zeros((I.shape[0], I.shape[1]), np.float32)
     S[seed_pos[0]][seed_pos[1]] = 1
-    t0 = time.time()
-    D1 = GeodisTK.generalised_geodesic2d_fast_marching(I, 1-S.astype(np.float32), 1e10)
-    t1 = time.time()
-    D2 = geodistk_generalised_geodesic_distance_2d(I, 1-S.astype(np.float32), 1e10, 1.0, 2)
-    dt1 = t1 - t0
-    dt2 = time.time() - t1
+
+    # run and time each method
+    iterations = 2
+    v = 1e10
+    lamb = 1.0
+
+    tic = time.time()
+    fastmarch_output = GeodisTK.generalised_geodesic2d_fast_marching(I, 1-S, v)
+    fastmarch_time = time.time()-tic
+
+    tic = time.time()
+    geodistkraster_output = geodistk_generalised_geodesic_distance_2d(I, 1-S, v, lamb, iterations)
+    geodistkraster_time = time.time() - tic
 
     if I.ndim == 3:
         I = np.moveaxis(I, -1, 0)
     else:
         I = np.expand_dims(I, 0)
-    It = torch.from_numpy(I).unsqueeze_(0)
-    St = torch.from_numpy(1-S.astype(np.float32)).unsqueeze_(0).unsqueeze_(0)
+    
+    device = "cpu"
+    It = torch.from_numpy(I).unsqueeze_(0).to(device)
+    St = torch.from_numpy(1-S.astype(np.float32)).unsqueeze_(0).unsqueeze_(0).to(device)
+        
+    tic = time.time()
+    fastraster_output_cpu = np.squeeze(fastgeodis_generalised_geodesic_distance_2d(It, St, v, lamb, iterations).cpu().numpy())
+    fastraster_time_cpu = time.time() - tic
 
-    D3 = np.squeeze(fastgeodis_generalised_geodesic_distance_2d(It, St, 1e10, 1.0, 2).numpy())
-    print("runtime(s) of fast marching {0:}".format(dt1))
-    print("runtime(s) of raster  scan  {0:}".format(dt2))
+    device = "cuda" if It.shape[1] == 1 and torch.cuda.is_available() else None
+    if device:
+        It = It.to(device)
+        St = St.to(device)
+        
+        tic = time.time()
+        fastraster_output_gpu = np.squeeze(fastgeodis_generalised_geodesic_distance_2d(It, St, v, lamb, iterations).cpu().numpy())
+        fastraster_time_gpu = time.time() - tic
+        
+    print('Runtimes:')
+    print('Fast Marching: {:.6f} s \nGeodisTk raster: {:.6f} s \nFastGeodis CPU raster: {:.6f} s'.format(\
+        fastmarch_time, geodistkraster_time, fastraster_time_cpu))
 
-    plt.figure(figsize=(15,5))
-    plt.subplot(1,5,1); plt.imshow(img)
+    if device:
+        print('FastGeodis GPU raster: {:.6f} s'.format(fastraster_time_gpu))
+
+    plt.figure(figsize=(18,6))
+    plt.subplot(2,4,1); plt.imshow(img, cmap="gray")
     plt.autoscale(False);  plt.plot([seed_pos[0]], [seed_pos[1]], 'ro')
     plt.axis('off'); plt.title('(a) Input image')
     
-    plt.subplot(1,5,2); plt.imshow(D1)
-    plt.axis('off'); plt.title('(b) Fast Marching')
+    plt.subplot(2,4,2); plt.imshow(fastmarch_output)
+    plt.axis('off'); plt.title('(b) Fast Marching | ({:.4f} s)'.format(fastmarch_time))
+
+    plt.subplot(2,4,3); plt.imshow(fastraster_output_cpu)
+    plt.axis('off'); plt.title('(c) FastGeodis (cpu) | ({:.4f} s)'.format(fastraster_time_cpu))
+
+    plt.subplot(2,4,6); plt.imshow(geodistkraster_output)
+    plt.axis('off'); plt.title('(d) GeodisTK | ({:.4f} s)'.format(geodistkraster_time))
+
+
+    if device:
+        plt.subplot(2,4,7); plt.imshow(fastraster_output_gpu)
+        plt.axis('off'); plt.title('(e) FastGeodis (gpu) | ({:.4f} s)'.format(fastraster_time_gpu))
+
+    diff = abs(fastmarch_output-fastraster_output_cpu)/(fastmarch_output+1e-7)*100
+    plt.subplot(2,4,4); plt.imshow(diff)
+    plt.axis('off'); plt.title('(f) Fast Marching vs. FastGeodis (cpu)\ndiff: max: {:.4f} | min: {:.4f}'.format(np.max(diff), np.min(diff)))
     
-    plt.subplot(1,5,3); plt.imshow(D2)
-    plt.axis('off'); plt.title('(c) GeodisTK')
-
-    plt.subplot(1,5,4); plt.imshow(D3)
-    plt.axis('off'); plt.title('(d) FastGeodis')
-
-    diff = D1-D3
-    plt.subplot(1,5,5); plt.imshow(diff)
-    plt.axis('off'); plt.title('(e) Fast Marching\nvs. FastGeodis\nmax diff: {}\nmin diff: {}'.format(np.max(diff), np.min(diff)))
+    if device:
+        diff = abs(fastmarch_output-fastraster_output_gpu)/(fastmarch_output+1e-7)*100
+        plt.subplot(2,4,8); plt.imshow(diff)
+        plt.axis('off'); plt.title('(g) Fast Marching vs. FastGeodis (gpu)\ndiff: max: {:.4f} | min: {:.4f}'.format(np.max(diff), np.min(diff)))
+    
+    # plt.colorbar()
     plt.show()
 
-    plt.figure()
-    plt.subplot(1, 2, 1)
-    plt.hist2d(D1.flatten(), D2.flatten(), bins=50)
+    plt.figure(figsize=(14,4))
+    plt.subplot(1, 3, 1)
+    plt.hist2d(fastmarch_output.flatten(), geodistkraster_output.flatten(), bins=50)
     plt.xlabel("Fast Marching")
     plt.ylabel("GeodisTK")
     plt.title("Joint histogram\nFast Marching vs. GeodisTK")
     # plt.gca().set_aspect("equal", adjustable="box")
 
-    plt.subplot(1, 2, 2)
-    plt.hist2d(D1.flatten(), D3.flatten(), bins=50)
+    plt.subplot(1, 3, 2)
+    plt.hist2d(fastmarch_output.flatten(), fastraster_output_cpu.flatten(), bins=50)
     plt.xlabel("Fast Marching")
-    plt.ylabel("FastGeodis")
-    plt.title("Joint histogram\nFast Marching vs. FastGeodis")
+    plt.ylabel("FastGeodis (cpu)")
+    plt.title("Joint histogram\nFast Marching vs. FastGeodis (cpu)")
     # plt.gca().set_aspect("equal", adjustable="box")
 
+    if device:
+        plt.subplot(1, 3, 3)
+        plt.hist2d(fastmarch_output.flatten(), fastraster_output_gpu.flatten(), bins=50)
+        plt.xlabel("Fast Marching")
+        plt.ylabel("FastGeodis (gpu)")
+        plt.title("Joint histogram\nFast Marching vs. FastGeodis (gpu)")
+        # plt.gca().set_aspect("equal", adjustable="box")
+
     plt.tight_layout()
+    # plt.colorbar()
     plt.show()
 
 def demo_geodesic_distance2d_gray_scale_image():
     img = Image.open('data/img2d.png').convert('L')
-    seed_position = [100, 100]
+    # make image bigger to check how much workload each method can take
+    imgsize = img.size
+    scale = 6
+    imgsize = [x * scale for x in imgsize]
+    img = img.resize(imgsize)
+    seed_position = [100 * scale, 100 * scale]
     demo_geodesic_distance2d(img, seed_position)
 
 def demo_geodesic_distance2d_RGB_image():
     img = Image.open('data/ISIC_546.jpg')
-    seed_position = [128, 128]
+    # make image bigger to check how much workload each method can take
+    imgsize = img.size
+    scale = 6
+    imgsize = [x * scale for x in imgsize]
+    img = img.resize(imgsize)
+    seed_position = [128 * scale, 128 * scale]
     demo_geodesic_distance2d(img, seed_position)
 
 if __name__ == '__main__':
     print("example list")
     print(" 0 -- example for gray scale image")
-    print(" 1 -- example for RB image")
+    print(" 1 -- example for RGB image")
     print("please enter the index of an example:")
     # method = input()
     # method = '{0:}'.format(method)
