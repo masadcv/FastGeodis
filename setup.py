@@ -7,7 +7,7 @@ import warnings
 import pkg_resources
 from setuptools import find_packages, setup
 
-FORCE_CUDA = os.getenv("FORCE_CUDA", "0") == "1" 
+FORCE_CUDA = True#os.getenv("FORCE_CUDA", "0") == "1" 
 
 BUILD_CPP = BUILD_CUDA = False
 TORCH_VERSION = 0
@@ -22,7 +22,7 @@ try:
 
     BUILD_CUDA = (CUDA_HOME is not None) if torch.cuda.is_available() else FORCE_CUDA
 
-    _pt_version = pkg_resources.parse_version(torch.__version__).release
+    _pt_version = pkg_resources.parse_version(torch.__version__)._version.release
     if _pt_version is None or len(_pt_version) < 3:
         raise AssertionError("unknown torch version")
     TORCH_VERSION = int(_pt_version[0]) * 10000 + int(_pt_version[1]) * 100 + int(_pt_version[2])
@@ -107,7 +107,7 @@ def get_extensions():
 setup(
     name='FastGeodis',
     version="0.0.1",
-    cmdclass={"build_ext": BuildExtension.with_options(no_python_abi_suffix=True)},
+    cmdclass={"build_ext": BuildExtension}, #.with_options(no_python_abi_suffix=True)},
     packages=find_packages(exclude=("data", "docs", "examples", "scripts", "tests")),
     zip_safe=False,
     ext_modules=get_extensions(),
