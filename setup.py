@@ -106,7 +106,7 @@ def get_extensions():
 
 setup(
     name='FastGeodis',
-    version="0.0.1",
+    version="0.0.2",
     cmdclass={"build_ext": BuildExtension}, #.with_options(no_python_abi_suffix=True)},
     packages=find_packages(exclude=("data", "docs", "examples", "scripts", "tests")),
     zip_safe=False,
