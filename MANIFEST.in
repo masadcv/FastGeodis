@@ -1,0 +1,3 @@
+include src/*h
+include src/*cpp
+include src/*cu
