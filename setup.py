@@ -1,3 +1,4 @@
+from gettext import install
 import glob
 import os
 import re
@@ -68,8 +69,9 @@ def omp_flags():
 
 
 def get_extensions():
-    this_dir = os.path.dirname(os.path.abspath(__file__))
-    ext_dir = os.path.join(this_dir, "src")
+    # this_dir = os.path.dirname(os.path.abspath(__file__))
+    # ext_dir = os.path.join(this_dir, "src")
+    ext_dir = "src"
     include_dirs = [ext_dir]
 
     source_cpu = glob.glob(os.path.join(ext_dir, "**", "*.cpp"), recursive=True)
@@ -95,7 +97,10 @@ def get_extensions():
             extra_compile_args["cxx"] += omp_flags()
     if extension is None or not sources:
         return []  # compile nothing
-
+    
+    # compile release
+    extra_compile_args["cxx"] += ["-g0"]
+    
     ext_modules = [
         extension(
             name="FastGeodis",
@@ -112,6 +117,9 @@ def get_extensions():
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+with open("requirements.txt", "r") as fp:
+    install_requires = fp.read().splitlines()
+
 setup(
     name="FastGeodis",
     version="0.0.2",
@@ -126,6 +134,7 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Programming Language :: Python :: 3",
     ],
+    install_requires=install_requires,
     cmdclass={
         "build_ext": BuildExtension
     },  # .with_options(no_python_abi_suffix=True)},
