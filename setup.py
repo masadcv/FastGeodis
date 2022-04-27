@@ -7,7 +7,7 @@ import warnings
 import pkg_resources
 from setuptools import find_packages, setup
 
-FORCE_CUDA = os.getenv("FORCE_CUDA", "0") == "1" 
+FORCE_CUDA = os.getenv("FORCE_CUDA", "0") == "1"
 
 BUILD_CPP = BUILD_CUDA = False
 TORCH_VERSION = 0
@@ -25,11 +25,15 @@ try:
     _pt_version = pkg_resources.parse_version(torch.__version__)._version.release
     if _pt_version is None or len(_pt_version) < 3:
         raise AssertionError("unknown torch version")
-    TORCH_VERSION = int(_pt_version[0]) * 10000 + int(_pt_version[1]) * 100 + int(_pt_version[2])
+    TORCH_VERSION = (
+        int(_pt_version[0]) * 10000 + int(_pt_version[1]) * 100 + int(_pt_version[2])
+    )
 except (ImportError, TypeError, AssertionError, AttributeError) as e:
     warnings.warn(f"extension build skipped: {e}")
 finally:
-    print(f"BUILD_CPP={BUILD_CPP}, BUILD_CUDA={BUILD_CUDA}, TORCH_VERSION={TORCH_VERSION}.")
+    print(
+        f"BUILD_CPP={BUILD_CPP}, BUILD_CUDA={BUILD_CUDA}, TORCH_VERSION={TORCH_VERSION}."
+    )
 
 
 def torch_parallel_backend():
@@ -104,11 +108,12 @@ def get_extensions():
     ]
     return ext_modules
 
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name='FastGeodis',
+    name="FastGeodis",
     version="0.0.2",
     description="Fast Implementation of Generalised Geodesic Distance Transform for CPU (OpenMP) and GPU (CUDA)",
     long_description=long_description,
@@ -121,7 +126,9 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Programming Language :: Python :: 3",
     ],
-    cmdclass={"build_ext": BuildExtension}, #.with_options(no_python_abi_suffix=True)},
+    cmdclass={
+        "build_ext": BuildExtension
+    },  # .with_options(no_python_abi_suffix=True)},
     packages=find_packages(exclude=("data", "docs", "examples", "scripts", "tests")),
     zip_safe=False,
     ext_modules=get_extensions(),
