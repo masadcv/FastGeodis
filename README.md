@@ -1,17 +1,18 @@
 # FastGeodis: Fast Generalised Geodesic Distance Transform
 
-CPU (OpenMP) and GPU (CUDA) implementation of Generalised Geodesic Distance Transform in PyTorch for 2D and 3D input data.
-For both CPU and GPU implementations, the following raster scan algorithm based on * is used for parallelisable passes on input data.
+CPU (OpenMP) and GPU (CUDA) implementation of Generalised Geodesic Distance Transform in PyTorch for 2D and 3D input data based on parallelisable raster scan ideas from [1, 2].
 
 
 | 2D images, 1 of 4 passes* | 3D volumes, 1 of 6 passes*  |
 |-------------------|-------------------------|
-| <img src="figures/geos_2d_pass.png?raw=true" width="400" /> | <img src="figures/geos_3d_pass.png?raw=true" width="300" /> |
+| <img src="figures/FastGeodis2D.png?raw=true" width="300" /> | <img src="figures/FastGeodis3D.png?raw=true" width="300" /> |
 
-*diagrams from:
-[https://www.microsoft.com/en-us/research/publication/interactive-geodesic-segmentation-of-n-dimensional-medical-images-on-the-graphics-processor/](https://www.microsoft.com/en-us/research/publication/interactive-geodesic-segmentation-of-n-dimensional-medical-images-on-the-graphics-processor/)
+- [1] Criminisi, Antonio, Toby Sharp, and Khan Siddiqui. "Interactive Geodesic Segmentation of n-Dimensional Medical Images on the Graphics Processor."
+- [2] Criminisi, Antonio, Toby Sharp, and Khan Siddiqui. "Interactive Geodesic Segmentation of n-Dimensional Medical Images on the Graphics Processor."
 
-The main contribution of the above raster scan method is that the compute for each row/plane can be parallelised using multiple threads on available device (CPU or GPU). This leads to significant speed up as compared to existing non-parallelised raster scan implementations such as [https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK). 
+
+The main contribution of the above raster scan method is that the compute for each row/plane can be parallelised using multiple threads on an available device (CPU or GPU). This leads to significant speed up as compared to existing non-parallelised raster scan implementations (e.g. [https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK)). 
+
 ## Installation instructions
 The provided package can be installed using:
 
@@ -22,17 +23,13 @@ or
 `pip install FastGeodis`
 
 ## References
-- [1] Criminisi, Antonio, Toby Sharp, and Andrew Blake. "Geos: Geodesic image segmentation." ECCV, 2008.
+- [1] Criminisi, Antonio, Toby Sharp, and Khan Siddiqui. "Interactive Geodesic Segmentation of n-Dimensional Medical Images on the Graphics Processor."
 
 - [2] Weber, Ofir, et al. "Parallel algorithms for approximation of distance maps on parametric surfaces." ACM Transactions on Graphics (TOG), (2008).
 
-- [3] Wang, Guotai, et al. "DeepIGeoS: A deep interactive geodesic framework for medical image segmentation." TPAMI, 2018.
-
 - [4] GeodisTK: [https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK)
 
-- [5] AdaptiveECONet TODO Add link to paper
 
-If you use this code, then please cite our paper: AdaptiveECONet
 ## Example usage
 
 ### Fast Geodesic Distance Transform
