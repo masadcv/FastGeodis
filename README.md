@@ -3,7 +3,7 @@
 CPU (OpenMP) and GPU (CUDA) implementation of Generalised Geodesic Distance Transform in PyTorch for 2D and 3D input data based on parallelisable raster scan ideas from [1, 2].
 
 
-| 2D images, 1 of 4 passes* | 3D volumes, 1 of 6 passes*  |
+| 2D images, 1 of 4 passes | 3D volumes, 1 of 6 passes  |
 |-------------------|-------------------------|
 | <img src="figures/FastGeodis2D.png?raw=true" width="300" /> | <img src="figures/FastGeodis3D.png?raw=true" width="300" /> |
 
@@ -20,14 +20,10 @@ The provided package can be installed using:
 
 or
 
+TODO:
 `pip install FastGeodis`
 
-## References
-- [1] Criminisi, Antonio, Toby Sharp, and Khan Siddiqui. "Interactive Geodesic Segmentation of n-Dimensional Medical Images on the Graphics Processor."
-
-- [2] Weber, Ofir, et al. "Parallel algorithms for approximation of distance maps on parametric surfaces." ACM Transactions on Graphics (TOG), (2008).
-
-- [4] GeodisTK: [https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK)
+If you use this code, then please cite our paper: TODO
 
 
 ## Example usage
@@ -81,3 +77,10 @@ FastGeodis (CPU/GPU) is compared with existing GeodisTK ([https://github.com/tai
 | Qualitative Comparison | Quantitative (joint histogram)  |
 |-------------------|-------------------------|
 | <img src="figures/fast_marching_compare_3d.png?raw=true" width="800" /> | <img src="figures/fast_marching_compare_3d_jointhist.png?raw=true" width="400" /> |
+
+## References
+- [1] Criminisi, Antonio, Toby Sharp, and Khan Siddiqui. "Interactive Geodesic Segmentation of n-Dimensional Medical Images on the Graphics Processor."
+
+- [2] Weber, Ofir, et al. "Parallel algorithms for approximation of distance maps on parametric surfaces." ACM Transactions on Graphics (TOG), (2008).
+
+- [3] GeodisTK: [https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK)
