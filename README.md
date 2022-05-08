@@ -7,11 +7,8 @@ CPU (OpenMP) and GPU (CUDA) implementation of Generalised Geodesic Distance Tran
 |-------------------|-------------------------|
 | <img src="figures/FastGeodis2D.png?raw=true" width="300" /> | <img src="figures/FastGeodis3D.png?raw=true" width="300" /> |
 
-- [1] Criminisi, Antonio, Toby Sharp, and Khan Siddiqui. "Interactive Geodesic Segmentation of n-Dimensional Medical Images on the Graphics Processor."
-- [2] Criminisi, Antonio, Toby Sharp, and Khan Siddiqui. "Interactive Geodesic Segmentation of n-Dimensional Medical Images on the Graphics Processor."
 
-
-The main contribution of the above raster scan method is that the compute for each row/plane can be parallelised using multiple threads on an available device (CPU or GPU). This leads to significant speed up as compared to existing non-parallelised raster scan implementations (e.g. [https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK)). 
+The above raster scan method can be parallelised for each row/plane on an available device (CPU or GPU). This leads to significant speed up as compared to existing non-parallelised raster scan implementations (e.g. [https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK)). 
 
 ## Installation instructions
 The provided package can be installed using:
