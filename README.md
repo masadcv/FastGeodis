@@ -22,6 +22,11 @@ TODO:
 
 If you use this code, then please cite our paper: TODO
 
+## Unit Tests
+A number of unittests are provided, which can be run as:
+
+`python -m unittest`
+
 
 ## Example usage
 
