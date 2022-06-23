@@ -1,0 +1,98 @@
+name: Build and upload wheels
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_py:
+        description: 'Publish package to test PY Repository'
+        required: true
+        default: 'false'
+      main_py:
+        description: 'Publish package to main PY Repository'
+        required: true
+        default: 'false'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-2019, macos-10.15, ubuntu-18.04]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        pip install wheel setuptools ninja numpy
+        pip install -r requirements-dev.txt
+    
+    - name: Build source dist
+      run: python setup.py sdist
+
+    - name: Install software
+      run: pip install ${{github.workspace}}/dist/FastGeodis*.tar.gz
+
+    - name: Run unittest
+      run: python -m unittest
+
+  build_sdist:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        pip install wheel setuptools numpy
+        pip install -r requirements-dev.txt
+    
+    - name: Build source dist
+      run: python setup.py sdist
+    
+    - name: Upload Python Dist
+      uses: actions/upload-artifact@v2
+      with:
+        name: dist
+        path: dist/
+        if-no-files-found: error
+
+    - name: Install software
+      run: pip install ${{github.workspace}}/dist/FastGeodis*.tar.gz
+
+    - name: Run unittest
+      run: python -m unittest
+
+  publish_pypi:
+    runs-on: ubuntu-18.04
+    needs:
+    - build
+    - build_sdist
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v2
+      with:
+        name: dist
+        path: dist/
+
+    - name: Publish distribution to Test PyPI
+      if: ${{ github.event.inputs.test_py == 'true' }}
+      uses: pypa/gh-action-pypi-publish@v1.5.0
+      with:
+        user: __token__
+        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        repository_url: https://test.pypi.org/legacy/
+
+    - name: Publish distribution to PyPI
+      if: ${{ github.event.inputs.main_py == 'true' }}
+      uses: pypa/gh-action-pypi-publish@v1.5.0
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
