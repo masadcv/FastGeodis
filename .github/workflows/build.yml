@@ -1,0 +1,95 @@
+name: Build
+# simple build workflow for sanity check wheel binary, source distribution compilation and installation on various platforms with p3.8
+
+on:
+  push:
+    branches: 
+      - '*'
+  pull_request:
+    branches: 
+      - '*'
+  workflow_dispatch:
+    inputs:
+      test_package:
+        description: 'Test package within workflow'
+        required: true
+        default: 'true'
+      save_artifacts:
+        description: 'Save artifacts from build'
+        required: true
+        default: 'false'
+        
+jobs:
+  build_whl:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-2019, macos-10.15, ubuntu-18.04]
+        python-version: [3.8]
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        pip install wheel setuptools ninja
+        pip install -r requirements-dev.txt
+    
+    - name: Build wheel
+      run: python setup.py bdist_wheel
+
+    - name: Install software
+      if: ${{ github.event.inputs.test_package == 'true' }}
+      run: |
+        pip install numpy # install to get rid of warning
+        pip install --no-index --find-links=${{github.workspace}}/dist/ FastGeodis
+    - name: Test import and unit tests
+      if: ${{ github.event.inputs.test_package == 'true' }}
+      run: |
+        python -m unittest
+      
+    - name: Upload Python Dist
+      if: ${{ github.event.inputs.save_artifacts == 'true' }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: dist
+        path: dist/
+        if-no-files-found: error    
+
+  build_sdist:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        pip install wheel setuptools
+        pip install -r requirements-dev.txt
+    
+    - name: Build source dist
+      run: python setup.py sdist
+
+    - name: Install software
+      if: ${{ github.event.inputs.test_package == 'true' }}
+      run: |
+        pip install numpy # install to get rid of warning
+        pip install ${{github.workspace}}/dist/FastGeodis*.tar.gz
+    - name: Test import and 2D/3D case
+      if: ${{ github.event.inputs.test_package == 'true' }}
+      run: |
+        python -m unittest
+      
+    - name: Upload Python Dist
+      if: ${{ github.event.inputs.save_artifacts == 'true' }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: dist
+        path: dist/
+        if-no-files-found: error
