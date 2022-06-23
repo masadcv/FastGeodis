@@ -10,10 +10,6 @@ on:
       - '*'
   workflow_dispatch:
     inputs:
-      test_package:
-        description: 'Test package within workflow'
-        required: true
-        default: 'true'
       save_artifacts:
         description: 'Save artifacts from build'
         required: true
@@ -42,12 +38,10 @@ jobs:
       run: python setup.py bdist_wheel
 
     - name: Install software
-      if: ${{ github.event.inputs.test_package == 'true' }}
       run: |
         pip install numpy # install to get rid of warning
         pip install --no-index --find-links=${{github.workspace}}/dist/ FastGeodis
-    - name: Test import and unit tests
-      if: ${{ github.event.inputs.test_package == 'true' }}
+    - name: Run unittests
       run: |
         python -m unittest
       
@@ -77,12 +71,10 @@ jobs:
       run: python setup.py sdist
 
     - name: Install software
-      if: ${{ github.event.inputs.test_package == 'true' }}
       run: |
         pip install numpy # install to get rid of warning
         pip install ${{github.workspace}}/dist/FastGeodis*.tar.gz
-    - name: Test import and 2D/3D case
-      if: ${{ github.event.inputs.test_package == 'true' }}
+    - name: Run unittests
       run: |
         python -m unittest
       
