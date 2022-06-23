@@ -22,7 +22,7 @@ def skip_if_no_cuda(obj):
 def run_cuda_if_available(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        if args[0] == 'cuda':
+        if args[1] == 'cuda':
             if torch.cuda.is_available():
                 return fn(*args, **kwargs)
             else:
