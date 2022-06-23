@@ -69,7 +69,15 @@ float l1distance(const float *in1, const float *in2, int size)
     return ret_sum;
 }
 
-
+float l1distance(const std::vector<float> &in1, const std::vector<float> &in2, int size)
+{
+    float ret_sum = 0.0;
+    for (int c_i = 0; c_i < size; c_i++)
+    {
+        ret_sum += abs(in1[c_i] - in2[c_i]);
+    }
+    return ret_sum;
+}
 
 // float l2distance(const float *in1, const float *in2, int size)
 // {
@@ -91,7 +99,11 @@ void geodesic_updown_pass_cpu(const torch::Tensor &image, torch::Tensor &distanc
 
     auto image_ptr = image.accessor<float, 4>();
     auto distance_ptr = distance.accessor<float, 4>();
-    constexpr float local_dist[] = {sqrt(float(2.)), float(1.), sqrt(float(2.))};
+    // constexpr float local_dist[] = {sqrt(float(2.)), float(1.), sqrt(float(2.))};
+    const float local_dist[] = {sqrt(float(2.)), float(1.), sqrt(float(2.))};
+
+    std::vector<float> pval_v(channel);
+    std::vector<float> qval_v(channel);
 
     // top-down
     for (int h = 1; h < height; h++)
@@ -103,7 +115,6 @@ void geodesic_updown_pass_cpu(const torch::Tensor &image, torch::Tensor &distanc
         for (int w = 0; w < width; w++)
         {
             float pval;
-            float pval_v[channel];
             if (channel == 1)
             {
                 pval = image_ptr[0][0][h][w];
@@ -130,7 +141,6 @@ void geodesic_updown_pass_cpu(const torch::Tensor &image, torch::Tensor &distanc
                 }
                 else
                 {
-                    float qval_v[channel];
                     for (int c_i = 0; c_i < channel; c_i++)
                     {
                         qval_v[c_i] = image_ptr[0][c_i][h - 1][w_ind];
@@ -154,7 +164,6 @@ void geodesic_updown_pass_cpu(const torch::Tensor &image, torch::Tensor &distanc
         for (int w = 0; w < width; w++)
         {
             float pval;
-            float pval_v[channel];
             if (channel == 1)
             {
                 pval = image_ptr[0][0][h][w];
@@ -181,7 +190,6 @@ void geodesic_updown_pass_cpu(const torch::Tensor &image, torch::Tensor &distanc
                 }
                 else
                 {
-                    float qval_v[channel];
                     for (int c_i = 0; c_i < channel; c_i++)
                     {
                         qval_v[c_i] = image_ptr[0][c_i][h + 1][w_ind];
@@ -251,6 +259,9 @@ void geodesic_frontback_pass_cpu(const torch::Tensor &image, torch::Tensor &dist
         }
     }
 
+    std::vector<float> pval_v(channel);
+    std::vector<float> qval_v(channel);
+
     // front-back
     for (int z = 1; z < depth; z++)
     {
@@ -263,7 +274,6 @@ void geodesic_frontback_pass_cpu(const torch::Tensor &image, torch::Tensor &dist
             for (int w = 0; w < width; w++)
             {
                 float pval;
-                float pval_v[channel];
                 if (channel == 1)
                 {
                     pval = image_ptr[0][0][z][h][w];
@@ -294,7 +304,6 @@ void geodesic_frontback_pass_cpu(const torch::Tensor &image, torch::Tensor &dist
                         }
                         else
                         {
-                            float qval_v[channel];
                             for (int c_i = 0; c_i < channel; c_i++)
                             {
                                 qval_v[c_i] = image_ptr[0][c_i][z - 1][h_ind][w_ind];
@@ -322,7 +331,6 @@ void geodesic_frontback_pass_cpu(const torch::Tensor &image, torch::Tensor &dist
             for (int w = 0; w < width; w++)
             {
                 float pval;
-                float pval_v[channel];
                 if (channel == 1)
                 {
                     pval = image_ptr[0][0][z][h][w];
@@ -353,7 +361,6 @@ void geodesic_frontback_pass_cpu(const torch::Tensor &image, torch::Tensor &dist
                         }
                         else
                         {
-                            float qval_v[channel];
                             for (int c_i = 0; c_i < channel; c_i++)
                             {
                                 qval_v[c_i] = image_ptr[0][c_i][z + 1][h_ind][w_ind];
