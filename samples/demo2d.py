@@ -212,8 +212,8 @@ def demo_geodesic_distance2d(image):
 
 
 if __name__ == "__main__":
+    # "gray" or "color"
     example = "gray"
-    example = "color"
 
     if example == "gray":
         image = Image.open("data/img2d.png").convert("L")

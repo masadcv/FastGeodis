@@ -56,12 +56,14 @@ torch::Tensor generalised_geodesic2d(torch::Tensor &image, const torch::Tensor &
     #endif
 
     // check input dimensions
-    const int num_dims = mask.dim();
-    if (num_dims != 4)
-    {
-        throw std::runtime_error(
-            "function only supports 2D spatial inputs, received " + std::to_string(num_dims - 2));
-    }
+    check_input_dimensions(image, mask, 4);
+    
+    // const int num_dims = mask.dim();
+    // if (num_dims != 4)
+    // {
+    //     throw std::invalid_argument(
+    //         "function only supports 2D spatial inputs, received " + std::to_string(num_dims - 2));
+    // }
 
     if (image.is_cuda()) 
     {
@@ -71,14 +73,17 @@ torch::Tensor generalised_geodesic2d(torch::Tensor &image, const torch::Tensor &
             throw std::runtime_error(
                 "cuda.is_available() returned false, please check if the library was compiled successfully with CUDA support");
         }
-        CHECK_CUDA(image);
-        CHECK_CUDA(mask);
+        check_cuda(mask);
 
         return generalised_geodesic2d_cuda(image, mask, v, l_grad, l_eucl, iterations);
 
     #else
         AT_ERROR("Not compiled with CUDA support.");
     #endif
+    }
+    else
+    {
+        check_cpu(mask);
     }
     return generalised_geodesic2d_cpu(image, mask, v, l_grad, l_eucl, iterations);
 }
@@ -99,16 +104,17 @@ torch::Tensor generalised_geodesic3d(torch::Tensor &image, const torch::Tensor &
     #endif
 
     // check input dimensions
-    const int num_dims = mask.dim();
-    if (num_dims != 5)
-    {
-        throw std::runtime_error(
-            "function only supports 3D spatial inputs, received " + std::to_string(num_dims - 2));
-    }
+    check_input_dimensions(image, mask, 5);
 
+    // const int num_dims = mask.dim();
+    // if (num_dims != 5)
+    // {
+    //     throw std::invalid_argument(
+    //         "function only supports 3D spatial inputs, received " + std::to_string(num_dims - 2));
+    // }
     if (spacing.size() != 3)
     {
-        throw std::runtime_error(
+        throw std::invalid_argument(
             "function only supports 3D spacing inputs, received " + std::to_string(spacing.size()));
     }
 
@@ -123,14 +129,17 @@ torch::Tensor generalised_geodesic3d(torch::Tensor &image, const torch::Tensor &
             throw std::runtime_error(
                 "cuda.is_available() returned false, please check if the library was compiled successfully with CUDA support");
         }
-        CHECK_CUDA(image);
-        CHECK_CUDA(mask);
+        check_cuda(mask);
         
         return generalised_geodesic3d_cuda(image, mask, spacing, v, l_grad, l_eucl, iterations);
 
     #else
         AT_ERROR("Not compiled with CUDA support.");
     #endif
+    }
+    else
+    {
+        check_cpu(mask);
     }
     return generalised_geodesic3d_cpu(image, mask, spacing, v, l_grad, l_eucl, iterations);
 }
