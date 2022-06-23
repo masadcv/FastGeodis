@@ -40,6 +40,9 @@ jobs:
     - name: Run unittest
       run: python -m unittest
 
+    - name: Delete sdist file 
+      run: rm -f ${{github.workspace}}/dist/FastGeodis*.tar.gz
+
   build_sdist:
     runs-on: ubuntu-18.04
     steps:
