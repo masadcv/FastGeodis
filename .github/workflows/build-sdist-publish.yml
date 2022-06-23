@@ -13,36 +13,6 @@ on:
         default: 'false'
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-2019, macos-10.15, ubuntu-18.04]
-        python-version: [3.6, 3.7, 3.8, 3.9]
-    steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install dependencies
-      run: |
-        pip install wheel setuptools ninja numpy
-        pip install -r requirements-dev.txt
-    
-    - name: Build source dist
-      run: python setup.py sdist
-
-    - name: Install software
-      run: pip install ${{github.workspace}}/dist/FastGeodis*.tar.gz
-
-    - name: Run unittest
-      run: python -m unittest
-
-    - name: Delete sdist file 
-      run: rm -f ${{github.workspace}}/dist/FastGeodis*.tar.gz
-
   build_sdist:
     runs-on: ubuntu-18.04
     steps:
@@ -73,10 +43,42 @@ jobs:
     - name: Run unittest
       run: python -m unittest
 
+  test_multiple_platforms:
+    runs-on: ${{ matrix.os }}
+    needs:
+    - build_sdist
+    strategy:
+      matrix:
+        os: [windows-2019, macos-10.15, ubuntu-18.04]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Download all the dists
+      uses: actions/download-artifact@v2
+      with:
+        name: dist
+        path: dist/
+
+    - name: Install dependencies
+      run: |
+        pip install wheel setuptools ninja numpy
+        pip install -r requirements-dev.txt   
+
+    - name: Install software
+      run: pip install ${{github.workspace}}/dist/FastGeodis*.tar.gz
+
+    - name: Run unittest
+      run: python -m unittest
+
   publish_pypi:
     runs-on: ubuntu-18.04
     needs:
-    - build
+    - test_multiple_platforms
     - build_sdist
     steps:
     - name: Download all the dists
