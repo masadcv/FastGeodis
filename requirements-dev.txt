@@ -1,0 +1,6 @@
+-r requirements.txt
+GeodisTK
+matplotlib
+numpy
+parameterized
+SimpleITK
