@@ -35,7 +35,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install wheel setuptools ninja
+        pip install wheel setuptools ninja numpy
         pip install -r requirements-dev.txt
     
     - name: Build wheel
@@ -70,7 +70,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install wheel setuptools
+        pip install wheel setuptools numpy
         pip install -r requirements-dev.txt
     
     - name: Build source dist
