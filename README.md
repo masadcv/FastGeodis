@@ -34,6 +34,8 @@ If you use this code, then please cite our paper: TODO
 
 ### Fast Geodesic Distance Transform
 The following demonstrates a simple example showing FastGeodis usage:
+
+To compute Geodesic Distance Transform:
 ```python
 device = "cuda" if torch.cuda.is_available else "cpu"
 image = np.asarray(Image.open("data/img2d.png"), np.float32)
@@ -44,12 +46,33 @@ mask_pt = torch.ones_like(image_pt)
 mask_pt[..., 100, 100] = 0
 
 v = 1e10
+# lamb = 0.0 (Euclidean) or 1.0 (Geodesic) or (0.0, 1.0) (mixture)
 lamb = 1.0
 iterations = 2
 geodesic_dist = FastGeodis.generalised_geodesic2d(
-    image_pt, mask_pt, v, lamb, 1 - lamb, iterations
+    image_pt, mask_pt, v, lamb, iterations
 )
 geodesic_dist = np.squeeze(geodesic_dist.cpu().numpy())
+```
+
+To compute Euclidean Distance Transform:
+```python
+device = "cuda" if torch.cuda.is_available else "cpu"
+image = np.asarray(Image.open("data/img2d.png"), np.float32)
+
+image_pt = torch.from_numpy(image).unsqueeze_(0).unsqueeze_(0)
+image_pt = image_pt.to(device)
+mask_pt = torch.ones_like(image_pt)
+mask_pt[..., 100, 100] = 0
+
+v = 1e10
+# lamb = 0.0 (Euclidean) or 1.0 (Geodesic) or (0.0, 1.0) (mixture)
+lamb = 0.0
+iterations = 2
+euclidean_dist = FastGeodis.generalised_geodesic2d(
+    image_pt, mask_pt, v, lamb, iterations
+)
+euclidean_dist = np.squeeze(euclidean_dist.cpu().numpy())
 ```
 
 For more usage examples see:
