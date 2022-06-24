@@ -5,7 +5,7 @@
 <img src="https://img.shields.io/badge/Python-3.6%20|%203.7%20|%203.8%20|%203.9-3776ab.svg"/>
 <img src="https://img.shields.io/badge/PyTorch-%3E%3D%201.10-brightgreen.svg"/>
 
-CPU (OpenMP) and GPU (CUDA) implementation of Generalised Geodesic Distance Transform in PyTorch for 2D and 3D input data based on parallelisable raster scan ideas from [1, 2].
+This repository provides CPU (OpenMP) and GPU (CUDA) implementations of Generalised Geodesic Distance Transform in PyTorch for 2D and 3D input data based on parallelisable raster scan ideas from [1, 2]. It includes methods for computing Geodesic, Euclidean distance transform and mixture of both.
 
 
 | 2D images, 1 of 4 passes | 3D volumes, 1 of 6 passes  |
@@ -13,7 +13,10 @@ CPU (OpenMP) and GPU (CUDA) implementation of Generalised Geodesic Distance Tran
 | <img src="figures/FastGeodis2D.png?raw=true" width="300" /> | <img src="figures/FastGeodis3D.png?raw=true" width="300" /> |
 
 
-The above raster scan method can be parallelised for each row/plane on an available device (CPU or GPU). This leads to significant speed up as compared to existing non-parallelised raster scan implementations (e.g. [https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK)). 
+The above raster scan method can be parallelised for each row/plane on an available device (CPU or GPU). This leads to significant speed up as compared to existing non-parallelised raster scan implementations (e.g. [https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK)). Python interface is provided (using PyTorch) for enabling its use in deep learning pipelines.
+
+In addition, it is one of the first library that provides Generalised Geodesic distance transforms along with Geodesic Symmetric Filtering (GSF) implementation for interactive segmentation, that were originally proposed in [1].
+
 
 ## Installation instructions
 The provided package can be installed using:
@@ -26,12 +29,6 @@ TODO:
 `pip install FastGeodis`
 
 If you use this code, then please cite our paper: TODO
-
-## Unit Tests
-A number of unittests are provided, which can be run as:
-
-`python -m unittest`
-
 
 ## Example usage
 
@@ -60,7 +57,11 @@ For more usage examples see:
 - **2D Geodesic Distance**: [`samples/demo2d.py`](./samples/demo2d.py) 
 - **3D Geodesic Distance**: [`samples/demo3d.py`](./samples/demo3d.py)
 - **2D GSF Segmentation Smoothing**: [`samples/demoGSF2d_SmoothingSegExample.ipynb`](./samples/demoGSF2d_SmoothingSegExample.ipynb)
- 
+
+## Unit Tests
+A number of unittests are provided, which can be run as:
+
+`python -m unittest`
 
 ## Comparison of Execution Time and Accuracy
 FastGeodis (CPU/GPU) is compared with existing GeodisTK ([https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK)) in terms of execution speed as well as accuracy.
