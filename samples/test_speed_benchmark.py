@@ -20,28 +20,28 @@ def timing(f):
     return wrap
 
 @timing
-def generalised_geodesic_distance_2d(I, S, v, lamda, iter):
-    return GeodisTK.generalised_geodesic2d_raster_scan_opt(I, S, v, lamda, iter)
+def generalised_geodesic_distance_2d(I, S, v, lamb, iter):
+    return GeodisTK.geodesic2d_raster_scan(I, 1-S.astype(np.uint8), lamb, iter)
 
 @timing
-def generalised_geodesic2d_raster_cpu(I, S, v, lamda, iter):
-    return FastGeodis.generalised_geodesic2d(I, S, v, lamda, 1-lamda, iter)
+def generalised_geodesic2d_raster_cpu(I, S, v, lamb, iter):
+    return FastGeodis.generalised_geodesic2d(I, S, v, lamb, iter)
 
 @timing
-def generalised_geodesic2d_raster_gpu(I, S, v, lamda, iter):
-    return FastGeodis.generalised_geodesic2d(I, S, v, lamda, 1-lamda, iter)
+def generalised_geodesic2d_raster_gpu(I, S, v, lamb, iter):
+    return FastGeodis.generalised_geodesic2d(I, S, v, lamb, iter)
 
 @timing
 def generalised_geodesic_distance_3d(I, S, spacing, v, lamb, iter):
-    return GeodisTK.generalised_geodesic3d_raster_scan(I, S, spacing, v, lamb, iter)
+    return GeodisTK.geodesic3d_raster_scan(I, 1-S.astype(np.uint8), spacing, lamb, iter)
 
 @timing
-def generalised_geodesic3d_raster_cpu(I, S, spacing, v, lamda, iter):
-    return FastGeodis.generalised_geodesic3d(I, S, spacing, v, lamda, 1-lamda, iter)
+def generalised_geodesic3d_raster_cpu(I, S, spacing, v, lamb, iter):
+    return FastGeodis.generalised_geodesic3d(I, S, spacing, v, lamb, iter)
 
 @timing
-def generalised_geodesic3d_raster_gpu(I, S, spacing, v, lamda, iter):
-    return FastGeodis.generalised_geodesic3d(I, S, spacing, v, lamda, 1-lamda, iter)
+def generalised_geodesic3d_raster_gpu(I, S, spacing, v, lamb, iter):
+    return FastGeodis.generalised_geodesic3d(I, S, spacing, v, lamb, iter)
     
 func_to_test_2d = [generalised_geodesic_distance_2d, generalised_geodesic2d_raster_cpu, generalised_geodesic2d_raster_gpu]
 func_to_test_3d = [generalised_geodesic_distance_3d, generalised_geodesic3d_raster_cpu, generalised_geodesic3d_raster_gpu]

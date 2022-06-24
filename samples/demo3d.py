@@ -11,11 +11,20 @@ import SimpleITK as sitk
 
 
 def geodistk_geodesic_distance_3d(I, S, spacing, lamb, iter):
+    """Compute Geodesic Distance using GeodisTK raster scanning.
+
+    I: input image, can have multiple channels. Type should be np.float32.
+    S: binary image where non-zero pixels are used as seeds. Type should be np.uint8.
+    spacing: spacing of input 3d volume
+    lamb: weighting betwween 0.0 and 1.0
+          if lamb==0.0, return spatial euclidean distance without considering gradient
+          if lamb==1.0, the distance is based on gradient only without using spatial distance
+    iter: number of iteration for raster scanning.
+
+    from: https://github.com/taigw/GeodisTK/blob/master/demo2d.py
+
+    """
     return GeodisTK.geodesic3d_raster_scan(I, S, spacing, lamb, iter)
-
-
-def fastgeodis_generalised_geodesic_distance_3d(I, S, spacing, v, lamda, iter):
-    return FastGeodis.generalised_geodesic3d(I, S, spacing, v, lamda, 1-lamda, iter)
 
 
 def demo_geodesic_distance3d():
@@ -29,19 +38,15 @@ def demo_geodesic_distance3d():
     S = np.zeros_like(I, np.uint8)
     S[10][60][70] = 1
     t0 = time.time()
-    D1 = GeodisTK.geodesic3d_fast_marching(
-        I, S, spacing
-    )
+    D1 = GeodisTK.geodesic3d_fast_marching(I, S, spacing)
     t1 = time.time()
-    D2 = geodistk_geodesic_distance_3d(
-        I, S, spacing, 1.0, 4
-    )
+    D2 = geodistk_geodesic_distance_3d(I, S, spacing, 1.0, 4)
     dt1 = t1 - t0
     dt2 = time.time() - t1
     It = torch.from_numpy(I).unsqueeze_(0).unsqueeze_(0)
     St = torch.from_numpy(1 - S.astype(np.float32)).unsqueeze_(0).unsqueeze_(0)
     D3 = np.squeeze(
-        fastgeodis_generalised_geodesic_distance_3d(
+        FastGeodis.generalised_geodesic3d(
             It, St, spacing, 1e10, 1.0, 4
         ).numpy()
     )

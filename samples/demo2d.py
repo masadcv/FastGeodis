@@ -24,31 +24,6 @@ def geodesic_distance_2d(I, S, lamb, iter):
     return GeodisTK.geodesic2d_raster_scan(I, S, lamb, iter)
 
 
-def fastgeodis_generalised_geodesic_distance_2d(
-    image: torch.Tensor, softmask: torch.Tensor, v: float, lamb: float, iter: int
-):
-    """Computes Generalised Geodesic Distance using FastGeodis raster scanning.
-    For more details on generalised geodesic distance, check the following reference:
-
-    Criminisi, Antonio, Toby Sharp, and Andrew Blake.
-    "Geos: Geodesic image segmentation."
-    European Conference on Computer Vision, Berlin, Heidelberg, 2008.
-
-    The function expects input as torch.Tensor, which can be run on CPU or GPU depending on Tensor's device location
-
-    Args:
-        image: input image, can be grayscale or multiple channels.
-        softmask: softmask in range [0, 1] with seed information.
-        v: weighting factor for establishing relationship between unary and spatial distances.
-        lamb: weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance
-        iter: number of passes of the iterative distance transform method
-
-    Returns:
-        torch.Tensor with distance transform
-    """
-    return FastGeodis.generalised_geodesic2d(image, softmask, v, lamb, 1 - lamb, iter)
-
-
 def evaluate_geodesic_distance2d(image, seed_pos):
     # get image and create seed image
     Image = np.asanyarray(image, np.float32)
@@ -86,9 +61,7 @@ def evaluate_geodesic_distance2d(image, seed_pos):
 
     tic = time.time()
     fastraster_output_cpu = np.squeeze(
-        fastgeodis_generalised_geodesic_distance_2d(It, St, v, lamb, iterations)
-        .cpu()
-        .numpy()
+        FastGeodis.generalised_geodesic2d(It, St, v, lamb, iterations).cpu().numpy()
     )
     fastraster_time_cpu = time.time() - tic
 
@@ -99,9 +72,7 @@ def evaluate_geodesic_distance2d(image, seed_pos):
 
         tic = time.time()
         fastraster_output_gpu = np.squeeze(
-            fastgeodis_generalised_geodesic_distance_2d(It, St, v, lamb, iterations)
-            .cpu()
-            .numpy()
+            FastGeodis.generalised_geodesic2d(It, St, v, lamb, iterations).cpu().numpy()
         )
         fastraster_time_gpu = time.time() - tic
 
