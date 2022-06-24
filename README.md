@@ -10,7 +10,7 @@ This repository provides CPU (OpenMP) and GPU (CUDA) implementations of Generali
 
 | 2D images, 1 of 4 passes | 3D volumes, 1 of 6 passes  |
 |-------------------|-------------------------|
-| <img src="figures/FastGeodis2D.png?raw=true" width="300" /> | <img src="figures/FastGeodis3D.png?raw=true" width="300" /> |
+| <img src="https://raw.githubusercontent.com/masadcv/FastGeodis/master/figures/FastGeodis2D.png?raw=true" width="300" /> | <img src="https://raw.githubusercontent.com/masadcv/FastGeodis/master/figures/FastGeodis3D.png?raw=true" width="300" /> |
 
 
 The above raster scan method can be parallelised for each row/plane on an available device (CPU or GPU). This leads to significant speed up as compared to existing non-parallelised raster scan implementations (e.g. [https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK)). Python interface is provided (using PyTorch) for enabling its use in deep learning and image processing pipelines.
@@ -93,7 +93,7 @@ FastGeodis (CPU/GPU) is compared with existing GeodisTK ([https://github.com/tai
 ### Execution Time
 | 2D images | 3D volumes  |
 |-------------------|-------------------------|
-|<img src="figures/experiment_2d.png?raw=true" width="400" />|<img src="figures/experiment_3d.png?raw=true" width="400" />|
+|<img src="https://raw.githubusercontent.com/masadcv/FastGeodis/master/figures/experiment_2d.png?raw=true" width="400" />|<img src="https://raw.githubusercontent.com/masadcv/FastGeodis/master/figures/experiment_3d.png?raw=true" width="400" />|
 
 <br>
 
@@ -101,13 +101,13 @@ FastGeodis (CPU/GPU) is compared with existing GeodisTK ([https://github.com/tai
 2D case
 | Qualitative Comparison | Quantitative (joint histogram)  |
 |-------------------|-------------------------|
-|<img src="figures/fast_marching_compare_2d.png?raw=true?raw=true" width="800" />  |<img src="figures/fast_marching_compare_2d_jointhist.png?raw=true" width="400" /> |
+|<img src="https://raw.githubusercontent.com/masadcv/FastGeodis/master/figures/fast_marching_compare_2d.png?raw=true?raw=true" width="800" />  |<img src="https://raw.githubusercontent.com/masadcv/FastGeodis/master/figures/fast_marching_compare_2d_jointhist.png?raw=true" width="400" /> |
 
 3D case
 
 | Qualitative Comparison | Quantitative (joint histogram)  |
 |-------------------|-------------------------|
-| <img src="figures/fast_marching_compare_3d.png?raw=true" width="800" /> | <img src="figures/fast_marching_compare_3d_jointhist.png?raw=true" width="400" /> |
+| <img src="https://raw.githubusercontent.com/masadcv/FastGeodis/master/figures/fast_marching_compare_3d.png?raw=true" width="800" /> | <img src="https://raw.githubusercontent.com/masadcv/FastGeodis/master/figures/fast_marching_compare_3d_jointhist.png?raw=true" width="400" /> |
 
 ## References
 - [1] Criminisi, Antonio, Toby Sharp, and Khan Siddiqui. "Interactive Geodesic Segmentation of n-Dimensional Medical Images on the Graphics Processor."
