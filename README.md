@@ -34,7 +34,7 @@ If you use this code, then please cite our paper: TODO
 
 ### Fast Geodesic Distance Transform
 The following demonstrates a simple example showing FastGeodis usage:
-```
+```python
 device = "cuda" if torch.cuda.is_available else "cpu"
 image = np.asarray(Image.open("data/img2d.png"), np.float32)
 
