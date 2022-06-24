@@ -28,10 +28,10 @@ bibliography: paper.bib
 
   
 
-Geodesic and Euclidean distance transforms have been widely used in a number of applications, where distance from a set of reference points is computed. Methods from recent years have shown effectiveness in applying Geodesic distance transform to interactively segment 3D medical imaging data [@wang2018deepigeos; @criminisi2008geos]. Despite existing methods for efficient computation of Geodesic distance transforms on GPU and CPU devices [@criminisi2008geos; @weber2008parallel; toivanen1996new], an open-source implementation of such methods does not exist. 
+Geodesic and Euclidean distance transforms have been widely used in a number of applications, where distance from a set of reference points is computed. Methods from recent years have shown effectiveness in applying Geodesic distance transform to interactively segment 3D medical imaging data [@wang2018deepigeos; @criminisi2008geos]. Despite existing methods for efficient computation of Geodesic distance transform on GPU and CPU devices [@criminisi2008geos; @weber2008parallel; @toivanen1996new], an open-source implementation of such methods does not exist. 
 On the contrary, efficient methods for Euclidean distance transform [@felzenszwalb2012distance] have open-source implementations [@tensorflow2015-whitepaper; @eucildeantdimpl]. Existing libraries, e.g. [@geodistk], provide C++ implementations of Geodesic distance transform, however they lack efficient utilization of underlying hardware and hence results in significant computation time especially when applying them on 3D medical imaging volumes.  
 
- The `FastGeodis` package provides an efficient implementation for computing Geodesic and Euclidean distance transforms (or a mixture of both) targeting efficient utilizing of CPU and GPU hardwares. This package is able to handle 2D as well as 3D data where it achieves up to 15x speedup on CPU and up to 60x speedup on GPU as compared to existing open-source libraries [@geodistk]. 
+The `FastGeodis` package provides an efficient implementation for computing Geodesic and Euclidean distance transforms (or a mixture of both) targeting efficient utilizing of CPU and GPU hardwares. This package is able to handle 2D as well as 3D data where it achieves up to 15x speedup on CPU and up to 60x speedup on GPU as compared to existing open-source libraries [@geodistk]. 
 
   
 
@@ -39,7 +39,7 @@ On the contrary, efficient methods for Euclidean distance transform [@felzenszwa
 
  
 
-Despite existing open-source implementation of distance transforms [@geodistk], open-source implementations of efficient Geodesic distance transform algorithms [@weber2008parallel] on CPU and GPU does not exist. However, for Euclidean distance efficient CPU [@eucildeantdimpl] and GPU [@tensorflow2015-whitepaper] implementations exist. To the best of our knowledge, `FastGeodis` is the first open-source implementation of efficient Geodesic distance transform, leading to up to 15x speedup on CPU and up to 60x speedup on GPU as compared to existing open-source libraries [@geodistk]. It also provides efficient implementation of Euclidean distance. In addition, it is the first open-source implementation of generalized Geodesic distance transform and Geodesic Symmetric Filtering (GSF) proposed in [@criminisi2008geos]. 
+Despite existing open-source implementation of distance transforms [@tensorflow2015-whitepaper; @eucildeantdimpl; @geodistk], open-source implementations of efficient Geodesic distance transform algorithms [@weber2008parallel] on CPU and GPU does not exist. However, for Euclidean distance efficient CPU [@eucildeantdimpl] and GPU [@tensorflow2015-whitepaper] implementations exist. To the best of our knowledge, `FastGeodis` is the first open-source implementation of efficient Geodesic distance transform, leading to up to 15x speedup on CPU and up to 60x speedup on GPU as compared to existing open-source libraries [@geodistk]. It also provides efficient implementation of Euclidean distance. In addition, it is the first open-source implementation of generalized Geodesic distance transform and Geodesic Symmetric Filtering (GSF) proposed in [@criminisi2008geos]. 
 
   
 
@@ -51,7 +51,7 @@ The ability to efficiently compute Geodesic and Euclidean distance transforms ca
 
   
 
-`FastGeodis` implements an efficient distance transform algorithm from [@criminisiinteractive], which provides parallelizable raster scan kernels to compute distance transform. The implementation consists of data passes parallelized across a line (2D) or plane (3D). Figure \autoref{fig:hwpasses} shows these data passes. For 2D data, four data passes are required, top-bottom, bottom-top, left-right and right-left, whereas for 3D data 6 passes are required, front-back, back-front, top-bottom, bottom-top and left-right, right-left.  
+`FastGeodis` implements an efficient distance transform algorithm from [@criminisiinteractive], which provides parallelizable raster scan kernels to compute distance transform. The implementation consists of data passes parallelized across a line (2D) or plane (3D). \autoref{fig:hwpasses} shows these data passes. For 2D data, four data passes are required, top-bottom, bottom-top, left-right and right-left, whereas for 3D data 6 passes are required, front-back, back-front, top-bottom, bottom-top, left-right and right-left.  
 
   
 
