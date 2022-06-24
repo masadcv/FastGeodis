@@ -21,12 +21,12 @@ In addition, implementation of generalised version of Geodesic distance transfor
 ## Installation instructions
 The provided package can be installed using:
 
-`pip install git+https://github.com/masadcv/FastGeodis`
+`pip install FastGeodis`
 
 or
 
-TODO:
-`pip install FastGeodis`
+`pip install git+https://github.com/masadcv/FastGeodis`
+
 
 If you use this code, then please cite our paper: TODO
 
