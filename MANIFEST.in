@@ -2,3 +2,4 @@ include requirements.txt
 include src/*h
 include src/*cpp
 include src/*cu
+include src/*py

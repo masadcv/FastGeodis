@@ -71,7 +71,7 @@ def omp_flags():
 def get_extensions():
     # this_dir = os.path.dirname(os.path.abspath(__file__))
     # ext_dir = os.path.join(this_dir, "src")
-    ext_dir = "src"
+    ext_dir = "FastGeodis"
     include_dirs = [ext_dir]
 
     source_cpu = glob.glob(os.path.join(ext_dir, "**", "*.cpp"), recursive=True)
@@ -103,7 +103,7 @@ def get_extensions():
     
     ext_modules = [
         extension(
-            name="FastGeodis",
+            name="FastGeodisCpp",
             sources=sources,
             include_dirs=include_dirs,
             define_macros=define_macros,
