@@ -1,5 +1,5 @@
 include requirements.txt
-include src/*h
-include src/*cpp
-include src/*cu
-include src/*py
+include FastGeodis/*h
+include FastGeodis/*cpp
+include FastGeodis/*cu
+include FastGeodis/*py
