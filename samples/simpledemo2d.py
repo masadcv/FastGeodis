@@ -14,18 +14,30 @@ mask_pt = torch.ones_like(image_pt)
 mask_pt[..., 100, 100] = 0
 
 v = 1e10
-lamb = 1.0
 iterations = 2
+
+lamb = 1.0 # <-- Geodesic distance transform
 geodesic_dist = FastGeodis.generalised_geodesic2d(
-    image_pt, mask_pt, v, lamb, 1 - lamb, iterations
+    image_pt, mask_pt, v, lamb, iterations
 )
 geodesic_dist = np.squeeze(geodesic_dist.cpu().numpy())
 
+lamb=0.0 # <-- Euclidean distance transform
+euclidean_dist = FastGeodis.generalised_geodesic2d(
+    image_pt, mask_pt, v, lamb, iterations
+)
+euclidean_dist = np.squeeze(euclidean_dist.cpu().numpy())
+
 plt.figure()
-plt.subplot(1, 2, 1)
+plt.subplot(1, 3, 1)
 plt.imshow(image)
 
-plt.subplot(1, 2, 2)
+plt.subplot(1, 3, 2)
 plt.imshow(geodesic_dist)
 plt.plot(100, 100, "mo")
+
+plt.subplot(1, 3, 3)
+plt.imshow(euclidean_dist)
+plt.plot(100, 100, "mo")
+
 plt.show()

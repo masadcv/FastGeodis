@@ -26,8 +26,8 @@ def geodesic_distance_2d(I, S, lamb, iter):
 def evaluate_geodesic_distance2d(image, seed_pos):
     SHOW_JOINT_HIST = False
     # get image and create seed image
-    Image = np.asanyarray(image, np.float32)
-    Seed = np.zeros((Image.shape[0], Image.shape[1]), np.float32)
+    input_image = np.asanyarray(image, np.float32)
+    Seed = np.zeros((input_image.shape[0], input_image.shape[1]), np.float32)
     Seed[seed_pos[0]][seed_pos[1]] = 1
 
     # run and time each method
@@ -36,23 +36,23 @@ def evaluate_geodesic_distance2d(image, seed_pos):
     lamb = 1.0
 
     tic = time.time()
-    fastmarch_output = GeodisTK.geodesic2d_fast_marching(Image, Seed.astype(np.uint8))
+    fastmarch_output = GeodisTK.geodesic2d_fast_marching(input_image, Seed.astype(np.uint8))
     fastmarch_time = time.time() - tic
 
     tic = time.time()
     geodistkraster_output = geodesic_distance_2d(
-        Image, Seed.astype(np.uint8), lamb, iterations
+        input_image, Seed.astype(np.uint8), lamb, iterations
     )
     geodistkraster_time = time.time() - tic
 
-    if Image.ndim == 3:
-        Image = np.moveaxis(Image, -1, 0)
+    if input_image.ndim == 3:
+        input_image = np.moveaxis(input_image, -1, 0)
     else:
-        Image = np.expand_dims(Image, 0)
+        input_image = np.expand_dims(input_image, 0)
 
     device = "cpu"
-    It = torch.from_numpy(Image).unsqueeze_(0).to(device)
-    St = (
+    input_image_pt = torch.from_numpy(input_image).unsqueeze_(0).to(device)
+    seed_image_pt = (
         torch.from_numpy(1 - Seed.astype(np.float32))
         .unsqueeze_(0)
         .unsqueeze_(0)
@@ -61,18 +61,18 @@ def evaluate_geodesic_distance2d(image, seed_pos):
 
     tic = time.time()
     fastraster_output_cpu = np.squeeze(
-        FastGeodis.generalised_geodesic2d(It, St, v, lamb, iterations).cpu().numpy()
+        FastGeodis.generalised_geodesic2d(input_image_pt, seed_image_pt, v, lamb, iterations).cpu().numpy()
     )
     fastraster_time_cpu = time.time() - tic
 
-    device = "cuda" if It.shape[1] == 1 and torch.cuda.is_available() else None
+    device = "cuda" if input_image_pt.shape[1] == 1 and torch.cuda.is_available() else None
     if device:
-        It = It.to(device)
-        St = St.to(device)
+        input_image_pt = input_image_pt.to(device)
+        seed_image_pt = seed_image_pt.to(device)
 
         tic = time.time()
         fastraster_output_gpu = np.squeeze(
-            FastGeodis.generalised_geodesic2d(It, St, v, lamb, iterations).cpu().numpy()
+            FastGeodis.generalised_geodesic2d(input_image_pt, seed_image_pt, v, lamb, iterations).cpu().numpy()
         )
         fastraster_time_gpu = time.time() - tic
 

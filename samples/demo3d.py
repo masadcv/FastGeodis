@@ -1,13 +1,15 @@
 import math
+import os
 import time
 from functools import wraps
 
-import torch
 import FastGeodis
 import GeodisTK
 import matplotlib.pyplot as plt
 import numpy as np
 import SimpleITK as sitk
+import torch
+
 
 def geodistk_geodesic_distance_3d(I, S, spacing, lamb, iter):
     """Compute Geodesic Distance using GeodisTK raster scanning.
@@ -26,102 +28,177 @@ def geodistk_geodesic_distance_3d(I, S, spacing, lamb, iter):
     return GeodisTK.geodesic3d_raster_scan(I, S, spacing, lamb, iter)
 
 
-def demo_geodesic_distance3d():
+def demo_geodesic_distance3d(image_path, seed_pos):
     SHOW_JOINT_HIST = False
-    input_name = "data/img3d.nii.gz"
-    img = sitk.ReadImage(input_name)
-    I = sitk.GetArrayFromImage(img)
-    spacing_raw = img.GetSpacing()
+    image_folder = os.path.dirname(image_path)
+    image_sitk = sitk.ReadImage(image_path)
+    input_image = sitk.GetArrayFromImage(image_sitk)
+    spacing_raw = image_sitk.GetSpacing()
     spacing = [spacing_raw[2], spacing_raw[1], spacing_raw[0]]
-    I = np.asarray(I, np.float32)
-    I = I[18:38, 63:183, 93:233]
-    S = np.zeros_like(I, np.uint8)
-    S[10][60][70] = 1
-    t0 = time.time()
-    D1 = GeodisTK.geodesic3d_fast_marching(I, S, spacing)
-    t1 = time.time()
-    D2 = geodistk_geodesic_distance_3d(I, S, spacing, 1.0, 4)
-    dt1 = t1 - t0
-    dt2 = time.time() - t1
-    It = torch.from_numpy(I).unsqueeze_(0).unsqueeze_(0)
-    St = torch.from_numpy(1 - S.astype(np.float32)).unsqueeze_(0).unsqueeze_(0)
-    D3 = np.squeeze(
-        FastGeodis.generalised_geodesic3d(
-            It, St, spacing, 1e10, 1.0, 4
-        ).numpy()
+
+    input_image = np.asarray(input_image, np.float32)
+    input_image = input_image[18:38, 63:183, 93:233]
+    seed_image = np.zeros_like(input_image, np.uint8)
+    seed_image[seed_pos[0]][seed_pos[1]][seed_pos[2]] = 1
+
+    tic = time.time()
+    fastmarch_output = GeodisTK.geodesic3d_fast_marching(
+        input_image, seed_image, spacing
     )
-    print("runtime(s) fast marching {0:}".format(dt1))
-    print("runtime(s) raster scan   {0:}".format(dt2))
+    fastmarch_time = time.time() - tic
 
-    img_d1 = sitk.GetImageFromArray(D1)
-    img_d1.SetSpacing(spacing_raw)
-    sitk.WriteImage(img_d1, "data/image3d_dis1.nii.gz")
+    tic = time.time()
+    geodistkraster_output = geodistk_geodesic_distance_3d(
+        input_image, seed_image, spacing, 1.0, 4
+    )
+    geodistkraster_time = time.time() - tic
 
-    img_d2 = sitk.GetImageFromArray(D2)
-    img_d2.SetSpacing(spacing_raw)
-    sitk.WriteImage(img_d2, "data/image3d_dis2.nii.gz")
+    device = "cpu"
+    input_image_pt = torch.from_numpy(input_image).unsqueeze_(0).unsqueeze_(0)
+    seed_image_pt = (
+        torch.from_numpy(1 - seed_image.astype(np.float32)).unsqueeze_(0).unsqueeze_(0)
+    )
+    input_image_pt = input_image_pt.to(device)
+    seed_image_pt = seed_image_pt.to(device)
+    tic = time.time()
+    fastraster_output_cpu = np.squeeze(
+        FastGeodis.generalised_geodesic3d(
+            input_image_pt, seed_image_pt, spacing, 1e10, 1.0, 4
+        )
+        .detach()
+        .cpu()
+        .numpy()
+    )
+    fastraster_time_cpu = time.time() - tic
 
-    img_d3 = sitk.GetImageFromArray(D3)
+    device = (
+        "cuda" if input_image_pt.shape[1] == 1 and torch.cuda.is_available() else None
+    )
+    if device:
+        input_image_pt = input_image_pt.to(device)
+        seed_image_pt = seed_image_pt.to(device)
+        tic = time.time()
+        fastraster_output_gpu = np.squeeze(
+            FastGeodis.generalised_geodesic3d(
+                input_image_pt, seed_image_pt, spacing, 1e10, 1.0, 4
+            )
+            .detach()
+            .cpu()
+            .numpy()
+        )
+        fastraster_time_gpu = time.time() - tic
+
+    print(
+        "Fast Marching: {:.6f} s \nGeodisTk raster: {:.6f} s \nFastGeodis CPU raster: {:.6f} s".format(
+            fastmarch_time, geodistkraster_time, fastraster_time_cpu
+        )
+    )
+    if device:
+        print("FastGeodis GPU raster: {:.6f} s".format(fastraster_time_gpu))
+
+    img_fastmarch_output = sitk.GetImageFromArray(fastmarch_output)
+    img_fastmarch_output.SetSpacing(spacing_raw)
+    sitk.WriteImage(
+        img_fastmarch_output, os.path.join(image_folder, "image3d_dis1.nii.gz")
+    )
+
+    img_geodistkraster_output = sitk.GetImageFromArray(geodistkraster_output)
+    img_geodistkraster_output.SetSpacing(spacing_raw)
+    sitk.WriteImage(
+        img_geodistkraster_output, os.path.join(image_folder, "image3d_dis2.nii.gz")
+    )
+
+    img_d3 = sitk.GetImageFromArray(fastraster_output_cpu)
     img_d3.SetSpacing(spacing_raw)
-    sitk.WriteImage(img_d3, "data/image3d_dis3.nii.gz")
+    sitk.WriteImage(img_d3, os.path.join(image_folder, "image3d_dis3.nii.gz"))
 
-    I_sub = sitk.GetImageFromArray(I)
-    I_sub.SetSpacing(spacing_raw)
-    sitk.WriteImage(I_sub, "data/image3d_sub.nii.gz")
+    input_image_sub = sitk.GetImageFromArray(input_image)
+    input_image_sub.SetSpacing(spacing_raw)
+    sitk.WriteImage(input_image_sub, os.path.join(image_folder, "image3d_sub.nii.gz"))
 
-    I = I * 255 / I.max()
-    I = np.asarray(I, np.uint8)
+    input_image = input_image * 255 / input_image.max()
+    input_image = np.asarray(input_image, np.uint8)
 
-    I_slice = I[10]
-    D1_slice = D1[10]
-    D2_slice = D2[10]
-    D3_slice = D3[10]
-    plt.figure(figsize=(15, 5))
-    plt.subplot(1, 5, 1)
-    plt.imshow(I_slice, cmap="gray")
+    image_slice = input_image[10]
+    fastmarch_output_slice = fastmarch_output[10]
+    geodistkraster_output_slice = geodistkraster_output[10]
+    fastraster_output_cpu_slice = fastraster_output_cpu[10]
+    if device:
+        fastraster_output_gpu_slice = fastraster_output_gpu[10]
+
+    plt.figure(figsize=(18, 6))
+    plt.subplot(2, 5, 1)
+    plt.imshow(image_slice, cmap="gray")
     plt.autoscale(False)
     plt.plot([70], [60], "ro")
     plt.axis("off")
     plt.title("(a) Input image")
 
-    plt.subplot(1, 5, 2)
-    plt.imshow(D1_slice)
+    plt.subplot(2, 4, 2)
+    plt.imshow(fastmarch_output_slice)
     plt.axis("off")
-    plt.title("(b) Fast Marching")
+    plt.title("(b) Fast Marching | ({:.4f} s)".format(fastmarch_time))
 
-    plt.subplot(1, 5, 3)
-    plt.imshow(D2_slice)
+    plt.subplot(2, 4, 3)
+    plt.imshow(fastraster_output_cpu_slice)
     plt.axis("off")
-    plt.title("(c) GeodisTK")
+    plt.title("(c) FastGeodis (cpu) | ({:.4f} s)".format(fastraster_time_cpu))
 
-    plt.subplot(1, 5, 4)
-    plt.imshow(D3_slice)
+    plt.subplot(2, 4, 6)
+    plt.imshow(geodistkraster_output_slice)
     plt.axis("off")
-    plt.title("(d) FastGeodis")
+    plt.title("(d) GeodisTK | ({:.4f} s)".format(geodistkraster_time))
 
-    diff = D1 - D3
-    diff_slice = diff[10]
-    plt.subplot(1, 5, 5)
+    if device:
+        plt.subplot(2, 4, 7)
+        plt.imshow(fastraster_output_gpu_slice)
+        plt.axis("off")
+        plt.title("(e) FastGeodis (gpu) | ({:.4f} s)".format(fastraster_time_gpu))
+
+    diff = (
+        abs(fastmarch_output - fastraster_output_cpu) / (fastmarch_output + 1e-7) * 100
+    )
+    diff_vol = fastmarch_output - fastraster_output_cpu
+    diff_slice = diff_vol[10]
+    plt.subplot(2, 4, 4)
     plt.imshow(diff_slice)
     plt.axis("off")
     plt.title(
-        "(d) Fast Marching \nvs. FastGeodis\nmax diff: {}\nmin diff: {}".format(
+        "(f) Fast Marching vs. FastGeodis (cpu)\ndiff: max: {:.4f} | min: {:.4f}".format(
             np.max(diff), np.min(diff)
         )
     )
+
+    if device:
+        diff = (
+            abs(fastmarch_output - fastraster_output_gpu)
+            / (fastmarch_output + 1e-7)
+            * 100
+        )
+        diff_vol = fastmarch_output - fastraster_output_gpu
+        diff_slice = diff_vol[10]
+        plt.subplot(2, 4, 8)
+        plt.imshow(diff_slice)
+        plt.axis("off")
+        plt.title(
+            "(g) Fast Marching vs. FastGeodis (gpu)\ndiff: max: {:.4f} | min: {:.4f}".format(
+                np.max(diff), np.min(diff)
+            )
+        )
+
     plt.show()
 
-    if SHOW_JOINT_HIST: 
+    if SHOW_JOINT_HIST:
         plt.figure()
         plt.subplot(1, 2, 1)
-        plt.hist2d(D1.flatten(), D2.flatten(), bins=50)
+        plt.hist2d(fastmarch_output.flatten(), geodistkraster_output.flatten(), bins=50)
         plt.xlabel("Fast Marching")
         plt.ylabel("GeodisTK")
         plt.title("Joint histogram\nFast Marching vs. GeodisTK")
         # plt.gca().set_aspect("equal", adjustable="box")
 
         plt.subplot(1, 2, 2)
-        plt.hist2d(D1.flatten(), D3.flatten(), bins=50)
+        plt.hist2d(fastmarch_output.flatten(), fastraster_output_cpu.flatten(), bins=50)
         plt.xlabel("Fast Marching")
         plt.ylabel("FastGeodis")
         plt.title("Joint histogram\nFast Marching vs. FastGeodis")
@@ -132,4 +209,4 @@ def demo_geodesic_distance3d():
 
 
 if __name__ == "__main__":
-    demo_geodesic_distance3d()
+    demo_geodesic_distance3d("data/img3d.nii.gz", [10, 60, 70])
