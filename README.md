@@ -86,7 +86,7 @@ A number of unittests are provided, which can be run as:
 
 `python -m unittest`
 
-# Documentation
+## Documentation
 Further details of each function implemented in FastGeodis can be accessed at the documentation hosted at: [https://masadcv.github.io/FastGeodis/index.html](https://masadcv.github.io/FastGeodis/index.html). 
 
 ## Comparison of Execution Time and Accuracy
