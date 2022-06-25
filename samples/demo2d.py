@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
-
 def geodesic_distance_2d(I, S, lamb, iter):
     """Compute Geodesic Distance using GeodisTK raster scanning.
 
@@ -25,6 +24,7 @@ def geodesic_distance_2d(I, S, lamb, iter):
 
 
 def evaluate_geodesic_distance2d(image, seed_pos):
+    SHOW_JOINT_HIST = False
     # get image and create seed image
     Image = np.asanyarray(image, np.float32)
     Seed = np.zeros((Image.shape[0], Image.shape[1]), np.float32)
@@ -143,34 +143,35 @@ def evaluate_geodesic_distance2d(image, seed_pos):
         )
 
     # plt.colorbar()
-    # plt.show()
+    plt.show()
 
-    plt.figure(figsize=(14, 4))
-    plt.subplot(1, 3, 1)
-    plt.hist2d(fastmarch_output.flatten(), geodistkraster_output.flatten(), bins=50)
-    plt.xlabel("Fast Marching")
-    plt.ylabel("GeodisTK")
-    plt.title("Joint histogram\nFast Marching vs. GeodisTK")
-    # plt.gca().set_aspect("equal", adjustable="box")
-
-    plt.title("Joint histogram\nFast Marching vs. FastGeodis (cpu)")
-    plt.subplot(1, 3, 2)
-    plt.hist2d(fastmarch_output.flatten(), fastraster_output_cpu.flatten(), bins=50)
-    plt.xlabel("Fast Marching")
-    plt.ylabel("FastGeodis (cpu)")
-    # plt.gca().set_aspect("equal", adjustable="box")
-
-    if device:
-        plt.subplot(1, 3, 3)
-        plt.hist2d(fastmarch_output.flatten(), fastraster_output_gpu.flatten(), bins=50)
+    if SHOW_JOINT_HIST:
+        plt.figure(figsize=(14, 4))
+        plt.subplot(1, 3, 1)
+        plt.hist2d(fastmarch_output.flatten(), geodistkraster_output.flatten(), bins=50)
         plt.xlabel("Fast Marching")
-        plt.ylabel("FastGeodis (gpu)")
-        plt.title("Joint histogram\nFast Marching vs. FastGeodis (gpu)")
+        plt.ylabel("GeodisTK")
+        plt.title("Joint histogram\nFast Marching vs. GeodisTK")
         # plt.gca().set_aspect("equal", adjustable="box")
 
-    plt.tight_layout()
-    # plt.colorbar()
-    plt.show()
+        plt.title("Joint histogram\nFast Marching vs. FastGeodis (cpu)")
+        plt.subplot(1, 3, 2)
+        plt.hist2d(fastmarch_output.flatten(), fastraster_output_cpu.flatten(), bins=50)
+        plt.xlabel("Fast Marching")
+        plt.ylabel("FastGeodis (cpu)")
+        # plt.gca().set_aspect("equal", adjustable="box")
+
+        if device:
+            plt.subplot(1, 3, 3)
+            plt.hist2d(fastmarch_output.flatten(), fastraster_output_gpu.flatten(), bins=50)
+            plt.xlabel("Fast Marching")
+            plt.ylabel("FastGeodis (gpu)")
+            plt.title("Joint histogram\nFast Marching vs. FastGeodis (gpu)")
+            # plt.gca().set_aspect("equal", adjustable="box")
+
+        plt.tight_layout()
+        # plt.colorbar()
+        plt.show()
 
 
 def demo_geodesic_distance2d(image):

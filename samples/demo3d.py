@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import SimpleITK as sitk
 
-
 def geodistk_geodesic_distance_3d(I, S, spacing, lamb, iter):
     """Compute Geodesic Distance using GeodisTK raster scanning.
 
@@ -28,6 +27,7 @@ def geodistk_geodesic_distance_3d(I, S, spacing, lamb, iter):
 
 
 def demo_geodesic_distance3d():
+    SHOW_JOINT_HIST = False
     input_name = "data/img3d.nii.gz"
     img = sitk.ReadImage(input_name)
     I = sitk.GetArrayFromImage(img)
@@ -111,23 +111,24 @@ def demo_geodesic_distance3d():
     )
     plt.show()
 
-    plt.figure()
-    plt.subplot(1, 2, 1)
-    plt.hist2d(D1.flatten(), D2.flatten(), bins=50)
-    plt.xlabel("Fast Marching")
-    plt.ylabel("GeodisTK")
-    plt.title("Joint histogram\nFast Marching vs. GeodisTK")
-    # plt.gca().set_aspect("equal", adjustable="box")
+    if SHOW_JOINT_HIST: 
+        plt.figure()
+        plt.subplot(1, 2, 1)
+        plt.hist2d(D1.flatten(), D2.flatten(), bins=50)
+        plt.xlabel("Fast Marching")
+        plt.ylabel("GeodisTK")
+        plt.title("Joint histogram\nFast Marching vs. GeodisTK")
+        # plt.gca().set_aspect("equal", adjustable="box")
 
-    plt.subplot(1, 2, 2)
-    plt.hist2d(D1.flatten(), D3.flatten(), bins=50)
-    plt.xlabel("Fast Marching")
-    plt.ylabel("FastGeodis")
-    plt.title("Joint histogram\nFast Marching vs. FastGeodis")
-    # plt.gca().set_aspect("equal", adjustable="box")
+        plt.subplot(1, 2, 2)
+        plt.hist2d(D1.flatten(), D3.flatten(), bins=50)
+        plt.xlabel("Fast Marching")
+        plt.ylabel("FastGeodis")
+        plt.title("Joint histogram\nFast Marching vs. FastGeodis")
+        # plt.gca().set_aspect("equal", adjustable="box")
 
-    plt.tight_layout()
-    plt.show()
+        plt.tight_layout()
+        plt.show()
 
 
 if __name__ == "__main__":
