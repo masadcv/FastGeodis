@@ -76,7 +76,6 @@ euclidean_dist = np.squeeze(euclidean_dist.cpu().numpy())
 ```
 
 For more usage examples see:
-For more usage examples see:
 | Description  |  Python |  Colab link  |
 |--------------|---------|--------------|
 | **Simple 2D Geodesic and Euclidean Distance** | [`samples/simpledemo2d.py`](./samples/simpledemo2d.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/simpledemo2d.ipynb)  |
