@@ -53,11 +53,11 @@ The ability to efficiently compute Geodesic and Euclidean distance transforms ca
 
   
 
-`FastGeodis` package is implemented using `PyTorch` [@NEURIPS2019_9015] utilizing OpenMP for CPU and CUDA for GPU parallelization of the algorithm. It is accessible as a python package, that can be installed across different operating systems and devices. Several examples are provided for understanding the usage of the library on 2D and 3D data using CPU or GPU.
+`FastGeodis` package is implemented using `PyTorch` [@NEURIPS2019_9015] utilizing OpenMP for CPU and CUDA for GPU parallelization of the algorithm. It is accessible as a python package, that can be installed across different operating systems and devices. Several examples are provided for understanding the usage of the package on 2D and 3D data using CPU or GPU.
 
   
 
-![Raster scan passes in FastGeodis.\label{fig:hwpasses}](FastGeodis.png){ width=100% } 
+![Raster scan passes in FastGeodis.\label{fig:hwpasses}](FastGeodis.png){ width=80% } 
 
 # Acknowledgements
 
