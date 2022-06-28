@@ -191,6 +191,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
 {
     m.def("generalised_geodesic2d", &generalised_geodesic2d, "Generalised Geodesic distance 2d");
     m.def("GSF2d", &GSF2d, "Geodesic Symmetric Filtering 2d");
+    m.def("signed_generalised_geodesic2d", &getDs2d, "Signed Generalised Geodesic distance 2d");
     m.def("generalised_geodesic3d", &generalised_geodesic3d, "Generalised Geodesic distance 3d");
     m.def("GSF3d", &GSF3d, "Geodesic Symmetric Filtering 3d");
+    m.def("signed_generalised_geodesic3d", &getDs3d, "Signed Generalised Geodesic distance 3d");
 }
