@@ -159,8 +159,8 @@ torch::Tensor GSF2d(torch::Tensor &image, const torch::Tensor &mask, const float
     torch::Tensor Md = (Ds_M > theta).type_as(Ds_M);
     torch::Tensor Me = (Ds_M > -theta).type_as(Ds_M);
 
-    torch::Tensor Dd_Md = -getDs2d(image, 1 - Md, v, lambda, 1-lambda, iterations);
-    torch::Tensor De_Me = getDs2d(image, Me, v, lambda, 1-lambda, iterations);
+    torch::Tensor Dd_Md = -getDs2d(image, 1 - Md, v, lambda, 1 - lambda, iterations);
+    torch::Tensor De_Me = getDs2d(image, Me, v, lambda, 1 - lambda, iterations);
 
     return Dd_Md + De_Me;
 }
