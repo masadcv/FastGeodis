@@ -12,7 +12,7 @@ authors:
     affiliation: 1
     corresponding: true
   - name: Reuben Dorent
-    # orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-7530-0644
     affiliation: 1
   - name: Tom Vercauteren
     orcid: 0000-0003-1794-0456
