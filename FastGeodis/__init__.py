@@ -124,7 +124,7 @@ def signed_generalised_geodesic2d(
         torch.Tensor with distance transform
     """
     return FastGeodisCpp.signed_generalised_geodesic2d(
-        image, softmask, v, lamb, iter
+        image, softmask, v, lamb, 1 - lamb, iter
     )
 
 
@@ -157,7 +157,7 @@ def signed_generalised_geodesic3d(
         torch.Tensor with distance transform
     """
     return FastGeodisCpp.signed_generalised_geodesic3d(
-        image, softmask, spacing, v, lamb, iter
+        image, softmask, spacing, v, lamb, 1 - lamb, iter
     )
 
 
