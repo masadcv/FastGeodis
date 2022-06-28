@@ -15,7 +15,7 @@ This repository provides CPU (OpenMP) and GPU (CUDA) implementations of Generali
 
 The above raster scan method can be parallelised for each row/plane on an available device (CPU or GPU). This leads to significant speed up as compared to existing non-parallelised raster scan implementations (e.g. [https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK)). Python interface is provided (using PyTorch) for enabling its use in deep learning and image processing pipelines.
 
-In addition, implementation of generalised version of Geodesic distance transforms along with Geodesic Symmetric Filtering (GSF) is provided for use in interactive segmentation methods, that were originally proposed in [1, 2].
+In addition, implementation of generalised version of Geodesic distance transforms along with Geodesic Symmetric Filtering (GSF) is provided for use in interactive segmentation methods, that were originally proposed in [1, 2, 5].
 
 
 ## Installation instructions
@@ -116,10 +116,12 @@ FastGeodis (CPU/GPU) is compared with existing GeodisTK ([https://github.com/tai
 | <img src="https://raw.githubusercontent.com/masadcv/FastGeodis/master/figures/fast_marching_compare_3d.png?raw=true" width="800" /> | <img src="https://raw.githubusercontent.com/masadcv/FastGeodis/master/figures/fast_marching_compare_3d_jointhist.png?raw=true" width="400" /> |
 
 ## References
-- [1] Criminisi, Antonio, Toby Sharp, and Khan Siddiqui. "Interactive Geodesic Segmentation of n-Dimensional Medical Images on the Graphics Processor."
+- [1] Criminisi, Antonio, Toby Sharp, and Khan Siddiqui. "Interactive Geodesic Segmentation of n-Dimensional Medical Images on the Graphics Processor." Radiological Society of North America (RSNA), 2009. [[pdf](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/Criminisi_RSNA09_extendedAbstract1.pdf), [ppt](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/RSNA2009_Segmentation_Criminisi.ppt), [url](https://www.microsoft.com/en-us/research/publication/interactive-geodesic-segmentation-of-n-dimensional-medical-images-on-the-graphics-processor/)]
 
-- [2] Criminisi, Antonio, Toby Sharp, and Andrew Blake. "Geos: Geodesic image segmentation." European Conference on Computer Vision. Springer, Berlin, Heidelberg, 2008.
+- [2] Criminisi, Antonio, Toby Sharp, and Andrew Blake. "Geos: Geodesic image segmentation." European Conference on Computer Vision. Springer, Berlin, Heidelberg, 2008. [[doi](https://doi.org/10.1007/978-3-540-88682-2_9)]
 
-- [3] Weber, Ofir, et al. "Parallel algorithms for approximation of distance maps on parametric surfaces." ACM Transactions on Graphics (TOG), (2008).
+- [3] Weber, Ofir, et al. "Parallel algorithms for approximation of distance maps on parametric surfaces." ACM Transactions on Graphics (TOG), (2008). [[doi](https://doi.org/10.1145/1409625.1409626)]
 
 - [4] GeodisTK: [https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK)
+
+- [5] Criminisi, Antonio, Toby Sharp, Carsten Rother, and Patrick Pérez. "Geodesic image and video editing." ACM Trans. Graph. 29, no. 5 (2010): 134-1. [[doi](https://doi.org/10.1145/1857907.1857910)]
