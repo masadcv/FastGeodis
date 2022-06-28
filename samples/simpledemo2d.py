@@ -5,7 +5,7 @@ from PIL import Image
 
 import FastGeodis
 
-device = "cuda" if torch.cuda.is_available else "cpu"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 image = np.asarray(Image.open("data/img2d.png"), np.float32)
 
 image_pt = torch.from_numpy(image).unsqueeze_(0).unsqueeze_(0)
