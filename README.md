@@ -79,6 +79,7 @@ For more usage examples see:
 | Description  |  Python |  Colab link  |
 |--------------|---------|--------------|
 | **Simple 2D Geodesic and Euclidean Distance** | [`samples/simpledemo2d.py`](./samples/simpledemo2d.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/simpledemo2d.ipynb)  |
+| **Simple Signed 2D Geodesic and Euclidean Distance** | [`samples/simpledemo2d_signed.py`](./samples/simpledemo2d_signed.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/simpledemo2d_signed.ipynb) |
 | **2D Geodesic Distance** | [`samples/demo2d.py`](./samples/demo2d.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/demo2d.ipynb)  |
 | **3D Geodesic Distance** | [`samples/demo3d.py`](./samples/demo3d.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/demo3d.ipynb)  |
 | **2D GSF Segmentation Smoothing** |  [`samples/demoGSF2d_SmoothingSegExample.ipynb`](./samples/demoGSF2d_SmoothingSegExample.ipynb) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/demoGSF2d_SmoothingSegExample.ipynb) | 
