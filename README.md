@@ -5,8 +5,7 @@
 <img src="https://img.shields.io/badge/Python-3.6%20|%203.7%20|%203.8%20|%203.9-3776ab.svg"/>
 <img src="https://img.shields.io/badge/PyTorch-%3E%3D%201.5.0-brightgreen.svg"/>
 
-This repository provides CPU (OpenMP) and GPU (CUDA) implementations of Generalised Geodesic Distance Transform in PyTorch for 2D and 3D input data based on parallelisable raster scan ideas from [1, 3]. It includes methods for computing Geodesic, Euclidean distance transform and mixture of both.
-
+This repository provides CPU (OpenMP) and GPU (CUDA) implementations of Generalised Geodesic Distance Transform in PyTorch for 2D and 3D input data based on parallelisable raster scan ideas from [1, 3]. It includes methods for computing Geodesic, Euclidean distance transform and mixture of both. 
 
 | 2D images, 1 of 4 passes | 3D volumes, 1 of 6 passes  |
 |-------------------|-------------------------|
@@ -17,6 +16,7 @@ The above raster scan method can be parallelised for each row/plane on an availa
 
 In addition, implementation of generalised version of Geodesic distance transforms along with Geodesic Symmetric Filtering (GSF) is provided for use in interactive segmentation methods, that were originally proposed in [1, 2, 5].
 
+> The raster scan based implementation provides a balance towards speed rather than accuracy of Geodesic distance transform and hence results in efficient hardware utilisation. On the other hand, in case of Euclidean distance transform, exact results can be achieved with other packages (albeit not on necessarilly on GPU) [6, 7, 8]
 
 ## Installation instructions
 The provided package can be installed using:
@@ -124,3 +124,9 @@ FastGeodis (CPU/GPU) is compared with existing GeodisTK ([https://github.com/tai
 - [4] GeodisTK: [https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK)
 
 - [5] Criminisi, Antonio, Toby Sharp, Carsten Rother, and Patrick Pérez. "Geodesic image and video editing." ACM Trans. Graph. 29, no. 5 (2010): 134-1. [[doi](https://doi.org/10.1145/1857907.1857910)]
+
+- [6] [https://github.com/seung-lab/euclidean-distance-transform-3d](https://github.com/seung-lab/euclidean-distance-transform-3d)
+
+- [7] [https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.distance_transform_edt.html](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.distance_transform_edt.html)
+
+- [8] [https://www.tensorflow.org/addons/api_docs/python/tfa/image/euclidean_dist_transform](https://www.tensorflow.org/addons/api_docs/python/tfa/image/euclidean_dist_transform)
