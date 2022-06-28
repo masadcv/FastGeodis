@@ -37,7 +37,7 @@ The following demonstrates a simple example showing FastGeodis usage:
 
 To compute Geodesic Distance Transform:
 ```python
-device = "cuda" if torch.cuda.is_available else "cpu"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 image = np.asarray(Image.open("data/img2d.png"), np.float32)
 
 image_pt = torch.from_numpy(image).unsqueeze_(0).unsqueeze_(0)
@@ -57,7 +57,7 @@ geodesic_dist = np.squeeze(geodesic_dist.cpu().numpy())
 
 To compute Euclidean Distance Transform:
 ```python
-device = "cuda" if torch.cuda.is_available else "cpu"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 image = np.asarray(Image.open("data/img2d.png"), np.float32)
 
 image_pt = torch.from_numpy(image).unsqueeze_(0).unsqueeze_(0)
