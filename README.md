@@ -29,7 +29,9 @@ or
 `pip install git+https://github.com/masadcv/FastGeodis`
 
 
-If you use this code, then please cite our paper: TODO
+If you use this code, then please consider citing our paper: 
+[![status](https://joss.theoj.org/papers/d0b6e3daa4b22fec471691c6f1c60e2a/status.svg)](https://joss.theoj.org/papers/d0b6e3daa4b22fec471691c6f1c60e2a)
+
 
 ## Example usage
 
