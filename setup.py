@@ -122,7 +122,7 @@ with open("requirements.txt", "r") as fp:
 
 setup(
     name="FastGeodis",
-    version="1.0.0rc5",
+    version="1.0.0rc6",
     description="Fast Implementation of Generalised Geodesic Distance Transform for CPU (OpenMP) and GPU (CUDA)",
     long_description=long_description,
     long_description_content_type="text/markdown",
