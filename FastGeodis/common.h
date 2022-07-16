@@ -54,12 +54,12 @@ void check_spatial_shape_match(const torch::Tensor &in1, const torch::Tensor &in
 {
     if (in1.dim() != in2.dim())
     {
-        throw std::invalid_argument("dimensions of input tensors do not match " 
-            + std::to_string(in1.dim() - 2) + " vs " + std::to_string(in2.dim() - 2));
+        throw std::invalid_argument("dimensions of input tensors do not match " + \
+            std::to_string(in1.dim() - 2) + " vs " + std::to_string(in2.dim() - 2));
     }
-    for(int i=0; i < dims; i++)
+    for (int i = 0; i < dims; i++)
     {
-        if(in1.size(2+i) != in2.size(2+i))
+        if (in1.size(2 + i) != in2.size(2 + i))
         {
             std::cout << "Tensor1 ";
             print_shape(in1);
@@ -116,5 +116,5 @@ void check_input_dimensions(const torch::Tensor &image, const torch::Tensor &mas
     check_single_batch(mask);
 
     // check spatial shapes match
-    check_spatial_shape_match(image, mask, num_dims-2);    
+    check_spatial_shape_match(image, mask, num_dims - 2);
 }
