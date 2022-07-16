@@ -102,9 +102,6 @@ void geodesic_updown_pass_cpu(const torch::Tensor &image, torch::Tensor &distanc
     // constexpr float local_dist[] = {sqrt(float(2.)), float(1.), sqrt(float(2.))};
     const float local_dist[] = {sqrt(float(2.)), float(1.), sqrt(float(2.))};
 
-    std::vector<float> pval_v(channel);
-    std::vector<float> qval_v(channel);
-
     // top-down
     for (int h = 1; h < height; h++)
     {
@@ -114,20 +111,7 @@ void geodesic_updown_pass_cpu(const torch::Tensor &image, torch::Tensor &distanc
         #endif
         for (int w = 0; w < width; w++)
         {
-            float pval;
-            if (channel == 1)
-            {
-                pval = image_ptr[0][0][h][w];
-            }
-            else
-            {
-                for (int c_i = 0; c_i < channel; c_i++)
-                {
-                    pval_v[c_i] = image_ptr[0][c_i][h][w];
-                }
-            }
             float new_dist = distance_ptr[0][0][h][w];
-
             for (int w_i = 0; w_i < 3; w_i++)
             {
                 const int w_ind = w + w_i - 1;
@@ -137,15 +121,15 @@ void geodesic_updown_pass_cpu(const torch::Tensor &image, torch::Tensor &distanc
                 float l_dist;
                 if (channel == 1)
                 {
-                    l_dist = l1distance(pval, image_ptr[0][0][h - 1][w_ind]);
+                    l_dist = l1distance(image_ptr[0][0][h][w], image_ptr[0][0][h - 1][w_ind]);
                 }
                 else
                 {
+                    l_dist = 0;
                     for (int c_i = 0; c_i < channel; c_i++)
                     {
-                        qval_v[c_i] = image_ptr[0][c_i][h - 1][w_ind];
+                        l_dist += l1distance(image_ptr[0][c_i][h][w], image_ptr[0][c_i][h - 1][w_ind]);
                     }
-                    l_dist = l1distance(pval_v, qval_v, channel);
                 }
                 const float cur_dist = distance_ptr[0][0][h - 1][w_ind] + l_eucl * local_dist[w_i] + l_grad * l_dist;
                 new_dist = std::min(new_dist, cur_dist);
@@ -163,20 +147,7 @@ void geodesic_updown_pass_cpu(const torch::Tensor &image, torch::Tensor &distanc
         #endif
         for (int w = 0; w < width; w++)
         {
-            float pval;
-            if (channel == 1)
-            {
-                pval = image_ptr[0][0][h][w];
-            }
-            else
-            {
-                for (int c_i = 0; c_i < channel; c_i++)
-                {
-                    pval_v[c_i] = image_ptr[0][c_i][h][w];
-                }
-            }
             float new_dist = distance_ptr[0][0][h][w];
-
             for (int w_i = 0; w_i < 3; w_i++)
             {
                 const int w_ind = w + w_i - 1;
@@ -186,15 +157,16 @@ void geodesic_updown_pass_cpu(const torch::Tensor &image, torch::Tensor &distanc
                 float l_dist;
                 if (channel == 1)
                 {
-                    l_dist = l1distance(pval, image_ptr[0][0][h + 1][w_ind]);
+                    l_dist = l1distance(image_ptr[0][0][h][w], image_ptr[0][0][h + 1][w_ind]);
                 }
                 else
                 {
+                    l_dist = 0;
                     for (int c_i = 0; c_i < channel; c_i++)
                     {
-                        qval_v[c_i] = image_ptr[0][c_i][h + 1][w_ind];
+                        l_dist += l1distance(image_ptr[0][c_i][h][w], image_ptr[0][c_i][h + 1][w_ind]);
                     }
-                    l_dist = l1distance(pval_v, qval_v, channel);
+                    
                 }
                 const float cur_dist = distance_ptr[0][0][h + 1][w_ind] + l_eucl * local_dist[w_i] + l_grad * l_dist;
                 new_dist = std::min(new_dist, cur_dist);
@@ -259,9 +231,6 @@ void geodesic_frontback_pass_cpu(const torch::Tensor &image, torch::Tensor &dist
         }
     }
 
-    std::vector<float> pval_v(channel);
-    std::vector<float> qval_v(channel);
-
     // front-back
     for (int z = 1; z < depth; z++)
     {
@@ -273,20 +242,7 @@ void geodesic_frontback_pass_cpu(const torch::Tensor &image, torch::Tensor &dist
         {
             for (int w = 0; w < width; w++)
             {
-                float pval;
-                if (channel == 1)
-                {
-                    pval = image_ptr[0][0][z][h][w];
-                }
-                else
-                {
-                    for (int c_i = 0; c_i < channel; c_i++)
-                    {
-                        pval_v[c_i] = image_ptr[0][c_i][z][h][w];
-                    }
-                }
                 float new_dist = distance_ptr[0][0][z][h][w];
-
                 for (int h_i = 0; h_i < 3; h_i++)
                 {
                     for (int w_i = 0; w_i < 3; w_i++)
@@ -298,17 +254,19 @@ void geodesic_frontback_pass_cpu(const torch::Tensor &image, torch::Tensor &dist
                             continue;
 
                         float l_dist;
+                        l_dist = 0.0;
                         if (channel == 1)
                         {
-                            l_dist = std::abs(pval - image_ptr[0][0][z - 1][h_ind][w_ind]);
+                            l_dist = std::abs(image_ptr[0][0][z][h][w] - image_ptr[0][0][z - 1][h_ind][w_ind]);
                         }
                         else
-                        {
+                        {  
                             for (int c_i = 0; c_i < channel; c_i++)
                             {
-                                qval_v[c_i] = image_ptr[0][c_i][z - 1][h_ind][w_ind];
+                                // qval_v[c_i] = image_ptr[0][c_i][z - 1][h_ind][w_ind];
+                                l_dist += l1distance(image_ptr[0][c_i][z][h][w], image_ptr[0][c_i][z - 1][h_ind][w_ind]);
                             }
-                            l_dist = l1distance(pval_v, qval_v, channel);
+                            
                         }
                         const float cur_dist = distance_ptr[0][0][z - 1][h_ind][w_ind] + l_eucl * local_dist[h_i * 3 + w_i]  + l_grad * l_dist;
                         new_dist = std::min(new_dist, cur_dist);
@@ -330,20 +288,7 @@ void geodesic_frontback_pass_cpu(const torch::Tensor &image, torch::Tensor &dist
         {
             for (int w = 0; w < width; w++)
             {
-                float pval;
-                if (channel == 1)
-                {
-                    pval = image_ptr[0][0][z][h][w];
-                }
-                else
-                {
-                    for (int c_i = 0; c_i < channel; c_i++)
-                    {
-                        pval_v[c_i] = image_ptr[0][c_i][z][h][w];
-                    }
-                }
                 float new_dist = distance_ptr[0][0][z][h][w];
-
                 for (int h_i = 0; h_i < 3; h_i++)
                 {
                     for (int w_i = 0; w_i < 3; w_i++)
@@ -355,17 +300,20 @@ void geodesic_frontback_pass_cpu(const torch::Tensor &image, torch::Tensor &dist
                             continue;
 
                         float l_dist;
+                        l_dist = 0.0;
                         if (channel == 1)
                         {
-                            l_dist = std::abs(pval - image_ptr[0][0][z + 1][h_ind][w_ind]);
+                            l_dist = std::abs(image_ptr[0][0][z][h][w] - image_ptr[0][0][z + 1][h_ind][w_ind]);
                         }
                         else
                         {
+                            
                             for (int c_i = 0; c_i < channel; c_i++)
                             {
-                                qval_v[c_i] = image_ptr[0][c_i][z + 1][h_ind][w_ind];
+                                // qval_v[c_i] = image_ptr[0][c_i][z + 1][h_ind][w_ind];
+                                l_dist += l1distance(image_ptr[0][c_i][z][h][w], image_ptr[0][c_i][z + 1][h_ind][w_ind]);
                             }
-                            l_dist = l1distance(pval_v, qval_v, channel);
+                            
                         }
                         const float cur_dist = distance_ptr[0][0][z + 1][h_ind][w_ind] + l_eucl * local_dist[h_i * 3 + w_i] + l_grad * l_dist;
                         new_dist = std::min(new_dist, cur_dist);

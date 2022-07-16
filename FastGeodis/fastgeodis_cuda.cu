@@ -51,16 +51,6 @@ __device__ float l1distance_cuda(const float &in1, const float &in2)
     return abs(in1 - in2);
 }
 
-float l1distance_cuda(const float *in1, const float *in2, int size)
-{
-    float ret_sum = 0.0;
-    for (int c_i = 0; c_i < size; c_i++)
-    {
-        ret_sum += abs(in1[c_i] - in2[c_i]);
-    }
-    return ret_sum;
-}
-
 template <typename scalar_t>
 __global__ void geodesic_updown_single_row_pass_kernel(
     torch::PackedTensorAccessor32<scalar_t, 4, torch::RestrictPtrTraits> image_ptr, 
@@ -71,15 +61,15 @@ __global__ void geodesic_updown_single_row_pass_kernel(
     const int h
     )
 {
-    const float height = image_ptr.size(2);
-    const float width = image_ptr.size(3);
+    const int channel = image_ptr.size(1);
+    const int width = image_ptr.size(3);
 
     int kernelW = blockIdx.x * blockDim.x + threadIdx.x;
     
     // if outside, then skip distance calculation - dont use the thread
     if(kernelW < width)
     {
-        float pval = image_ptr[0][0][h][kernelW];
+        float l_dist;
         float new_dist = distance_ptr[0][0][h][kernelW];
         float cur_dist = 0.0;
         for (int w_i = 0; w_i < 3; w_i++)
@@ -87,7 +77,18 @@ __global__ void geodesic_updown_single_row_pass_kernel(
             const int kernelW_ind = kernelW + w_i - 1;
             if (kernelW_ind >= 0 && kernelW_ind < width)
             {
-                float l_dist = l1distance_cuda(pval, image_ptr[0][0][h + direction][kernelW_ind]);
+                l_dist = 0.0;
+                if (channel == 1)
+                {
+                    l_dist = l1distance_cuda(image_ptr[0][0][h][kernelW], image_ptr[0][0][h + direction][kernelW_ind]);
+                }
+                else
+                {
+                    for (int c_i = 0; c_i < channel; c_i++)
+                    {
+                        l_dist += l1distance_cuda(image_ptr[0][c_i][h][kernelW], image_ptr[0][c_i][h + direction][kernelW_ind]);
+                    }
+                }
                 cur_dist =  distance_ptr[0][0][h + direction][kernelW_ind] + l_eucl * local_dist2d[w_i] + l_grad * l_dist;
                 new_dist = std::min(new_dist, cur_dist);
             }
@@ -106,6 +107,7 @@ __global__ void geodesic_updown_single_row_pass_ptr_kernel(
     float l_eucl,
     const int direction,
     const int h,
+    const int channel,
     const int height,
     const int width
     )
@@ -115,16 +117,28 @@ __global__ void geodesic_updown_single_row_pass_ptr_kernel(
     // if outside, then skip distance calculation - dont use the thread
     if(kernelW < width)
     {
-        float pval = image_ptr[h * width + kernelW];
+        float l_dist;
         float new_dist = distance_ptr[h * width + kernelW];
         float cur_dist = 0.0;
 
         for (int w_i = 0; w_i < 3; w_i++)
         {
             const int kernelW_ind = kernelW + w_i - 1;
+            
             if (kernelW_ind >= 0 && kernelW_ind < width)
             {
-                float l_dist = l1distance_cuda(pval, image_ptr[(h + direction) * width + kernelW_ind]);
+                l_dist = 0.0;
+                if (channel == 1)
+                {
+                    l_dist = l1distance_cuda(image_ptr[h * width + kernelW], image_ptr[(h + direction) * width + kernelW_ind]);
+                }
+                else
+                {
+                    for (int c_i = 0; c_i < channel; c_i++)
+                    {
+                        l_dist += l1distance_cuda(image_ptr[c_i * height * width + h * width + kernelW], image_ptr[ c_i * height * width + (h + direction) * width + kernelW_ind]);
+                    }
+                }
                 cur_dist = distance_ptr[(h + direction) * width + kernelW_ind] + l_eucl * local_dist2d[w_i] + l_grad * l_dist;
                 new_dist = std::min(new_dist, cur_dist);
             }
@@ -143,13 +157,13 @@ void geodesic_updown_pass_cuda(const torch::Tensor image, torch::Tensor distance
     const int height = image.size(2);
     const int width = image.size(3);
     
-    if (channel != 1)
-    {
-        throw std::runtime_error(
-            "CUDA implementation currently only supports 1 channel, received " + std::to_string(channel) + \
-            " channels\nTry passing tensors with tensor.cpu() to run cpu implementation"
-            );
-    }
+    // if (channel != 1)
+    // {
+    //     throw std::runtime_error(
+    //         "CUDA implementation currently only supports 1 channel, received " + std::to_string(channel) + \
+    //         " channels\nTry passing tensors with tensor.cpu() to run cpu implementation"
+    //         );
+    // }
 
     // constexpr float local_dist[] = {sqrt(2.), 1., sqrt(2.)};
     const float local_dist[] = {sqrt(float(2.)), float(1.), sqrt(float(2.))};
@@ -190,6 +204,7 @@ void geodesic_updown_pass_cuda(const torch::Tensor image, torch::Tensor distance
                 l_eucl, 
                 direction,
                 h, 
+                channel,
                 height, 
                 width
                 );
@@ -222,6 +237,7 @@ void geodesic_updown_pass_cuda(const torch::Tensor image, torch::Tensor distance
                 l_eucl, 
                 direction,
                 h, 
+                channel,
                 height, 
                 width
                 );
@@ -269,6 +285,7 @@ __global__ void geodesic_frontback_single_plane_pass_kernel(
     const int z
     )
 {
+    const int channel = image_ptr.size(1);
     const int height = image_ptr.size(3);
     const int width = image_ptr.size(4);
 
@@ -278,9 +295,8 @@ __global__ void geodesic_frontback_single_plane_pass_kernel(
     // if outside, then skip distance calculation - dont use the thread
     if(kernelH >= 0 && kernelH < height && kernelW >= 0 && kernelW < width)
     {
-        float pval = image_ptr[0][0][z][kernelH][kernelW];
+        float pval, l_dist;
         float new_dist = distance_ptr[0][0][z][kernelH][kernelW];
-
         float cur_dist = 0.0;
         for (int h_i = 0; h_i < 3; h_i++)
         {
@@ -288,10 +304,21 @@ __global__ void geodesic_frontback_single_plane_pass_kernel(
             {
                 const int kernelH_ind = kernelH + h_i - 1;
                 const int kernelW_ind = kernelW + w_i - 1;
-
+                
                 if (kernelH_ind >= 0 && kernelH_ind < height && kernelW_ind >= 0 && kernelW_ind < width)
                 {
-                    float l_dist = l1distance_cuda(pval, image_ptr[0][0][z + direction][kernelH_ind][kernelW_ind]);
+                    l_dist = 0.0;
+                    if (channel == 1)
+                    {
+                        l_dist = l1distance_cuda(image_ptr[0][0][z][kernelH][kernelW], image_ptr[0][0][z + direction][kernelH_ind][kernelW_ind]);
+                    }
+                    else
+                    {   
+                        for (int c_i = 0; c_i < channel; c_i++)
+                        {
+                            l_dist += l1distance_cuda(image_ptr[0][c_i][z][kernelH][kernelW], image_ptr[0][c_i][z + direction][kernelH_ind][kernelW_ind]);
+                        }
+                    }
                     cur_dist =  distance_ptr[0][0][z + direction][kernelH_ind][kernelW_ind] + l_eucl * local_dist3d[h_i * 3 + w_i] + l_grad * l_dist;
                     new_dist = std::min(new_dist, cur_dist);
                 }
@@ -311,6 +338,8 @@ __global__ void geodesic_frontback_single_plane_pass_kernel(
     const float l_eucl,
     const int direction,
     const int z,
+    const int channel,
+    const int depth,
     const int height,
     const int width
     )
@@ -323,7 +352,7 @@ __global__ void geodesic_frontback_single_plane_pass_kernel(
     if(kernelH >= 0 && kernelH < height && kernelW >= 0 && kernelW < width)
     {
         // float pval = image_ptr[0][0][z][kernelH][kernelW];
-        float pval = image_ptr[z*height*width + kernelH*width + kernelW];
+        float pval, l_dist;
         // float new_dist = distance_ptr[0][0][z][kernelH][kernelW];
         float new_dist = distance_ptr[z*height*width + kernelH*width + kernelW];
 
@@ -337,7 +366,18 @@ __global__ void geodesic_frontback_single_plane_pass_kernel(
 
                 if (kernelH_ind >= 0 && kernelH_ind < height && kernelW_ind >= 0 && kernelW_ind < width)
                 {
-                    float l_dist = l1distance_cuda(pval, image_ptr[(z + direction)*height*width + kernelH_ind*width + kernelW_ind]);
+                    l_dist = 0.0;
+                    if (channel == 1)
+                    {
+                        l_dist = l1distance_cuda(image_ptr[z * height * width + kernelH*width + kernelW], image_ptr[(z + direction)*height*width + kernelH_ind*width + kernelW_ind]);
+                    }
+                    else
+                    {   
+                        for (int c_i = 0; c_i < channel; c_i++)
+                        {
+                            l_dist += l1distance_cuda(image_ptr[c_i * depth * height * width + z * height * width + kernelH*width + kernelW], image_ptr[c_i * depth * height * width + (z + direction)*height*width + kernelH_ind*width + kernelW_ind]);
+                        }
+                    }
                     cur_dist =  distance_ptr[(z + direction)*height*width + kernelH_ind*width + kernelW_ind] + l_eucl * local_dist3d[h_i * 3 + w_i] + l_grad * l_dist;
                     new_dist = std::min(new_dist, cur_dist);
                 }
@@ -359,13 +399,13 @@ void geodesic_frontback_pass_cuda(const torch::Tensor &image, torch::Tensor &dis
     const int height = image.size(3);
     const int width = image.size(4);
 
-    if (channel != 1)
-    {
-        throw std::runtime_error(
-            "CUDA implementation currently only supports 1 channel, received " + std::to_string(channel) + \
-            " channels\nTry passing tensors with tensor.cpu() to run cpu implementation"
-            );
-    }
+    // if (channel != 1)
+    // {
+    //     throw std::runtime_error(
+    //         "CUDA implementation currently only supports 1 channel, received " + std::to_string(channel) + \
+    //         " channels\nTry passing tensors with tensor.cpu() to run cpu implementation"
+    //         );
+    // }
 
     // convert allowed number of threads into a 2D grid
     // helps if the THREAD_COUNT is N*N already 
@@ -422,6 +462,8 @@ void geodesic_frontback_pass_cuda(const torch::Tensor &image, torch::Tensor &dis
                 l_eucl,
                 direction,
                 z,
+                channel,
+                depth,
                 height,
                 width
                 );
@@ -453,6 +495,8 @@ void geodesic_frontback_pass_cuda(const torch::Tensor &image, torch::Tensor &dis
                 l_eucl,
                 direction,
                 z,
+                channel,
+                depth,
                 height,
                 width
                 );
