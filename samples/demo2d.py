@@ -65,7 +65,7 @@ def evaluate_geodesic_distance2d(image, seed_pos):
     )
     fastraster_time_cpu = time.time() - tic
 
-    device = "cuda" if input_image_pt.shape[1] == 1 and torch.cuda.is_available() else None
+    device = "cuda" if torch.cuda.is_available() else None
     if device:
         input_image_pt = input_image_pt.to(device)
         seed_image_pt = seed_image_pt.to(device)
@@ -185,7 +185,7 @@ def demo_geodesic_distance2d(image):
 
 if __name__ == "__main__":
     # "gray" or "color"
-    example = "gray"
+    example = "color"
 
     if example == "gray":
         image = Image.open("data/img2d.png").convert("L")
