@@ -20,6 +20,13 @@ In addition, implementation of generalised version of Geodesic distance transfor
 
 > The raster scan based implementation provides a balance towards speed rather than accuracy of Geodesic distance transform and hence results in efficient hardware utilisation. On the other hand, in case of Euclidean distance transform, exact results can be achieved with other packages (albeit not on necessarilly on GPU) [6, 7, 8]
 
+## Citation
+If you use this code in your research, then please consider citing:
+
+[![status](https://joss.theoj.org/papers/d0b6e3daa4b22fec471691c6f1c60e2a/status.svg)](https://joss.theoj.org/papers/d0b6e3daa4b22fec471691c6f1c60e2a)
+
+***Asad, Muhammad, Reuben Dorent, and Tom Vercauteren. "FastGeodis: Fast Generalised Geodesic Distance Transform." Under review at Journal of Open Source Software (JOSS), 2022.***
+
 ## Installation instructions
 The provided package can be installed using:
 
@@ -28,11 +35,6 @@ The provided package can be installed using:
 or
 
 `pip install git+https://github.com/masadcv/FastGeodis`
-
-
-If you use this code, then please consider citing our paper: 
-[![status](https://joss.theoj.org/papers/d0b6e3daa4b22fec471691c6f1c60e2a/status.svg)](https://joss.theoj.org/papers/d0b6e3daa4b22fec471691c6f1c60e2a)
-
 
 ## Example usage
 
