@@ -36,6 +36,10 @@ or
 
 `pip install git+https://github.com/masadcv/FastGeodis`
 
+or (on conda systems with existing installation of PyTorch with CUDA)
+
+`pip install FastGeodis --no-build-isolation`
+
 ## Example usage
 
 ### Fast Geodesic Distance Transform
@@ -93,7 +97,10 @@ For more usage examples see:
 ## Unit Tests
 A number of unittests are provided, which can be run as:
 
-`python -m unittest`
+```
+pip install -r requirements-dev.txt
+python -m unittest
+```
 
 ## Documentation
 Further details of each function implemented in FastGeodis can be accessed at the documentation hosted at: [https://masadcv.github.io/FastGeodis/index.html](https://masadcv.github.io/FastGeodis/index.html). 
