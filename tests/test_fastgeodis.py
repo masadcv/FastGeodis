@@ -112,8 +112,8 @@ def get_GSF_func(num_dims, spacing=[1.0, 1.0, 1.0]):
 
 
 DEVICES_TO_RUN = ["cpu", "cuda"]
-CONF_2D = [(dev, 2, bas) for dev in DEVICES_TO_RUN for bas in [32, 128, 256]]
-CONF_3D = [(dev, 3, bas) for dev in DEVICES_TO_RUN for bas in [16, 64, 128]]
+CONF_2D = [(dev, 2, bas) for dev in DEVICES_TO_RUN for bas in [16, 32, 64]]
+CONF_3D = [(dev, 3, bas) for dev in DEVICES_TO_RUN for bas in [16, 32, 64]]
 CONF_ALL = CONF_2D + CONF_3D
 
 
@@ -155,14 +155,15 @@ class TestFastGeodis(unittest.TestCase):
             geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
 
         # 3D shape for 2D functions - unsupported
-        image_shape_mod = image_shape.copy()
-        mask_shape_mod = mask_shape.copy()
-        with self.assertRaises(ValueError):
-            image_shape_mod += [128]
-            mask_shape_mod += [128]
-            image = torch.rand(image_shape_mod, dtype=torch.float32).to(device)
-            mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
-            geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
+        if num_dims == 2:
+            image_shape_mod = image_shape.copy()
+            mask_shape_mod = mask_shape.copy()
+            with self.assertRaises(ValueError):
+                image_shape_mod += [16]
+                mask_shape_mod += [16]
+                image = torch.rand(image_shape_mod, dtype=torch.float32).to(device)
+                mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
+                geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
 
     @parameterized.expand(CONF_ALL)
     @run_cuda_if_available
@@ -306,7 +307,7 @@ class TestFastGeodis(unittest.TestCase):
     @skip_if_no_cuda
     def test_device_mismatch(self):
         device = "cuda"
-        base_dim = 128
+        base_dim = 16
 
         for num_dims in [2, 3]:
             # start with a good shape for image and mask
@@ -363,14 +364,15 @@ class TestFastGeodisSigned(unittest.TestCase):
             geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
 
         # 3D shape for 2D functions - unsupported
-        image_shape_mod = image_shape.copy()
-        mask_shape_mod = mask_shape.copy()
-        with self.assertRaises(ValueError):
-            image_shape_mod += [128]
-            mask_shape_mod += [128]
-            image = torch.rand(image_shape_mod, dtype=torch.float32).to(device)
-            mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
-            geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
+        if num_dims == 2:
+            image_shape_mod = image_shape.copy()
+            mask_shape_mod = mask_shape.copy()
+            with self.assertRaises(ValueError):
+                image_shape_mod += [16]
+                mask_shape_mod += [16]
+                image = torch.rand(image_shape_mod, dtype=torch.float32).to(device)
+                mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
+                geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
 
     @parameterized.expand(CONF_ALL)
     @run_cuda_if_available
@@ -464,7 +466,7 @@ class TestFastGeodisSigned(unittest.TestCase):
     @skip_if_no_cuda
     def test_device_mismatch(self):
         device = "cuda"
-        base_dim = 128
+        base_dim = 16
 
         for num_dims in [2, 3]:
             # start with a good shape for image and mask
