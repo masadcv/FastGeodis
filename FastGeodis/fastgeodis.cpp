@@ -144,6 +144,32 @@ torch::Tensor generalised_geodesic3d(torch::Tensor &image, const torch::Tensor &
     return generalised_geodesic3d_cpu(image, mask, spacing, v, l_grad, l_eucl, iterations);
 }
 
+torch::Tensor generalised_geodesic2d_toivanen(torch::Tensor &image, const torch::Tensor &mask, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
+{
+
+    // check input dimensions
+    check_input_dimensions(image, mask, 4);
+
+    // toivanen method is only implementable on cpu
+    check_cpu(image);    
+    check_cpu(mask);
+
+    return generalised_geodesic2d_toivanen_cpu(image, mask, v, l_grad, l_eucl, iterations);
+}
+
+torch::Tensor generalised_geodesic3d_toivanen(torch::Tensor &image, const torch::Tensor &mask, const std::vector<float> &spacing, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
+{
+    // check input dimensions
+    check_input_dimensions(image, mask, 5);
+
+    // toivanen method is only implementable on cpu
+    check_cpu(image);    
+    check_cpu(mask);
+
+    return generalised_geodesic3d_toivanen_cpu(image, mask, spacing, v, l_grad, l_eucl, iterations);
+}
+
+
 torch::Tensor getDs2d(torch::Tensor &image, const torch::Tensor &mask, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
 {
     torch::Tensor D_M = generalised_geodesic2d(image, mask, v, l_grad, l_eucl, iterations);
@@ -192,7 +218,10 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
     m.def("generalised_geodesic2d", &generalised_geodesic2d, "Generalised Geodesic distance 2d");
     m.def("GSF2d", &GSF2d, "Geodesic Symmetric Filtering 2d");
     m.def("signed_generalised_geodesic2d", &getDs2d, "Signed Generalised Geodesic distance 2d");
+    m.def("generalised_geodesic2d_toivanen", &generalised_geodesic2d_toivanen, "Generalised Geodesic distance 2d using Toivanen's method");
+
     m.def("generalised_geodesic3d", &generalised_geodesic3d, "Generalised Geodesic distance 3d");
     m.def("GSF3d", &GSF3d, "Geodesic Symmetric Filtering 3d");
     m.def("signed_generalised_geodesic3d", &getDs3d, "Signed Generalised Geodesic distance 3d");
+    m.def("generalised_geodesic3d_toivanen", &generalised_geodesic3d_toivanen, "Generalised Geodesic distance 3d using Toivanen's method");
 }
