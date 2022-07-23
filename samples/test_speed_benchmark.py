@@ -132,7 +132,7 @@ def save_plot(sizes, time_taken_dict, figname):
 
 if __name__ == "__main__":
     sizes, ttdict = test2d()
-    save_plot(sizes, ttdict, 'experiment_2d')
+    save_plot(sizes, ttdict, 'experiment_2d_toivanen')
 
     sizes, ttdict = test3d()
-    save_plot(sizes, ttdict, 'experiment_3d')
+    save_plot(sizes, ttdict, 'experiment_3d_toivanen')
