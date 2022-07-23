@@ -86,28 +86,33 @@ def fastgeodis_signed_generalised_geodesic_distance_2d(image, softmask, v, lamb,
 def fastgeodis_signed_generalised_geodesic_distance_3d(
     image, softmask, v, lamb, iter, spacing
 ):
-    return FastGeodis.signed_generalised_geodesic3d(image, softmask, spacing, v, lamb, iter)
+    return FastGeodis.signed_generalised_geodesic3d(
+        image, softmask, spacing, v, lamb, iter
+    )
+
 
 def toivanen_signed_generalised_geodesic_distance_2d(image, softmask, v, lamb, iter):
-    return FastGeodis.signed_generalised_geodesic2d_toivanen(image, softmask, v, lamb, iter)
+    return FastGeodis.signed_generalised_geodesic2d_toivanen(
+        image, softmask, v, lamb, iter
+    )
 
 
 def toivanen_signed_generalised_geodesic_distance_3d(
     image, softmask, v, lamb, iter, spacing
 ):
-    return FastGeodis.signed_generalised_geodesic3d_toivanen(image, softmask, spacing, v, lamb, iter)
-
+    return FastGeodis.signed_generalised_geodesic3d_toivanen(
+        image, softmask, spacing, v, lamb, iter
+    )
 
 
 def toivanen_generalised_geodesic_distance_2d(image, softmask, v, lamb, iter):
     return FastGeodis.generalised_geodesic2d_toivanen(image, softmask, v, lamb, iter)
 
 
-def toivanen_generalised_geodesic_distance_3d(
-    image, softmask, v, lamb, iter, spacing
-):
-    return FastGeodis.generalised_geodesic3d_toivanen(image, softmask, spacing, v, lamb, iter)
-
+def toivanen_generalised_geodesic_distance_3d(image, softmask, v, lamb, iter, spacing):
+    return FastGeodis.generalised_geodesic3d_toivanen(
+        image, softmask, spacing, v, lamb, iter
+    )
 
 
 def fastgeodis_GSF_2d(image, softmask, theta, v, lamb, iter):
@@ -116,6 +121,7 @@ def fastgeodis_GSF_2d(image, softmask, theta, v, lamb, iter):
 
 def fastgeodis_GSF_3d(image, softmask, theta, v, lamb, iter, spacing):
     return FastGeodis.GSF3d(image, softmask, theta, spacing, v, lamb, iter)
+
 
 def toivanen_GSF_2d(image, softmask, theta, v, lamb, iter):
     return FastGeodis.GSF2d_toivanen(image, softmask, theta, v, lamb, iter)
@@ -139,13 +145,17 @@ def get_fastgeodis_func(num_dims, spacing=[1.0, 1.0, 1.0]):
     else:
         raise ValueError("Unsupported num_dims received: {}".format(num_dims))
 
+
 def get_signed_fastgeodis_func(num_dims, spacing=[1.0, 1.0, 1.0]):
     if num_dims == 2:
         return fastgeodis_signed_generalised_geodesic_distance_2d
     elif num_dims == 3:
-        return partial(fastgeodis_signed_generalised_geodesic_distance_3d, spacing=spacing)
+        return partial(
+            fastgeodis_signed_generalised_geodesic_distance_3d, spacing=spacing
+        )
     else:
         raise ValueError("Unsupported num_dims received: {}".format(num_dims))
+
 
 def get_toivanen_func(num_dims, spacing=[1.0, 1.0, 1.0]):
     if num_dims == 2:
@@ -160,9 +170,12 @@ def get_signed_toivanen_func(num_dims, spacing=[1.0, 1.0, 1.0]):
     if num_dims == 2:
         return toivanen_signed_generalised_geodesic_distance_2d
     elif num_dims == 3:
-        return partial(toivanen_signed_generalised_geodesic_distance_3d, spacing=spacing)
+        return partial(
+            toivanen_signed_generalised_geodesic_distance_3d, spacing=spacing
+        )
     else:
         raise ValueError("Unsupported num_dims received: {}".format(num_dims))
+
 
 def get_GSF_func(num_dims, spacing=[1.0, 1.0, 1.0]):
     if num_dims == 2:
@@ -193,6 +206,7 @@ CONF_3D = CONF_3D_CPU + CONF_3D_CUDA
 CONF_ALL = CONF_2D + CONF_3D
 
 CONF_ALL_CPU = CONF_2D_CPU + CONF_3D_CPU
+
 
 class TestFastGeodis(unittest.TestCase):
     @parameterized.expand(CONF_ALL)
@@ -402,6 +416,7 @@ class TestFastGeodis(unittest.TestCase):
                 image = torch.rand(image_shape_mod, dtype=torch.float32).to(device)
                 mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
                 geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
+
 
 class TestFastGeodisToivanen(unittest.TestCase):
     @parameterized.expand(CONF_ALL_CPU)
@@ -681,7 +696,8 @@ class TestFastGeodisSigned(unittest.TestCase):
 
         # output should be -1 * ones * v
         np.testing.assert_allclose(
-            -1 * np.ones(mask_shape, dtype=np.float32)* 1e10, geodesic_dist.cpu().numpy()
+            -1 * np.ones(mask_shape, dtype=np.float32) * 1e10,
+            geodesic_dist.cpu().numpy(),
         )
 
     @parameterized.expand(CONF_ALL)
@@ -750,9 +766,9 @@ class TestFastGeodisSigned(unittest.TestCase):
                 mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
                 geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
 
+
 class TestFastGeodisSignedToivanen(unittest.TestCase):
     @parameterized.expand(CONF_ALL_CPU)
-    @run_cuda_if_available
     def test_ill_shape(self, device, num_dims, base_dim):
         print(device)
         print(num_dims)
@@ -799,7 +815,6 @@ class TestFastGeodisSignedToivanen(unittest.TestCase):
                 geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
 
     @parameterized.expand(CONF_ALL_CPU)
-    @run_cuda_if_available
     def test_correct_shape(self, device, num_dims, base_dim):
         print(device)
         print(num_dims)
@@ -820,7 +835,6 @@ class TestFastGeodisSignedToivanen(unittest.TestCase):
         geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
 
     @parameterized.expand(CONF_ALL_CPU)
-    @run_cuda_if_available
     def test_zeros_input(self, device, num_dims, base_dim):
         print(device)
         print(num_dims)
@@ -840,11 +854,11 @@ class TestFastGeodisSignedToivanen(unittest.TestCase):
 
         # output should be -1 * ones * v
         np.testing.assert_allclose(
-            -1 * np.ones(mask_shape, dtype=np.float32)* 1e10, geodesic_dist.cpu().numpy()
+            -1 * np.ones(mask_shape, dtype=np.float32) * 1e10,
+            geodesic_dist.cpu().numpy(),
         )
 
     @parameterized.expand(CONF_ALL_CPU)
-    @run_cuda_if_available
     def test_mask_ones_input(self, device, num_dims, base_dim):
         print(device)
         print(num_dims)
@@ -887,7 +901,6 @@ class TestFastGeodisSignedToivanen(unittest.TestCase):
             geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
 
 
-
 class TestGSF(unittest.TestCase):
     @parameterized.expand(CONF_ALL)
     @run_cuda_if_available
@@ -909,6 +922,7 @@ class TestGSF(unittest.TestCase):
 
         # should work without any errors
         geodesic_dist = geodis_func(image, mask, 0.0, 1e10, 1.0, 2)
+
 
 class TestGSFToivanen(unittest.TestCase):
     @parameterized.expand(CONF_ALL_CPU)
