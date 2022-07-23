@@ -88,12 +88,22 @@ def fastgeodis_signed_generalised_geodesic_distance_3d(
 ):
     return FastGeodis.signed_generalised_geodesic3d(image, softmask, spacing, v, lamb, iter)
 
+def toivanen_signed_generalised_geodesic_distance_2d(image, softmask, v, lamb, iter):
+    return FastGeodis.signed_generalised_geodesic2d_toivanen(image, softmask, v, lamb, iter)
 
-def toivenan_generalised_geodesic_distance_2d(image, softmask, v, lamb, iter):
+
+def toivanen_signed_generalised_geodesic_distance_3d(
+    image, softmask, v, lamb, iter, spacing
+):
+    return FastGeodis.signed_generalised_geodesic3d_toivanen(image, softmask, spacing, v, lamb, iter)
+
+
+
+def toivanen_generalised_geodesic_distance_2d(image, softmask, v, lamb, iter):
     return FastGeodis.generalised_geodesic2d_toivanen(image, softmask, v, lamb, iter)
 
 
-def toivenan_generalised_geodesic_distance_3d(
+def toivanen_generalised_geodesic_distance_3d(
     image, softmask, v, lamb, iter, spacing
 ):
     return FastGeodis.generalised_geodesic3d_toivanen(image, softmask, spacing, v, lamb, iter)
@@ -106,6 +116,13 @@ def fastgeodis_GSF_2d(image, softmask, theta, v, lamb, iter):
 
 def fastgeodis_GSF_3d(image, softmask, theta, v, lamb, iter, spacing):
     return FastGeodis.GSF3d(image, softmask, theta, spacing, v, lamb, iter)
+
+def toivanen_GSF_2d(image, softmask, theta, v, lamb, iter):
+    return FastGeodis.GSF2d_toivanen(image, softmask, theta, v, lamb, iter)
+
+
+def toivanen_GSF_3d(image, softmask, theta, v, lamb, iter, spacing):
+    return FastGeodis.GSF3d_toivanen(image, softmask, theta, spacing, v, lamb, iter)
 
 
 def get_simple_shape(base_dim, num_dims):
@@ -130,20 +147,37 @@ def get_signed_fastgeodis_func(num_dims, spacing=[1.0, 1.0, 1.0]):
     else:
         raise ValueError("Unsupported num_dims received: {}".format(num_dims))
 
-def get_toivenan_func(num_dims, spacing=[1.0, 1.0, 1.0]):
+def get_toivanen_func(num_dims, spacing=[1.0, 1.0, 1.0]):
     if num_dims == 2:
-        return toivenan_generalised_geodesic_distance_2d
+        return toivanen_generalised_geodesic_distance_2d
     elif num_dims == 3:
-        return partial(toivenan_generalised_geodesic_distance_3d, spacing=spacing)
+        return partial(toivanen_generalised_geodesic_distance_3d, spacing=spacing)
     else:
         raise ValueError("Unsupported num_dims received: {}".format(num_dims))
 
+
+def get_signed_toivanen_func(num_dims, spacing=[1.0, 1.0, 1.0]):
+    if num_dims == 2:
+        return toivanen_signed_generalised_geodesic_distance_2d
+    elif num_dims == 3:
+        return partial(toivanen_signed_generalised_geodesic_distance_3d, spacing=spacing)
+    else:
+        raise ValueError("Unsupported num_dims received: {}".format(num_dims))
 
 def get_GSF_func(num_dims, spacing=[1.0, 1.0, 1.0]):
     if num_dims == 2:
         return fastgeodis_GSF_2d
     elif num_dims == 3:
         return partial(fastgeodis_GSF_3d, spacing=spacing)
+    else:
+        raise ValueError("Unsupported num_dims received: {}".format(num_dims))
+
+
+def get_GSF_toivanen_func(num_dims, spacing=[1.0, 1.0, 1.0]):
+    if num_dims == 2:
+        return toivanen_GSF_2d
+    elif num_dims == 3:
+        return partial(toivanen_GSF_3d, spacing=spacing)
     else:
         raise ValueError("Unsupported num_dims received: {}".format(num_dims))
 
@@ -369,7 +403,7 @@ class TestFastGeodis(unittest.TestCase):
                 mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
                 geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
 
-class TestFastGeodisToivenan(unittest.TestCase):
+class TestFastGeodisToivanen(unittest.TestCase):
     @parameterized.expand(CONF_ALL_CPU)
     @run_cuda_if_available
     def test_ill_shape(self, device, num_dims, base_dim):
@@ -380,7 +414,7 @@ class TestFastGeodisToivenan(unittest.TestCase):
         image_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
         mask_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
 
-        geodis_func = get_toivenan_func(num_dims=num_dims)
+        geodis_func = get_toivanen_func(num_dims=num_dims)
 
         # batch != 1 - unsupported
         image_shape_mod = image_shape.copy()
@@ -427,7 +461,7 @@ class TestFastGeodisToivenan(unittest.TestCase):
         image_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
         mask_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
 
-        geodis_func = get_toivenan_func(num_dims=num_dims)
+        geodis_func = get_toivanen_func(num_dims=num_dims)
 
         # device mismatch for input - unsupported
         image_shape_mod = image_shape.copy()
@@ -448,7 +482,7 @@ class TestFastGeodisToivenan(unittest.TestCase):
         image_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
         mask_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
 
-        geodis_func = get_toivenan_func(num_dims=num_dims)
+        geodis_func = get_toivanen_func(num_dims=num_dims)
 
         # device mismatch for input - unsupported
         image = torch.zeros(image_shape, dtype=torch.float32).to(device)
@@ -472,7 +506,7 @@ class TestFastGeodisToivenan(unittest.TestCase):
         image_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
         mask_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
 
-        geodis_func = get_toivenan_func(num_dims=num_dims)
+        geodis_func = get_toivanen_func(num_dims=num_dims)
 
         # device mismatch for input - unsupported
         image = torch.zeros(image_shape, dtype=torch.float32).to(device)
@@ -521,7 +555,7 @@ class TestFastGeodisToivenan(unittest.TestCase):
         image_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
         mask_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
 
-        geodis_func = get_toivenan_func(num_dims=num_dims)
+        geodis_func = get_toivanen_func(num_dims=num_dims)
 
         # device mismatch for input - unsupported
         image = torch.ones(image_shape, dtype=torch.float32).to(device)
@@ -551,7 +585,7 @@ class TestFastGeodisToivenan(unittest.TestCase):
         mask = torch.zeros(mask_shape, dtype=torch.float32).to(device)
 
         spacing = [1.0, 1.0]
-        geodis_func = get_toivenan_func(num_dims=num_dims, spacing=spacing)
+        geodis_func = get_toivanen_func(num_dims=num_dims, spacing=spacing)
 
         with self.assertRaises(ValueError):
             geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
@@ -716,6 +750,143 @@ class TestFastGeodisSigned(unittest.TestCase):
                 mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
                 geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
 
+class TestFastGeodisSignedToivanen(unittest.TestCase):
+    @parameterized.expand(CONF_ALL_CPU)
+    @run_cuda_if_available
+    def test_ill_shape(self, device, num_dims, base_dim):
+        print(device)
+        print(num_dims)
+
+        # start with a good shape for image and mask
+        image_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
+        mask_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
+
+        geodis_func = get_signed_toivanen_func(num_dims=num_dims)
+
+        # batch != 1 - unsupported
+        image_shape_mod = image_shape.copy()
+        mask_shape_mod = mask_shape.copy()
+        with self.assertRaises(ValueError):
+            mask_shape_mod[0] = 2
+            image = torch.rand(image_shape_mod, dtype=torch.float32).to(device)
+            mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
+            geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
+
+        with self.assertRaises(ValueError):
+            image_shape_mod[0] = 2
+            image = torch.rand(image_shape_mod, dtype=torch.float32).to(device)
+            mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
+            geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
+
+        # spatial shape mismatch - unsupported
+        image_shape_mod = image_shape.copy()
+        mask_shape_mod = mask_shape.copy()
+        with self.assertRaises(ValueError):
+            image_shape_mod[-1] = 12
+            image = torch.rand(image_shape_mod, dtype=torch.float32).to(device)
+            mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
+            geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
+
+        # 3D shape for 2D functions - unsupported
+        if num_dims == 2:
+            image_shape_mod = image_shape.copy()
+            mask_shape_mod = mask_shape.copy()
+            with self.assertRaises(ValueError):
+                image_shape_mod += [16]
+                mask_shape_mod += [16]
+                image = torch.rand(image_shape_mod, dtype=torch.float32).to(device)
+                mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
+                geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
+
+    @parameterized.expand(CONF_ALL_CPU)
+    @run_cuda_if_available
+    def test_correct_shape(self, device, num_dims, base_dim):
+        print(device)
+        print(num_dims)
+
+        # start with a good shape for image and mask
+        image_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
+        mask_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
+
+        geodis_func = get_signed_toivanen_func(num_dims=num_dims)
+
+        # device mismatch for input - unsupported
+        image_shape_mod = image_shape.copy()
+        mask_shape_mod = mask_shape.copy()
+        image = torch.rand(image_shape_mod, dtype=torch.float32).to(device)
+        mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
+
+        # should work without any errors
+        geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
+
+    @parameterized.expand(CONF_ALL_CPU)
+    @run_cuda_if_available
+    def test_zeros_input(self, device, num_dims, base_dim):
+        print(device)
+        print(num_dims)
+
+        # start with a good shape for image and mask
+        image_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
+        mask_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
+
+        geodis_func = get_signed_toivanen_func(num_dims=num_dims)
+
+        # device mismatch for input - unsupported
+        image = torch.zeros(image_shape, dtype=torch.float32).to(device)
+        mask = torch.zeros(mask_shape, dtype=torch.float32).to(device)
+
+        # should work without any errors
+        geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
+
+        # output should be -1 * ones * v
+        np.testing.assert_allclose(
+            -1 * np.ones(mask_shape, dtype=np.float32)* 1e10, geodesic_dist.cpu().numpy()
+        )
+
+    @parameterized.expand(CONF_ALL_CPU)
+    @run_cuda_if_available
+    def test_mask_ones_input(self, device, num_dims, base_dim):
+        print(device)
+        print(num_dims)
+
+        # start with a good shape for image and mask
+        image_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
+        mask_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
+
+        geodis_func = get_signed_toivanen_func(num_dims=num_dims)
+
+        # device mismatch for input - unsupported
+        image = torch.zeros(image_shape, dtype=torch.float32).to(device)
+        mask = torch.ones(mask_shape, dtype=torch.float32).to(device)
+
+        # should work without any errors
+        geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
+
+        # output should be ones * v
+        np.testing.assert_allclose(
+            np.ones(mask_shape, dtype=np.float32) * 1e10, geodesic_dist.cpu().numpy()
+        )
+
+    @parameterized.expand(CONF_3D_CPU)
+    def test_ill_spacing(self, device, num_dims, base_dim):
+        print(device)
+        print(num_dims)
+
+        # start with a good shape for image and mask
+        image_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
+        mask_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
+
+        # device mismatch for input - unsupported
+        image = torch.zeros(image_shape, dtype=torch.float32).to(device)
+        mask = torch.zeros(mask_shape, dtype=torch.float32).to(device)
+
+        spacing = [1.0, 1.0]
+        geodis_func = get_signed_toivanen_func(num_dims=num_dims, spacing=spacing)
+
+        with self.assertRaises(ValueError):
+            geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
+
+
 
 class TestGSF(unittest.TestCase):
     @parameterized.expand(CONF_ALL)
@@ -729,6 +900,28 @@ class TestGSF(unittest.TestCase):
         mask_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
 
         geodis_func = get_GSF_func(num_dims=num_dims)
+
+        # device mismatch for input - unsupported
+        image_shape_mod = image_shape.copy()
+        mask_shape_mod = mask_shape.copy()
+        image = torch.rand(image_shape_mod, dtype=torch.float32).to(device)
+        mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
+
+        # should work without any errors
+        geodesic_dist = geodis_func(image, mask, 0.0, 1e10, 1.0, 2)
+
+class TestGSFToivanen(unittest.TestCase):
+    @parameterized.expand(CONF_ALL_CPU)
+    @run_cuda_if_available
+    def test_correct_shape(self, device, num_dims, base_dim):
+        print(device)
+        print(num_dims)
+
+        # start with a good shape for image and mask
+        image_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
+        mask_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
+
+        geodis_func = get_GSF_toivanen_func(num_dims=num_dims)
 
         # device mismatch for input - unsupported
         image_shape_mod = image_shape.copy()
