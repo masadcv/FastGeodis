@@ -33,13 +33,13 @@ v = 1e10
 iterations = 2
 
 lamb = 1.0  # <-- Geodesic distance transform
-geodesic_dist = FastGeodis.generalised_geodesic3d(
+geodesic_dist = FastGeodis.signed_generalised_geodesic3d(
     image_pt, mask_pt, spacing, v, lamb, iterations
 )
 geodesic_dist = np.squeeze(geodesic_dist.cpu().numpy())
 
 lamb = 0.0  # <-- Euclidean distance transform
-euclidean_dist = FastGeodis.generalised_geodesic3d(
+euclidean_dist = FastGeodis.signed_generalised_geodesic3d(
     image_pt, mask_pt, spacing, v, lamb, iterations
 )
 euclidean_dist = np.squeeze(euclidean_dist.cpu().numpy())
@@ -67,13 +67,13 @@ image_pt = image_pt.to("cpu")
 mask_pt = mask_pt.to("cpu")
 
 lamb = 1.0  # <-- Geodesic distance transform
-geodesic_dist_toivanen = FastGeodis.generalised_geodesic3d_toivanen(
+geodesic_dist_toivanen = FastGeodis.signed_generalised_geodesic3d_toivanen(
     image_pt, mask_pt, spacing, v, lamb, iterations
 )
 geodesic_dist_toivanen = np.squeeze(geodesic_dist_toivanen.cpu().numpy())
 
 lamb = 0.0  # <-- Euclidean distance transform
-euclidean_dist_toivanen = FastGeodis.generalised_geodesic3d_toivanen(
+euclidean_dist_toivanen = FastGeodis.signed_generalised_geodesic3d_toivanen(
     image_pt, mask_pt, spacing, v, lamb, iterations
 )
 euclidean_dist_toivanen = np.squeeze(euclidean_dist_toivanen.cpu().numpy())
