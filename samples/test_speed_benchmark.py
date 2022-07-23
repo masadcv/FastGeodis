@@ -1,4 +1,3 @@
-import GeodisTK
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
@@ -19,9 +18,10 @@ def timing(f):
 
     return wrap
 
+
 @timing
-def generalised_geodesic_distance_2d(I, S, v, lamb, iter):
-    return GeodisTK.geodesic2d_raster_scan(I, 1-S.astype(np.uint8), lamb, iter)
+def generalised_geodesic_distance_2d_cpu(I, S, v, lamb, iter):
+    return FastGeodis.generalised_geodesic2d_toivanen(I, S, v, lamb, iter)
 
 @timing
 def generalised_geodesic2d_raster_cpu(I, S, v, lamb, iter):
@@ -32,8 +32,9 @@ def generalised_geodesic2d_raster_gpu(I, S, v, lamb, iter):
     return FastGeodis.generalised_geodesic2d(I, S, v, lamb, iter)
 
 @timing
-def generalised_geodesic_distance_3d(I, S, spacing, v, lamb, iter):
-    return GeodisTK.geodesic3d_raster_scan(I, 1-S.astype(np.uint8), spacing, lamb, iter)
+def generalised_geodesic_distance_3d_cpu(I, S, spacing, v, lamb, iter):
+    return FastGeodis.generalised_geodesic3d_toivanen(I, S, spacing, v, lamb, iter)
+
 
 @timing
 def generalised_geodesic3d_raster_cpu(I, S, spacing, v, lamb, iter):
@@ -43,8 +44,8 @@ def generalised_geodesic3d_raster_cpu(I, S, spacing, v, lamb, iter):
 def generalised_geodesic3d_raster_gpu(I, S, spacing, v, lamb, iter):
     return FastGeodis.generalised_geodesic3d(I, S, spacing, v, lamb, iter)
     
-func_to_test_2d = [generalised_geodesic_distance_2d, generalised_geodesic2d_raster_cpu, generalised_geodesic2d_raster_gpu]
-func_to_test_3d = [generalised_geodesic_distance_3d, generalised_geodesic3d_raster_cpu, generalised_geodesic3d_raster_gpu]
+func_to_test_2d = [generalised_geodesic_distance_2d_cpu, generalised_geodesic2d_raster_cpu, generalised_geodesic2d_raster_gpu]
+func_to_test_3d = [generalised_geodesic_distance_3d_cpu, generalised_geodesic3d_raster_cpu, generalised_geodesic3d_raster_gpu]
 
 def test2d():
     num_runs = 5
@@ -113,12 +114,12 @@ def save_plot(sizes, time_taken_dict, figname):
     plt.figure()
     plt.grid()
     for key in time_taken_dict.keys():
-        if 'cpu' in key:
+        if 'cpu' in key and 'raster' in key:
             plt.plot(sizes, time_taken_dict[key], 'm-o', label='FastGeodis (cpu)')
-        elif 'gpu' in key:
+        elif 'gpu' in key and 'raster' in key:
             plt.plot(sizes, time_taken_dict[key], 'g-o', label='FastGeodis (gpu)')
         else:
-            plt.plot(sizes, time_taken_dict[key], 'r-o', label='GeodisTK')
+            plt.plot(sizes, time_taken_dict[key], 'r-o', label='Toivanen (cpu)')
     plt.legend()
     plt.xticks(sizes, [str(s) for s in sizes], rotation=45)
     plt.title(figname)
