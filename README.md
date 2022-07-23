@@ -27,7 +27,7 @@ If you use this code in your research, then please consider citing:
 
 ***Asad, Muhammad, Reuben Dorent, and Tom Vercauteren. "FastGeodis: Fast Generalised Geodesic Distance Transform." Under review at Journal of Open Source Software (JOSS), 2022.***
 
-## Installation instructions
+# Installation instructions
 The provided package can be installed using:
 
 `pip install FastGeodis`
@@ -40,7 +40,30 @@ or (on conda systems with existing installation of PyTorch with CUDA)
 
 `pip install FastGeodis --no-build-isolation`
 
-## Example usage
+# Included methods
+## Optimised Fast Implementations for GPU/CPU based on [1, 3]
+| Method | Description | Documentation |
+|--------|-------------|---------------|
+| Fast Generalised Geodesic Distance 2D   |  Paralellised generalised geodesic distance transform for CPU/GPU [1, 3]          |      [FastGeodis.generalised_geodesic2d](https://masadcv.github.io/FastGeodis/#FastGeodis.generalised_geodesic2d)         |
+| Fast Generalised Geodesic Distance 3D   |  Paralellised generalised geodesic distance transform for CPU/GPU [1, 3]          |      [FastGeodis.generalised_geodesic3d](https://masadcv.github.io/FastGeodis/#FastGeodis.generalised_geodesic3d)         |
+| Fast Signed Generalised Geodesic Distance 2D   |  Paralellised signed generalised geodesic distance transform for CPU/GPU [1, 3]          |      [FastGeodis.signed_generalised_geodesic2d](https://masadcv.github.io/FastGeodis/#FastGeodis.signed_generalised_geodesic2d)         |
+| Fast Signed Generalised Geodesic Distance 3D   |  Paralellised signed generalised geodesic distance transform for CPU/GPU [1, 3]          |      [FastGeodis.signed_generalised_geodesic3d](https://masadcv.github.io/FastGeodis/#FastGeodis.signed_generalised_geodesic3d)         |
+| Fast Geodesic Symmetric Filtering 2D   |  Paralellised geodesic symmetric filtering for CPU/GPU [2]          |      [FastGeodis.GSF2d](https://masadcv.github.io/FastGeodis/#FastGeodis.GSF2d)         |
+| Fast Geodesic Symmetric Filtering 3D   |  Paralellised geodesic symmetric filtering for CPU/GPU [2]          |      [FastGeodis.GSF3d](https://masadcv.github.io/FastGeodis/#FastGeodis.GSF3d)         |
+----
+
+## Toivanen's Implementations for CPU based on [9]
+
+| Method | Description | Documentation |
+|--------|-------------|---------------|
+| Toivanen's Generalised Geodesic Distance 2D   |  Toivanen's generalised geodesic distance transform for CPU [9]          |      [FastGeodis.generalised_geodesic2d_toivanen](https://masadcv.github.io/FastGeodis/#FastGeodis.generalised_geodesic2d_toivanen)         |
+| Toivanen's Generalised Geodesic Distance 3D   |  Toivanen's generalised geodesic distance transform for CPU [9]          |      [FastGeodis.generalised_geodesic3d_toivanen](https://masadcv.github.io/FastGeodis/#FastGeodis.generalised_geodesic3d_toivanen)         |
+| Toivanen's Signed Generalised Geodesic Distance 2D   |  Toivanen's signed generalised geodesic distance transform for CPU/GPU [9]          |      [FastGeodis.signed_generalised_geodesic2d_toivanen](https://masadcv.github.io/FastGeodis/#FastGeodis.signed_generalised_geodesic2d_toivanen)         |
+| Toivanen's Signed Generalised Geodesic Distance 3D   |  Toivanen's signed generalised geodesic distance transform for CPU [9]          |      [FastGeodis.signed_generalised_geodesic3d_toivanen](https://masadcv.github.io/FastGeodis/#FastGeodis.signed_generalised_geodesic3d_toivanen)         |
+| Toivanen's Geodesic Symmetric Filtering 2D   |  Toivanen's geodesic symmetric filtering for CPU [2, 9]          |      [FastGeodis.GSF2d_toivanen](https://masadcv.github.io/FastGeodis/#FastGeodis.GSF2d_toivanen)         |
+| Toivanen's Geodesic Symmetric Filtering 3D   |  Toivanen's geodesic symmetric filtering for CPU [2, 9]          |      [FastGeodis.GSF3d_toivanen](https://masadcv.github.io/FastGeodis/#FastGeodis.GSF3d_toivanen)         |
+
+# Example usage
 
 ### Fast Geodesic Distance Transform
 The following demonstrates a simple example showing FastGeodis usage:
@@ -94,7 +117,7 @@ For more usage examples see:
 | **3D Geodesic Distance** | [`samples/demo3d.py`](./samples/demo3d.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/demo3d.ipynb)  |
 | **2D GSF Segmentation Smoothing** |  [`samples/demoGSF2d_SmoothingSegExample.ipynb`](./samples/demoGSF2d_SmoothingSegExample.ipynb) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/demoGSF2d_SmoothingSegExample.ipynb) | 
 
-## Unit Tests
+# Unit Tests
 A number of unittests are provided, which can be run as:
 
 ```
@@ -102,10 +125,10 @@ pip install -r requirements-dev.txt
 python -m unittest
 ```
 
-## Documentation
+# Documentation
 Further details of each function implemented in FastGeodis can be accessed at the documentation hosted at: [https://masadcv.github.io/FastGeodis/index.html](https://masadcv.github.io/FastGeodis/index.html). 
 
-## Comparison of Execution Time and Accuracy
+# Comparison of Execution Time and Accuracy
 FastGeodis (CPU/GPU) is compared with existing GeodisTK ([https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK)) in terms of execution speed as well as accuracy.
 
 
@@ -144,3 +167,5 @@ FastGeodis (CPU/GPU) is compared with existing GeodisTK ([https://github.com/tai
 - [7] [https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.distance_transform_edt.html](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.distance_transform_edt.html)
 
 - [8] [https://www.tensorflow.org/addons/api_docs/python/tfa/image/euclidean_dist_transform](https://www.tensorflow.org/addons/api_docs/python/tfa/image/euclidean_dist_transform)
+
+- [9] Toivanen, Pekka J. "New geodosic distance transforms for gray-scale images." Pattern Recognition Letters 17.5 (1996): 437-450.
