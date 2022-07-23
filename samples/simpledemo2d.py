@@ -1,10 +1,8 @@
+import FastGeodis
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from PIL import Image
-
-import FastGeodis
-
 
 # FastGeodis Method
 
@@ -19,13 +17,13 @@ mask_pt[..., 100, 100] = 0
 v = 1e10
 iterations = 2
 
-lamb = 1.0 # <-- Geodesic distance transform
+lamb = 1.0  # <-- Geodesic distance transform
 geodesic_dist = FastGeodis.generalised_geodesic2d(
     image_pt, mask_pt, v, lamb, iterations
 )
 geodesic_dist = np.squeeze(geodesic_dist.cpu().numpy())
 
-lamb=0.0 # <-- Euclidean distance transform
+lamb = 0.0  # <-- Euclidean distance transform
 euclidean_dist = FastGeodis.generalised_geodesic2d(
     image_pt, mask_pt, v, lamb, iterations
 )
@@ -48,16 +46,16 @@ plt.show()
 # Toivanen's Raster Method
 
 # Toivanen's method only support CPU
-image_pt = image_pt.to('cpu')
-mask_pt = mask_pt.to('cpu')
+image_pt = image_pt.to("cpu")
+mask_pt = mask_pt.to("cpu")
 
-lamb = 1.0 # <-- Geodesic distance transform
+lamb = 1.0  # <-- Geodesic distance transform
 geodesic_dist_toivanen = FastGeodis.signed_generalised_geodesic2d_toivanen(
     image_pt, mask_pt, v, lamb, iterations
 )
 geodesic_dist_toivanen = np.squeeze(geodesic_dist_toivanen.cpu().numpy())
 
-lamb=0.0 # <-- Euclidean distance transform
+lamb = 0.0  # <-- Euclidean distance transform
 euclidean_dist_toivanen = FastGeodis.signed_generalised_geodesic2d_toivanen(
     image_pt, mask_pt, v, lamb, iterations
 )
