@@ -9,6 +9,7 @@ import numpy as np
 import SimpleITK as sitk
 import torch
 
+
 def demo_geodesic_distance3d(image_path, seed_pos):
     SHOW_JOINT_HIST = False
     image_folder = os.path.dirname(image_path)
@@ -40,7 +41,7 @@ def demo_geodesic_distance3d(image_path, seed_pos):
         .numpy()
     )
     toivanenraster_time = time.time() - tic
-    
+
     tic = time.time()
     fastraster_output_cpu = np.squeeze(
         FastGeodis.generalised_geodesic3d(
@@ -112,7 +113,7 @@ def demo_geodesic_distance3d(image_path, seed_pos):
     plt.imshow(toivanenraster_output_slice)
     plt.axis("off")
     plt.title("(b) Toivanen's Raster (cpu) | ({:.4f} s)".format(toivanenraster_time))
-    
+
     plt.subplot(2, 4, 3)
     plt.imshow(fastraster_output_cpu_slice)
     plt.axis("off")
@@ -130,7 +131,9 @@ def demo_geodesic_distance3d(image_path, seed_pos):
         plt.title("(e) FastGeodis (gpu) | ({:.4f} s)".format(fastraster_time_gpu))
 
     diff = (
-        abs(toivanenraster_output - fastraster_output_cpu) / (toivanenraster_output + 1e-7) * 100
+        abs(toivanenraster_output - fastraster_output_cpu)
+        / (toivanenraster_output + 1e-7)
+        * 100
     )
     diff_vol = toivanenraster_output - fastraster_output_cpu
     diff_slice = diff_vol[10]
@@ -165,14 +168,20 @@ def demo_geodesic_distance3d(image_path, seed_pos):
     if SHOW_JOINT_HIST:
         plt.figure(figsize=(12, 6))
         plt.subplot(1, 2, 1)
-        plt.hist2d(toivanenraster_output.flatten(), fastraster_output_cpu.flatten(), bins=50)
+        plt.hist2d(
+            toivanenraster_output.flatten(), fastraster_output_cpu.flatten(), bins=50
+        )
         plt.xlabel("Toivanen's Raster (cpu)")
         plt.ylabel("FastGeodis (cpu)")
         plt.title("Joint histogram\nToivanen's Raster (cpu) vs. FastGeodis (cpu)")
 
         if device:
             plt.subplot(1, 2, 2)
-            plt.hist2d(toivanenraster_output.flatten(), fastraster_output_gpu.flatten(), bins=50)
+            plt.hist2d(
+                toivanenraster_output.flatten(),
+                fastraster_output_gpu.flatten(),
+                bins=50,
+            )
             plt.xlabel("Toivanen's Raster (cpu)")
             plt.ylabel("FastGeodis (gpu)")
             plt.title("Joint histogram\nToivanen's Raster (cpu) vs. FastGeodis (cpu)")

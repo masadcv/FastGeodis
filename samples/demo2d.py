@@ -1,9 +1,9 @@
 import time
 
-import torch
 import FastGeodis
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 from PIL import Image
 
 
@@ -35,13 +35,21 @@ def evaluate_geodesic_distance2d(image, seed_pos):
 
     tic = time.time()
     toivanenraster_output = np.squeeze(
-        FastGeodis.generalised_geodesic2d_toivanen(input_image_pt, seed_image_pt, v, lamb, iterations).cpu().numpy()
+        FastGeodis.generalised_geodesic2d_toivanen(
+            input_image_pt, seed_image_pt, v, lamb, iterations
+        )
+        .cpu()
+        .numpy()
     )
     toivanenraster_time = time.time() - tic
 
     tic = time.time()
     fastraster_output_cpu = np.squeeze(
-        FastGeodis.generalised_geodesic2d(input_image_pt, seed_image_pt, v, lamb, iterations).cpu().numpy()
+        FastGeodis.generalised_geodesic2d(
+            input_image_pt, seed_image_pt, v, lamb, iterations
+        )
+        .cpu()
+        .numpy()
     )
     fastraster_time_cpu = time.time() - tic
 
@@ -52,7 +60,11 @@ def evaluate_geodesic_distance2d(image, seed_pos):
 
         tic = time.time()
         fastraster_output_gpu = np.squeeze(
-            FastGeodis.generalised_geodesic2d(input_image_pt, seed_image_pt, v, lamb, iterations).cpu().numpy()
+            FastGeodis.generalised_geodesic2d(
+                input_image_pt, seed_image_pt, v, lamb, iterations
+            )
+            .cpu()
+            .numpy()
         )
         fastraster_time_gpu = time.time() - tic
 
@@ -96,7 +108,9 @@ def evaluate_geodesic_distance2d(image, seed_pos):
         plt.title("(e) FastGeodis (gpu) | ({:.4f} s)".format(fastraster_time_gpu))
 
     diff = (
-        abs(toivanenraster_output - fastraster_output_cpu) / (toivanenraster_output + 1e-7) * 100
+        abs(toivanenraster_output - fastraster_output_cpu)
+        / (toivanenraster_output + 1e-7)
+        * 100
     )
     plt.subplot(2, 4, 4)
     plt.imshow(diff)
@@ -129,14 +143,20 @@ def evaluate_geodesic_distance2d(image, seed_pos):
         plt.figure(figsize=(12, 6))
         plt.subplot(1, 2, 1)
         plt.title("Joint histogram\nToivanen's Raster (cpu) vs. FastGeodis (cpu)")
-        plt.hist2d(toivanenraster_output.flatten(), fastraster_output_cpu.flatten(), bins=50)
+        plt.hist2d(
+            toivanenraster_output.flatten(), fastraster_output_cpu.flatten(), bins=50
+        )
         plt.xlabel("Toivanen's Raster (cpu)")
         plt.ylabel("FastGeodis (cpu)")
         # plt.gca().set_aspect("equal", adjustable="box")
 
         if device:
             plt.subplot(1, 2, 2)
-            plt.hist2d(toivanenraster_output.flatten(), fastraster_output_gpu.flatten(), bins=50)
+            plt.hist2d(
+                toivanenraster_output.flatten(),
+                fastraster_output_gpu.flatten(),
+                bins=50,
+            )
             plt.xlabel("Toivanen's Raster (cpu)")
             plt.ylabel("FastGeodis (gpu)")
             plt.title("Joint histogram\nToivanen's Raster (cpu) vs. FastGeodis (gpu)")
