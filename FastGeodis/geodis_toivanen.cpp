@@ -37,22 +37,11 @@ float l1distance_toivanen(const float &in1, const float &in2)
     return std::abs(in1 - in2);
 }
 
-// float l2distance(const float *in1, const float *in2, int size)
-// {
-//     float ret_sum = 0.0;
-//     for (int c_i = 0; c_i < size; c_i++)
-//     {
-//         ret_sum += (in1[c_i] - in2[c_i]) * (in1[c_i] - in2[c_i]);
-//     }
-//     return std::sqrt(ret_sum);
-// }
-
 void geodesic2d_forback_toivanen_cpu(
-    const torch::Tensor &image, 
-    torch::Tensor &distance, 
-    const float &l_grad, 
-    const float &l_eucl
-    )
+    const torch::Tensor &image,
+    torch::Tensor &distance,
+    const float &l_grad,
+    const float &l_eucl)
 {
     // batch, channel, height, width
     const int channel = image.size(1);
@@ -87,23 +76,21 @@ void geodesic2d_forback_toivanen_cpu(
                 if (channel == 1)
                 {
                     l_dist = l1distance_toivanen(
-                        image_ptr[0][0][h][w], 
-                        image_ptr[0][0][h_ind][w_ind]
-                        );
+                        image_ptr[0][0][h][w],
+                        image_ptr[0][0][h_ind][w_ind]);
                 }
                 else
                 {
                     for (int c_i = 0; c_i < channel; c_i++)
                     {
                         l_dist += l1distance_toivanen(
-                            image_ptr[0][c_i][h][w], 
-                            image_ptr[0][c_i][h_ind][w_ind]
-                            );
+                            image_ptr[0][c_i][h][w],
+                            image_ptr[0][c_i][h_ind][w_ind]);
                     }
                 }
-                cur_dist = distance_ptr[0][0][h_ind][w_ind] + \
-                            l_eucl * local_dist_f[ind] + \
-                            l_grad * l_dist;
+                cur_dist = distance_ptr[0][0][h_ind][w_ind] +
+                           l_eucl * local_dist_f[ind] +
+                           l_grad * l_dist;
 
                 new_dist = std::min(new_dist, cur_dist);
             }
@@ -119,7 +106,7 @@ void geodesic2d_forback_toivanen_cpu(
 
     for (int h = height - 1; h >= 0; h--)
     {
-        for (int w = width -1 ; w >= 0; w--)
+        for (int w = width - 1; w >= 0; w--)
         {
             float l_dist, cur_dist;
             float new_dist = distance_ptr[0][0][h][w];
@@ -136,24 +123,22 @@ void geodesic2d_forback_toivanen_cpu(
                 if (channel == 1)
                 {
                     l_dist = l1distance_toivanen(
-                        image_ptr[0][0][h][w], 
-                        image_ptr[0][0][h_ind][w_ind]
-                        );
+                        image_ptr[0][0][h][w],
+                        image_ptr[0][0][h_ind][w_ind]);
                 }
                 else
                 {
                     for (int c_i = 0; c_i < channel; c_i++)
                     {
                         l_dist += l1distance_toivanen(
-                            image_ptr[0][c_i][h][w], 
-                            image_ptr[0][c_i][h_ind][w_ind]
-                            );
+                            image_ptr[0][c_i][h][w],
+                            image_ptr[0][c_i][h_ind][w_ind]);
                     }
                 }
-                cur_dist = distance_ptr[0][0][h_ind][w_ind] + \
-                            l_eucl * local_dist_b[ind] + \
-                            l_grad * l_dist;
-                            
+                cur_dist = distance_ptr[0][0][h_ind][w_ind] +
+                           l_eucl * local_dist_b[ind] +
+                           l_grad * l_dist;
+
                 new_dist = std::min(new_dist, cur_dist);
             }
             distance_ptr[0][0][h][w] = new_dist;
@@ -162,13 +147,12 @@ void geodesic2d_forback_toivanen_cpu(
 }
 
 torch::Tensor generalised_geodesic2d_toivanen_cpu(
-    torch::Tensor &image, 
-    const torch::Tensor &mask, 
-    const float &v, 
-    const float &l_grad, 
-    const float &l_eucl, 
-    const int &iterations
-    )
+    torch::Tensor &image,
+    const torch::Tensor &mask,
+    const float &v,
+    const float &l_grad,
+    const float &l_eucl,
+    const int &iterations)
 {
     torch::Tensor distance = v * mask.clone();
 
@@ -182,12 +166,11 @@ torch::Tensor generalised_geodesic2d_toivanen_cpu(
 }
 
 void geodesic3d_forback_toivanen_cpu(
-    const torch::Tensor &image, 
-    torch::Tensor &distance, 
-    const std::vector<float> &spacing, 
-    const float &l_grad, 
-    const float &l_eucl
-    )
+    const torch::Tensor &image,
+    torch::Tensor &distance,
+    const std::vector<float> &spacing,
+    const float &l_grad,
+    const float &l_eucl)
 {
     // batch, channel, depth, height, width
     const int channel = image.size(1);
@@ -199,54 +182,54 @@ void geodesic3d_forback_toivanen_cpu(
     auto distance_ptr = distance.accessor<float, 5>();
 
     // distances for forward
-    const int dz_f[13] = {-1, -1, -1, -1, -1,  0,  0,  0,  0,  1,  1,  1,  1};
-    const int dh_f[13] = {-1, -1, -1,  0,  0, -1, -1, -1,  0, -1, -1, -1,  0};
-    const int dw_f[13] = {-1,  0,  1, -1,  0, -1,  0,  1, -1, -1,  0,  1, -1};
-    
+    const int dz_f[13] = {-1, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1};
+    const int dh_f[13] = {-1, -1, -1, 0, 0, -1, -1, -1, 0, -1, -1, -1, 0};
+    const int dw_f[13] = {-1, 0, 1, -1, 0, -1, 0, 1, -1, -1, 0, 1, -1};
+
     float local_dist_f[13];
     for (int i = 0; i < 13; i++)
     {
         float ld = 0.0;
-        if(dz_f[i] !=0) 
+        if (dz_f[i] != 0)
         {
-            ld += spacing[0] *spacing[0];
+            ld += spacing[0] * spacing[0];
         }
 
-        if(dh_f[i] !=0) 
+        if (dh_f[i] != 0)
         {
-            ld += spacing[1] *spacing[1];
+            ld += spacing[1] * spacing[1];
         }
 
-        if(dw_f[i] !=0) 
+        if (dw_f[i] != 0)
         {
-            ld += spacing[2] *spacing[2];
+            ld += spacing[2] * spacing[2];
         }
 
         local_dist_f[i] = sqrt(ld);
     }
 
     // distances for backward
-    const int dz_b[13] = {-1, -1, -1, -1,  0,  0,  0,  0,  1,  1,  1,  1,  1};
-    const int dh_b[13] = { 0,  1,  1,  1,  0,  1,  1,  1,  0,  0,  1,  1,  1};
-    const int dw_b[13] = { 1, -1,  0,  1,  1, -1,  0,  1,  0,  1, -1,  0,  1};
-    
+    const int dz_b[13] = {-1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1, 1};
+    const int dh_b[13] = {0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1};
+    const int dw_b[13] = {1, -1, 0, 1, 1, -1, 0, 1, 0, 1, -1, 0, 1};
+
     float local_dist_b[13];
     for (int i = 0; i < 13; i++)
     {
         float ld = 0.0;
-        if(dz_b[i] !=0) 
+        if (dz_b[i] != 0)
         {
-            ld += spacing[0] *spacing[0];
+            ld += spacing[0] * spacing[0];
         }
 
-        if(dh_b[i] !=0) 
+        if (dh_b[i] != 0)
         {
-            ld += spacing[1] *spacing[1];
+            ld += spacing[1] * spacing[1];
         }
 
-        if(dw_b[i] !=0) 
+        if (dw_b[i] != 0)
         {
-            ld += spacing[2] *spacing[2];
+            ld += spacing[2] * spacing[2];
         }
 
         local_dist_b[i] = sqrt(ld);
@@ -275,23 +258,21 @@ void geodesic3d_forback_toivanen_cpu(
                     if (channel == 1)
                     {
                         l_dist = l1distance_toivanen(
-                                    image_ptr[0][0][z][h][w], 
-                                    image_ptr[0][0][z_ind][h_ind][w_ind]
-                                    );
+                            image_ptr[0][0][z][h][w],
+                            image_ptr[0][0][z_ind][h_ind][w_ind]);
                     }
                     else
                     {
                         for (int c_i = 0; c_i < channel; c_i++)
                         {
                             l_dist += l1distance_toivanen(
-                                image_ptr[0][c_i][z][h][w], 
-                                image_ptr[0][c_i][z_ind][h_ind][w_ind]
-                                );
+                                image_ptr[0][c_i][z][h][w],
+                                image_ptr[0][c_i][z_ind][h_ind][w_ind]);
                         }
                     }
-                    cur_dist = distance_ptr[0][0][z_ind][h_ind][w_ind] + \
-                                l_eucl * local_dist_f[ind] + \
-                                l_grad * l_dist;
+                    cur_dist = distance_ptr[0][0][z_ind][h_ind][w_ind] +
+                               l_eucl * local_dist_f[ind] +
+                               l_grad * l_dist;
 
                     new_dist = std::min(new_dist, cur_dist);
                 }
@@ -303,7 +284,7 @@ void geodesic3d_forback_toivanen_cpu(
     // backward
     for (int z = depth - 1; z >= 0; z--)
     {
-        for (int h = height - 1 ; h >= 0; h--)
+        for (int h = height - 1; h >= 0; h--)
         {
             for (int w = width - 1; w >= 0; w--)
             {
@@ -323,23 +304,21 @@ void geodesic3d_forback_toivanen_cpu(
                     if (channel == 1)
                     {
                         l_dist = l1distance_toivanen(
-                                    image_ptr[0][0][z][h][w], 
-                                    image_ptr[0][0][z_ind][h_ind][w_ind]
-                                    );
+                            image_ptr[0][0][z][h][w],
+                            image_ptr[0][0][z_ind][h_ind][w_ind]);
                     }
                     else
                     {
                         for (int c_i = 0; c_i < channel; c_i++)
                         {
                             l_dist += l1distance_toivanen(
-                                        image_ptr[0][c_i][z][h][w], 
-                                        image_ptr[0][c_i][z_ind][h_ind][w_ind]
-                                        );
+                                image_ptr[0][c_i][z][h][w],
+                                image_ptr[0][c_i][z_ind][h_ind][w_ind]);
                         }
                     }
-                    cur_dist = distance_ptr[0][0][z_ind][h_ind][w_ind] + \
-                                l_eucl * local_dist_b[ind] + \
-                                l_grad * l_dist;
+                    cur_dist = distance_ptr[0][0][z_ind][h_ind][w_ind] +
+                               l_eucl * local_dist_b[ind] +
+                               l_grad * l_dist;
 
                     new_dist = std::min(new_dist, cur_dist);
                 }
@@ -350,14 +329,13 @@ void geodesic3d_forback_toivanen_cpu(
 }
 
 torch::Tensor generalised_geodesic3d_toivanen_cpu(
-    torch::Tensor &image, 
-    const torch::Tensor &mask, 
-    const std::vector<float> &spacing, 
-    const float &v, 
-    const float &l_grad, 
-    const float &l_eucl, 
-    const int &iterations
-    )
+    torch::Tensor &image,
+    const torch::Tensor &mask,
+    const std::vector<float> &spacing,
+    const float &v,
+    const float &l_grad,
+    const float &l_eucl,
+    const int &iterations)
 {
     torch::Tensor distance = v * mask.clone();
 
