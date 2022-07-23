@@ -166,6 +166,12 @@ torch::Tensor generalised_geodesic3d_toivanen(torch::Tensor &image, const torch:
     check_cpu(image);    
     check_cpu(mask);
 
+    if (spacing.size() != 3)
+    {
+        throw std::invalid_argument(
+            "function only supports 3D spacing inputs, received " + std::to_string(spacing.size()));
+    }
+
     return generalised_geodesic3d_toivanen_cpu(image, mask, spacing, v, l_grad, l_eucl, iterations);
 }
 
