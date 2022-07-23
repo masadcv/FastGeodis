@@ -4,29 +4,10 @@ import time
 from functools import wraps
 
 import FastGeodis
-import GeodisTK
 import matplotlib.pyplot as plt
 import numpy as np
 import SimpleITK as sitk
 import torch
-
-
-def geodistk_geodesic_distance_3d(I, S, spacing, lamb, iter):
-    """Compute Geodesic Distance using GeodisTK raster scanning.
-
-    I: input image, can have multiple channels. Type should be np.float32.
-    S: binary image where non-zero pixels are used as seeds. Type should be np.uint8.
-    spacing: spacing of input 3d volume
-    lamb: weighting betwween 0.0 and 1.0
-          if lamb==0.0, return spatial euclidean distance without considering gradient
-          if lamb==1.0, the distance is based on gradient only without using spatial distance
-    iter: number of iteration for raster scanning.
-
-    from: https://github.com/taigw/GeodisTK/blob/master/demo2d.py
-
-    """
-    return GeodisTK.geodesic3d_raster_scan(I, S, spacing, lamb, iter)
-
 
 def demo_geodesic_distance3d(image_path, seed_pos):
     SHOW_JOINT_HIST = False
@@ -41,18 +22,6 @@ def demo_geodesic_distance3d(image_path, seed_pos):
     seed_image = np.zeros_like(input_image, np.uint8)
     seed_image[seed_pos[0]][seed_pos[1]][seed_pos[2]] = 1
 
-    tic = time.time()
-    fastmarch_output = GeodisTK.geodesic3d_fast_marching(
-        input_image, seed_image, spacing
-    )
-    fastmarch_time = time.time() - tic
-
-    tic = time.time()
-    geodistkraster_output = geodistk_geodesic_distance_3d(
-        input_image, seed_image, spacing, 1.0, 4
-    )
-    geodistkraster_time = time.time() - tic
-
     device = "cpu"
     input_image_pt = torch.from_numpy(input_image).unsqueeze_(0).unsqueeze_(0)
     seed_image_pt = (
@@ -60,6 +29,18 @@ def demo_geodesic_distance3d(image_path, seed_pos):
     )
     input_image_pt = input_image_pt.to(device)
     seed_image_pt = seed_image_pt.to(device)
+
+    tic = time.time()
+    toivanenraster_output = np.squeeze(
+        FastGeodis.generalised_geodesic3d_toivanen(
+            input_image_pt, seed_image_pt, spacing, 1e10, 1.0, 4
+        )
+        .detach()
+        .cpu()
+        .numpy()
+    )
+    toivanenraster_time = time.time() - tic
+    
     tic = time.time()
     fastraster_output_cpu = np.squeeze(
         FastGeodis.generalised_geodesic3d(
@@ -89,23 +70,17 @@ def demo_geodesic_distance3d(image_path, seed_pos):
         fastraster_time_gpu = time.time() - tic
 
     print(
-        "Fast Marching: {:.6f} s \nGeodisTk raster: {:.6f} s \nFastGeodis CPU raster: {:.6f} s".format(
-            fastmarch_time, geodistkraster_time, fastraster_time_cpu
+        "Toivanen's CPU raster: {:.6f} s \nFastGeodis CPU raster: {:.6f} s".format(
+            toivanenraster_time, fastraster_time_cpu
         )
     )
     if device:
         print("FastGeodis GPU raster: {:.6f} s".format(fastraster_time_gpu))
 
-    img_fastmarch_output = sitk.GetImageFromArray(fastmarch_output)
-    img_fastmarch_output.SetSpacing(spacing_raw)
+    img_toivanenraster_output = sitk.GetImageFromArray(toivanenraster_output)
+    img_toivanenraster_output.SetSpacing(spacing_raw)
     sitk.WriteImage(
-        img_fastmarch_output, os.path.join(image_folder, "image3d_dis1.nii.gz")
-    )
-
-    img_geodistkraster_output = sitk.GetImageFromArray(geodistkraster_output)
-    img_geodistkraster_output.SetSpacing(spacing_raw)
-    sitk.WriteImage(
-        img_geodistkraster_output, os.path.join(image_folder, "image3d_dis2.nii.gz")
+        img_toivanenraster_output, os.path.join(image_folder, "image3d_dis2.nii.gz")
     )
 
     img_d3 = sitk.GetImageFromArray(fastraster_output_cpu)
@@ -120,8 +95,7 @@ def demo_geodesic_distance3d(image_path, seed_pos):
     input_image = np.asarray(input_image, np.uint8)
 
     image_slice = input_image[10]
-    fastmarch_output_slice = fastmarch_output[10]
-    geodistkraster_output_slice = geodistkraster_output[10]
+    toivanenraster_output_slice = toivanenraster_output[10]
     fastraster_output_cpu_slice = fastraster_output_cpu[10]
     if device:
         fastraster_output_gpu_slice = fastraster_output_gpu[10]
@@ -135,19 +109,19 @@ def demo_geodesic_distance3d(image_path, seed_pos):
     plt.title("(a) Input image")
 
     plt.subplot(2, 4, 2)
-    plt.imshow(fastmarch_output_slice)
+    plt.imshow(toivanenraster_output_slice)
     plt.axis("off")
-    plt.title("(b) Fast Marching | ({:.4f} s)".format(fastmarch_time))
-
+    plt.title("(b) Toivanen's Raster (cpu) | ({:.4f} s)".format(toivanenraster_time))
+    
     plt.subplot(2, 4, 3)
     plt.imshow(fastraster_output_cpu_slice)
     plt.axis("off")
     plt.title("(c) FastGeodis (cpu) | ({:.4f} s)".format(fastraster_time_cpu))
 
     plt.subplot(2, 4, 6)
-    plt.imshow(geodistkraster_output_slice)
+    plt.imshow(toivanenraster_output_slice)
     plt.axis("off")
-    plt.title("(d) GeodisTK | ({:.4f} s)".format(geodistkraster_time))
+    plt.title("(d) Toivanen's Raster (cpu) | ({:.4f} s)".format(toivanenraster_time))
 
     if device:
         plt.subplot(2, 4, 7)
@@ -156,9 +130,9 @@ def demo_geodesic_distance3d(image_path, seed_pos):
         plt.title("(e) FastGeodis (gpu) | ({:.4f} s)".format(fastraster_time_gpu))
 
     diff = (
-        abs(fastmarch_output - fastraster_output_cpu) / (fastmarch_output + 1e-7) * 100
+        abs(toivanenraster_output - fastraster_output_cpu) / (toivanenraster_output + 1e-7) * 100
     )
-    diff_vol = fastmarch_output - fastraster_output_cpu
+    diff_vol = toivanenraster_output - fastraster_output_cpu
     diff_slice = diff_vol[10]
     plt.subplot(2, 4, 4)
     plt.imshow(diff_slice)
@@ -171,11 +145,11 @@ def demo_geodesic_distance3d(image_path, seed_pos):
 
     if device:
         diff = (
-            abs(fastmarch_output - fastraster_output_gpu)
-            / (fastmarch_output + 1e-7)
+            abs(toivanenraster_output - fastraster_output_gpu)
+            / (toivanenraster_output + 1e-7)
             * 100
         )
-        diff_vol = fastmarch_output - fastraster_output_gpu
+        diff_vol = toivanenraster_output - fastraster_output_gpu
         diff_slice = diff_vol[10]
         plt.subplot(2, 4, 8)
         plt.imshow(diff_slice)
@@ -189,20 +163,20 @@ def demo_geodesic_distance3d(image_path, seed_pos):
     plt.show()
 
     if SHOW_JOINT_HIST:
-        plt.figure()
+        plt.figure(figsize=(12, 6))
         plt.subplot(1, 2, 1)
-        plt.hist2d(fastmarch_output.flatten(), geodistkraster_output.flatten(), bins=50)
-        plt.xlabel("Fast Marching")
-        plt.ylabel("GeodisTK")
-        plt.title("Joint histogram\nFast Marching vs. GeodisTK")
-        # plt.gca().set_aspect("equal", adjustable="box")
+        plt.hist2d(toivanenraster_output.flatten(), fastraster_output_cpu.flatten(), bins=50)
+        plt.xlabel("Toivanen's Raster (cpu)")
+        plt.ylabel("FastGeodis (cpu)")
+        plt.title("Joint histogram\nToivanen's Raster (cpu) vs. FastGeodis (cpu)")
 
-        plt.subplot(1, 2, 2)
-        plt.hist2d(fastmarch_output.flatten(), fastraster_output_cpu.flatten(), bins=50)
-        plt.xlabel("Fast Marching")
-        plt.ylabel("FastGeodis")
-        plt.title("Joint histogram\nFast Marching vs. FastGeodis")
-        # plt.gca().set_aspect("equal", adjustable="box")
+        if device:
+            plt.subplot(1, 2, 2)
+            plt.hist2d(toivanenraster_output.flatten(), fastraster_output_gpu.flatten(), bins=50)
+            plt.xlabel("Toivanen's Raster (cpu)")
+            plt.ylabel("FastGeodis (gpu)")
+            plt.title("Joint histogram\nToivanen's Raster (cpu) vs. FastGeodis (cpu)")
+            # plt.gca().set_aspect("equal", adjustable="box")
 
         plt.tight_layout()
         plt.show()

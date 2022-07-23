@@ -70,6 +70,24 @@ torch::Tensor generalised_geodesic3d_cpu(
     const float &l_eucl,
     const int &iterations);
 
+torch::Tensor generalised_geodesic2d_toivanen_cpu(
+    torch::Tensor &image,
+    const torch::Tensor &mask,
+    const float &v,
+    const float &l_grad,
+    const float &l_eucl,
+    const int &iterations);
+
+torch::Tensor generalised_geodesic3d_toivanen_cpu(
+    torch::Tensor &image,
+    const torch::Tensor &mask,
+    const std::vector<float> &spacing,
+    const float &v,
+    const float &l_grad,
+    const float &l_eucl,
+    const int &iterations);
+
+
 torch::Tensor generalised_geodesic2d(
     torch::Tensor &image,
     const torch::Tensor &mask,
@@ -79,6 +97,23 @@ torch::Tensor generalised_geodesic2d(
     const int &iterations);
 
 torch::Tensor generalised_geodesic3d(
+    torch::Tensor &image,
+    const torch::Tensor &mask,
+    const std::vector<float> &spacing,
+    const float &v,
+    const float &l_grad,
+    const float &l_eucl,
+    const int &iterations);
+
+torch::Tensor generalised_geodesic2d_toivanen(
+    torch::Tensor &image,
+    const torch::Tensor &mask,
+    const float &v,
+    const float &l_grad,
+    const float &l_eucl,
+    const int &iterations);
+
+torch::Tensor generalised_geodesic3d_toivanen(
     torch::Tensor &image,
     const torch::Tensor &mask,
     const std::vector<float> &spacing,
