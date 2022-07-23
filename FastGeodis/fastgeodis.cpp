@@ -277,5 +277,4 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
     m.def("generalised_geodesic3d_toivanen", &generalised_geodesic3d_toivanen, "Generalised Geodesic distance 3d using Toivanen's method");
     m.def("GSF3d_toivanen", &GSF3d_toivanen, "Geodesic Symmetric Filtering 3d using Toivanen's method");
     m.def("signed_generalised_geodesic3d_toivanen", &getDs3d_toivanen, "Signed Generalised Geodesic distance 3d using Toivanen's method");
-    
 }
