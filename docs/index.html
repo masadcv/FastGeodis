@@ -82,10 +82,67 @@ European Conference on Computer Vision, Berlin, Heidelberg, 2008.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="FastGeodis.GSF2d_toivanen">
+<span class="sig-prename descclassname"><span class="pre">FastGeodis.</span></span><span class="sig-name descname"><span class="pre">GSF2d_toivanen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">softmask</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamb</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iter</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FastGeodis.GSF2d_toivanen" title="Permalink to this definition"></a></dt>
+<dd><p>Computes Geodesic Symmetric Filtering (GSF) using Toivanen’s raster scanning method from:</p>
+<p>Toivanen, Pekka J.
+“New geodosic distance transforms for gray-scale images.”
+Pattern Recognition Letters 17.5 (1996): 437-450.</p>
+<p>For more details on GSF, check the following reference:</p>
+<p>Criminisi, Antonio, Toby Sharp, and Andrew Blake.
+“Geos: Geodesic image segmentation.”
+European Conference on Computer Vision, Berlin, Heidelberg, 2008.</p>
+<p>The function expects input as torch.Tensor, which can be run on CPU or GPU depending on Tensor’s device location</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> – input image, can be grayscale or multiple channels.</p></li>
+<li><p><strong>softmask</strong> – softmask in range [0, 1] with seed information.</p></li>
+<li><p><strong>v</strong> – weighting factor for establishing relationship between unary and spatial distances.</p></li>
+<li><p><strong>lamb</strong> – weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance</p></li>
+<li><p><strong>iter</strong> – number of passes of the iterative distance transform method</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>torch.Tensor with distance transform</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="FastGeodis.GSF3d">
 <span class="sig-prename descclassname"><span class="pre">FastGeodis.</span></span><span class="sig-name descname"><span class="pre">GSF3d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">softmask</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">List</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamb</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iter</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FastGeodis.GSF3d" title="Permalink to this definition"></a></dt>
 <dd><p>Computes Geodesic Symmetric Filtering (GSF) using FastGeodis raster scanning.
 For more details on GSF, check the following reference:</p>
+<p>Criminisi, Antonio, Toby Sharp, and Andrew Blake.
+“Geos: Geodesic image segmentation.”
+European Conference on Computer Vision, Berlin, Heidelberg, 2008.</p>
+<p>The function expects input as torch.Tensor, which can be run on CPU or GPU depending on Tensor’s device location</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> – input image, can be grayscale or multiple channels.</p></li>
+<li><p><strong>softmask</strong> – softmask in range [0, 1] with seed information.</p></li>
+<li><p><strong>spacing</strong> – spacing for 3D data</p></li>
+<li><p><strong>v</strong> – weighting factor for establishing relationship between unary and spatial distances.</p></li>
+<li><p><strong>lamb</strong> – weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance</p></li>
+<li><p><strong>iter</strong> – number of passes of the iterative distance transform method</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>torch.Tensor with distance transform</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FastGeodis.GSF3d_toivanen">
+<span class="sig-prename descclassname"><span class="pre">FastGeodis.</span></span><span class="sig-name descname"><span class="pre">GSF3d_toivanen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">softmask</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">List</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamb</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iter</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FastGeodis.GSF3d_toivanen" title="Permalink to this definition"></a></dt>
+<dd><p>Computes Geodesic Symmetric Filtering (GSF) using Toivanen’s raster scanning method from:</p>
+<p>Toivanen, Pekka J.
+“New geodosic distance transforms for gray-scale images.”
+Pattern Recognition Letters 17.5 (1996): 437-450.</p>
+<p>For more details on GSF, check the following reference:</p>
 <p>Criminisi, Antonio, Toby Sharp, and Andrew Blake.
 “Geos: Geodesic image segmentation.”
 European Conference on Computer Vision, Berlin, Heidelberg, 2008.</p>
@@ -133,10 +190,67 @@ European Conference on Computer Vision, Berlin, Heidelberg, 2008.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="FastGeodis.generalised_geodesic2d_toivanen">
+<span class="sig-prename descclassname"><span class="pre">FastGeodis.</span></span><span class="sig-name descname"><span class="pre">generalised_geodesic2d_toivanen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">softmask</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamb</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iter</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">int</span></span><span class="w">  </span><span class="o"><span class="pre">=</span></span><span class="w">  </span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FastGeodis.generalised_geodesic2d_toivanen" title="Permalink to this definition"></a></dt>
+<dd><p>Computes Generalised Geodesic Distance using Toivanen’s raster scanning method from:</p>
+<p>Toivanen, Pekka J.
+“New geodosic distance transforms for gray-scale images.”
+Pattern Recognition Letters 17.5 (1996): 437-450.</p>
+<p>For more details on generalised geodesic distance, check the following reference:</p>
+<p>Criminisi, Antonio, Toby Sharp, and Andrew Blake.
+“Geos: Geodesic image segmentation.”
+European Conference on Computer Vision, Berlin, Heidelberg, 2008.</p>
+<p>The function expects input as torch.Tensor, which can be run on CPU or GPU depending on Tensor’s device location</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> – input image, can be grayscale or multiple channels.</p></li>
+<li><p><strong>softmask</strong> – softmask in range [0, 1] with seed information.</p></li>
+<li><p><strong>v</strong> – weighting factor for establishing relationship between unary and spatial distances.</p></li>
+<li><p><strong>lamb</strong> – weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance</p></li>
+<li><p><strong>iter</strong> – number of passes of the iterative distance transform method</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>torch.Tensor with distance transform</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="FastGeodis.generalised_geodesic3d">
 <span class="sig-prename descclassname"><span class="pre">FastGeodis.</span></span><span class="sig-name descname"><span class="pre">generalised_geodesic3d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">softmask</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">List</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamb</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iter</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">int</span></span><span class="w">  </span><span class="o"><span class="pre">=</span></span><span class="w">  </span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FastGeodis.generalised_geodesic3d" title="Permalink to this definition"></a></dt>
 <dd><p>Computes Generalised Geodesic Distance using FastGeodis raster scanning.
 For more details on generalised geodesic distance, check the following reference:</p>
+<p>Criminisi, Antonio, Toby Sharp, and Andrew Blake.
+“Geos: Geodesic image segmentation.”
+European Conference on Computer Vision, Berlin, Heidelberg, 2008.</p>
+<p>The function expects input as torch.Tensor, which can be run on CPU or GPU depending on Tensor’s device location</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> – input image, can be grayscale or multiple channels.</p></li>
+<li><p><strong>softmask</strong> – softmask in range [0, 1] with seed information.</p></li>
+<li><p><strong>spacing</strong> – spacing for 3D data</p></li>
+<li><p><strong>v</strong> – weighting factor for establishing relationship between unary and spatial distances.</p></li>
+<li><p><strong>lamb</strong> – weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance</p></li>
+<li><p><strong>iter</strong> – number of passes of the iterative distance transform method</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>torch.Tensor with distance transform</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FastGeodis.generalised_geodesic3d_toivanen">
+<span class="sig-prename descclassname"><span class="pre">FastGeodis.</span></span><span class="sig-name descname"><span class="pre">generalised_geodesic3d_toivanen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">softmask</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">List</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamb</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iter</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">int</span></span><span class="w">  </span><span class="o"><span class="pre">=</span></span><span class="w">  </span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FastGeodis.generalised_geodesic3d_toivanen" title="Permalink to this definition"></a></dt>
+<dd><p>Computes Generalised Geodesic Distance using Toivanen’s raster scanning method from:</p>
+<p>Toivanen, Pekka J.
+“New geodosic distance transforms for gray-scale images.”
+Pattern Recognition Letters 17.5 (1996): 437-450.</p>
+<p>For more details on generalised geodesic distance, check the following reference:</p>
 <p>Criminisi, Antonio, Toby Sharp, and Andrew Blake.
 “Geos: Geodesic image segmentation.”
 European Conference on Computer Vision, Berlin, Heidelberg, 2008.</p>
@@ -184,10 +298,67 @@ European Conference on Computer Vision, Berlin, Heidelberg, 2008.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="FastGeodis.signed_generalised_geodesic2d_toivanen">
+<span class="sig-prename descclassname"><span class="pre">FastGeodis.</span></span><span class="sig-name descname"><span class="pre">signed_generalised_geodesic2d_toivanen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">softmask</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamb</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iter</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">int</span></span><span class="w">  </span><span class="o"><span class="pre">=</span></span><span class="w">  </span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FastGeodis.signed_generalised_geodesic2d_toivanen" title="Permalink to this definition"></a></dt>
+<dd><p>Computes Signed Generalised Geodesic Distance using Toivanen’s raster scanning method from:</p>
+<p>Toivanen, Pekka J.
+“New geodosic distance transforms for gray-scale images.”
+Pattern Recognition Letters 17.5 (1996): 437-450.</p>
+<p>For more details on generalised geodesic distance, check the following reference:</p>
+<p>Criminisi, Antonio, Toby Sharp, and Andrew Blake.
+“Geos: Geodesic image segmentation.”
+European Conference on Computer Vision, Berlin, Heidelberg, 2008.</p>
+<p>The function expects input as torch.Tensor, which can be run on CPU or GPU depending on Tensor’s device location</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> – input image, can be grayscale or multiple channels.</p></li>
+<li><p><strong>softmask</strong> – softmask in range [0, 1] with seed information.</p></li>
+<li><p><strong>v</strong> – weighting factor for establishing relationship between unary and spatial distances.</p></li>
+<li><p><strong>lamb</strong> – weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance</p></li>
+<li><p><strong>iter</strong> – number of passes of the iterative distance transform method</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>torch.Tensor with distance transform</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="FastGeodis.signed_generalised_geodesic3d">
 <span class="sig-prename descclassname"><span class="pre">FastGeodis.</span></span><span class="sig-name descname"><span class="pre">signed_generalised_geodesic3d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">softmask</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">List</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamb</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iter</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">int</span></span><span class="w">  </span><span class="o"><span class="pre">=</span></span><span class="w">  </span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FastGeodis.signed_generalised_geodesic3d" title="Permalink to this definition"></a></dt>
 <dd><p>Computes Signed Generalised Geodesic Distance using FastGeodis raster scanning.
 For more details on generalised geodesic distance, check the following reference:</p>
+<p>Criminisi, Antonio, Toby Sharp, and Andrew Blake.
+“Geos: Geodesic image segmentation.”
+European Conference on Computer Vision, Berlin, Heidelberg, 2008.</p>
+<p>The function expects input as torch.Tensor, which can be run on CPU or GPU depending on Tensor’s device location</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> – input image, can be grayscale or multiple channels.</p></li>
+<li><p><strong>softmask</strong> – softmask in range [0, 1] with seed information.</p></li>
+<li><p><strong>spacing</strong> – spacing for 3D data</p></li>
+<li><p><strong>v</strong> – weighting factor for establishing relationship between unary and spatial distances.</p></li>
+<li><p><strong>lamb</strong> – weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance</p></li>
+<li><p><strong>iter</strong> – number of passes of the iterative distance transform method</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>torch.Tensor with distance transform</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="FastGeodis.signed_generalised_geodesic3d_toivanen">
+<span class="sig-prename descclassname"><span class="pre">FastGeodis.</span></span><span class="sig-name descname"><span class="pre">signed_generalised_geodesic3d_toivanen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">softmask</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">List</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lamb</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iter</span></span><span class="p"><span class="pre">:</span></span><span class="w">  </span><span class="n"><span class="pre">int</span></span><span class="w">  </span><span class="o"><span class="pre">=</span></span><span class="w">  </span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#FastGeodis.signed_generalised_geodesic3d_toivanen" title="Permalink to this definition"></a></dt>
+<dd><p>Computes Signed Generalised Geodesic Distance using Toivanen’s raster scanning method from:</p>
+<p>Toivanen, Pekka J.
+“New geodosic distance transforms for gray-scale images.”
+Pattern Recognition Letters 17.5 (1996): 437-450.</p>
+<p>For more details on generalised geodesic distance, check the following reference:</p>
 <p>Criminisi, Antonio, Toby Sharp, and Andrew Blake.
 “Geos: Geodesic image segmentation.”
 European Conference on Computer Vision, Berlin, Heidelberg, 2008.</p>
