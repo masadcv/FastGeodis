@@ -225,21 +225,9 @@ void geodesic_updown_pass_cuda(
 
     // top-down
     direction = +1;
-    // each distance calculation in down pass require previous row i.e. -1
+    // each distance calculation in down pass require previous row i.e. +1
     // process each row in parallel with CUDA kernel
-    if (~USE_PTR)
-    {
-        AT_DISPATCH_FLOATING_TYPES(image.type(), "geodesic_updown_single_row_pass_kernel", ([&]
-            { geodesic_updown_single_row_pass_kernel<scalar_t><<<blockCountUpDown, THREAD_COUNT>>>(
-                image.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(),
-                distance.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(),
-                l_grad,
-                l_eucl,
-                direction); 
-            }));
-    }
-    else
-    {
+    #if USE_PTR
         geodesic_updown_single_row_pass_ptr_kernel<<<blockCountUpDown, THREAD_COUNT>>>(
             image.data_ptr<float>(),
             distance.data_ptr<float>(),
@@ -249,25 +237,21 @@ void geodesic_updown_pass_cuda(
             channel,
             height,
             width);
-    }
+    #else
+        AT_DISPATCH_FLOATING_TYPES(image.type(), "geodesic_updown_single_row_pass_kernel", ([&]
+            { geodesic_updown_single_row_pass_kernel<scalar_t><<<blockCountUpDown, THREAD_COUNT>>>(
+                image.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(),
+                distance.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(),
+                l_grad,
+                l_eucl,
+                direction); 
+            }));
+    #endif
 
 
     // bottom-up
     direction = -1;
-    
-    if (~USE_PTR)
-    {
-        AT_DISPATCH_FLOATING_TYPES(image.type(), "geodesic_updown_single_row_pass_kernel", ([&]
-            { geodesic_updown_single_row_pass_kernel<scalar_t><<<blockCountUpDown, THREAD_COUNT>>>(
-                image.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(),
-                distance.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(),
-                l_grad,
-                l_eucl,
-                direction); 
-            }));
-    }
-    else
-    {
+    #if USE_PTR
         geodesic_updown_single_row_pass_ptr_kernel<<<blockCountUpDown, THREAD_COUNT>>>(
             image.data_ptr<float>(),
             distance.data_ptr<float>(),
@@ -277,7 +261,16 @@ void geodesic_updown_pass_cuda(
             channel,
             height,
             width);
-    }
+    #else
+        AT_DISPATCH_FLOATING_TYPES(image.type(), "geodesic_updown_single_row_pass_kernel", ([&]
+            { geodesic_updown_single_row_pass_kernel<scalar_t><<<blockCountUpDown, THREAD_COUNT>>>(
+                image.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(),
+                distance.packed_accessor32<scalar_t, 4, torch::RestrictPtrTraits>(),
+                l_grad,
+                l_eucl,
+                direction); 
+            }));
+    #endif
     
 }
 
@@ -533,24 +526,12 @@ void geodesic_frontback_pass_cuda(
     dim3 dimBlock(THREAD_COUNT_2D, THREAD_COUNT_2D);
     // Kernel<<<dimGrid, dimBlock>>>( arg1, arg2, arg2);
 
-    // direction variable used to indicate read from previous (-1) or next (+1) plane
+    // direction variable used to indicate read from previous (+1) or next (-1) plane
     int direction;
 
     // front-back
     direction = +1;
-    if (~USE_PTR)
-    {
-        AT_DISPATCH_FLOATING_TYPES(image.type(), "geodesic_frontback_single_plane_pass_kernel", ([&]
-            { geodesic_frontback_single_plane_pass_kernel<scalar_t><<<dimGrid, dimBlock>>>(
-                image.packed_accessor32<scalar_t, 5, torch::RestrictPtrTraits>(),
-                distance.packed_accessor32<scalar_t, 5, torch::RestrictPtrTraits>(),
-                l_grad,
-                l_eucl,
-                direction); 
-            }));
-    }
-    else
-    {
+    #if USE_PTR
         geodesic_frontback_single_plane_pass_ptr_kernel<<<dimGrid, dimBlock>>>(
             image.data_ptr<float>(),
             distance.data_ptr<float>(),
@@ -561,23 +542,20 @@ void geodesic_frontback_pass_cuda(
             depth,
             height,
             width);
-    }
+    #else
+        AT_DISPATCH_FLOATING_TYPES(image.type(), "geodesic_frontback_single_plane_pass_kernel", ([&]
+            { geodesic_frontback_single_plane_pass_kernel<scalar_t><<<dimGrid, dimBlock>>>(
+                image.packed_accessor32<scalar_t, 5, torch::RestrictPtrTraits>(),
+                distance.packed_accessor32<scalar_t, 5, torch::RestrictPtrTraits>(),
+                l_grad,
+                l_eucl,
+                direction); 
+            }));
+    #endif
 
     // back-front
     direction = -1;
-    if (~USE_PTR)
-    {
-        AT_DISPATCH_FLOATING_TYPES(image.type(), "geodesic_frontback_single_plane_pass_kernel", ([&]
-            { geodesic_frontback_single_plane_pass_kernel<scalar_t><<<dimGrid, dimBlock>>>(
-                image.packed_accessor32<scalar_t, 5, torch::RestrictPtrTraits>(),
-                distance.packed_accessor32<scalar_t, 5, torch::RestrictPtrTraits>(),
-                l_grad,
-                l_eucl,
-                direction); 
-            }));
-    }
-    else
-    {
+    #if USE_PTR
         geodesic_frontback_single_plane_pass_ptr_kernel<<<dimGrid, dimBlock>>>(
             image.data_ptr<float>(),
             distance.data_ptr<float>(),
@@ -588,7 +566,16 @@ void geodesic_frontback_pass_cuda(
             depth,
             height,
             width);
-    }
+    #else
+        AT_DISPATCH_FLOATING_TYPES(image.type(), "geodesic_frontback_single_plane_pass_kernel", ([&]
+            { geodesic_frontback_single_plane_pass_kernel<scalar_t><<<dimGrid, dimBlock>>>(
+                image.packed_accessor32<scalar_t, 5, torch::RestrictPtrTraits>(),
+                distance.packed_accessor32<scalar_t, 5, torch::RestrictPtrTraits>(),
+                l_grad,
+                l_eucl,
+                direction); 
+            }));
+    #endif
 }
 
 torch::Tensor generalised_geodesic3d_cuda(
