@@ -1,3 +1,4 @@
+import json
 import os
 import time
 from functools import wraps
@@ -170,6 +171,9 @@ def save_plot(sizes, time_taken_dict, figname):
     plt.ylabel("Execution time (seconds)")
     plt.tight_layout()
     plt.savefig(os.path.join("figures", figname + ".png"))
+    time_taken_dict['spatial_dim'] = sizes
+    with open(os.path.join('figures', figname + '.json'), 'w') as fp:
+        json.dump(time_taken_dict, fp, indent=4)
 
 
 if __name__ == "__main__":
