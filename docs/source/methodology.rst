@@ -17,7 +17,7 @@ The ability to incorporate image gradients with spatial distances has enabled ap
 Statement of Need
 ##################
 
-Despite existing open-source implementation of distance transforms :cite:p:`tensorflow2015-whitepaper,eucildeantdimpl,geodistk`, open-source implementations of efficient Geodesic distance transform algorithms :cite:p:`criminisiinteractive,weber2008parallel` on CPU and GPU do not exist. However, efficient CPU :cite:p:`eucildeantdimpl` and GPU :cite:p:`tensorflow2015-whitepaper` implementations exist for Euclidean distance transform. To the best of our knowledge, **FastGeodis** is the first open-source implementation of efficient Geodesic distance transform :cite:p:`criminisiinteractive`, achieving up to 15x speed-up on CPU and up to 60x speed-up on GPU as compared to existing open-source libraries :cite:p:`geodistk`. It also provides efficient implementation of Euclidean distance transform. In addition, it is the first open-source implementation of generalised Geodesic distance transform and Geodesic Symmetric Filtering (GSF) proposed in :cite:p:`criminisi2008geos`. 
+Despite existing open-source implementation of distance transforms :cite:p:`tensorflow2015-whitepaper,eucildeantdimpl,geodistk`, open-source implementations of efficient Geodesic distance transform algorithms :cite:p:`criminisiinteractive,weber2008parallel` on CPU and GPU do not exist. However, efficient CPU :cite:p:`eucildeantdimpl` and GPU :cite:p:`tensorflow2015-whitepaper` implementations exist for Euclidean distance transform. To the best of our knowledge, **FastGeodis** is the first open-source implementation of efficient Geodesic distance transform :cite:p:`criminisiinteractive`, achieving up to 20x speed-up on CPU and up to 74x speed-up on GPU as compared to existing open-source libraries :cite:p:`geodistk`. It also provides efficient implementation of Euclidean distance transform. In addition, it is the first open-source implementation of generalised Geodesic distance transform and Geodesic Symmetric Filtering (GSF) proposed in :cite:p:`criminisi2008geos`. 
   
 
 The ability to efficiently compute Geodesic and Euclidean distance transforms can significantly enhance distance transform applications especially for training deep learning models that utilise distance transforms :cite:p:`wang2018deepigeos`. It will improve prototyping, experimentation, and deployment of such methods, where efficient computation of distance transforms has been a limiting factor. In 3D medical imaging problems, efficient computation of distance transforms will lead to significant speed-ups, enabling online learning applications for better processing/labelling/inference from volumetric datasets :cite:p:`asad2022econet`.  In addition, **FastGeodis** provides efficient implementation for both CPUs and GPUs hardware and hence will enable efficient use of a wide range of hardware devices. 
@@ -70,31 +70,53 @@ Performance Improvements
 ################################
 FastGeodis (CPU/GPU) is compared with existing GeodisTK (https://github.com/taigw/GeodisTK) in terms of execution speed as well as accuracy. All our experiments were evaluated on Nvidia GeForce Titan X (12 GB) with 6-Core Intel Xeon E5-1650 CPU. We present our results below:
 
-Execution Speed
-----------------
+Execution
+*******************
+The following figures summarise execution speed comparison of **FastGeodis** with :cite:p:`geodistk`.
+
 .. table:: 
    :align: center
 
    +--------------------------------------------+--------------------------------------------+
-   |   **2D images:** 1 of 4 passes             |   **3D volumes:** 1 of 6 passes            |
+   |   **Execution Speed for 2D images**        |   **Execution Speed for 3D volumes**       | 
    +--------------------------------------------+--------------------------------------------+
-   | .. figure:: ../../figures/FastGeodis2D.png | .. figure:: ../../figures/FastGeodis3D.png |
+   | .. figure:: ../../figures/experiment_2d.png| .. figure:: ../../figures/experiment_3d.png|
    |   :alt: 2D                                 |   :alt: 3D                                 |
    |                                            |                                            |
    +--------------------------------------------+--------------------------------------------+
+
+The above results are further summarised in tables below, along with calculated speed-ups for **FastGeodis** functions vs :cite:p:`geodistk`:
+
+.. csv-table:: Execution speed-up on 2D images
+   :file: experiment2d.csv
+   :widths: 10, 10, 10, 10, 10, 10
+   :header-rows: 2
+
+
+.. csv-table:: Execution speed-up on 3D volumes
+   :file: experiment3d.csv
+   :widths: 10, 10, 10, 10, 10, 10
+   :header-rows: 2
+
+It can be observed that for 2D images, **FastGeodis** leads to a speed-up of upto 20x on CPU and upto 55x on GPU.
+For 3D images, **FastGeodis** leads to a speed-up of upto 3x on CPU and upto 74x on GPU.
 
 Accuracy
-----------------
-.. table:: 
-   :align: center
+*******************
 
-   +--------------------------------------------+--------------------------------------------+
-   |   **2D images:** 1 of 4 passes             |   **3D volumes:** 1 of 6 passes            |
-   +--------------------------------------------+--------------------------------------------+
-   | .. figure:: ../../figures/FastGeodis2D.png | .. figure:: ../../figures/FastGeodis3D.png |
-   |   :alt: 2D                                 |   :alt: 3D                                 |
-   |                                            |                                            |
-   +--------------------------------------------+--------------------------------------------+
+2D Image Data
+================
+ 
+.. figure:: ../../figures/fast_marching_compare_2d.png 
+
+.. figure:: ../../figures/fast_marching_compare_2d_jointhist.png
+
+3D Image Data
+==================
+.. image:: ../../figures/fast_marching_compare_3d.png 
+
+
+.. figure:: ../../figures/fast_marching_compare_3d_jointhist.png
 
 
 .. bibliography::
