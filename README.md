@@ -130,6 +130,10 @@ python -m unittest
 # Documentation
 Further details of each function implemented in FastGeodis can be accessed at the documentation hosted at: [https://masadcv.github.io/FastGeodis/index.html](https://masadcv.github.io/FastGeodis/index.html). 
 
+# Contributing to FastGeodis
+Spotted a bug or have a feature request to improve the package? We would love to have your input! See our [guidelines for contributing](https://masadcv.github.io/FastGeodis/contributing.html).
+
+
 # Comparison of Execution Time and Accuracy
 FastGeodis (CPU/GPU) is compared with existing GeodisTK ([https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK)) in terms of execution speed as well as accuracy.
 
