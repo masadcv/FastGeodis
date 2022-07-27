@@ -36,7 +36,7 @@ or
 
 `pip install git+https://github.com/masadcv/FastGeodis`
 
-or (on conda systems with existing installation of PyTorch with CUDA)
+or (on conda environments with existing installation of PyTorch with CUDA)
 
 `pip install FastGeodis --no-build-isolation`
 
@@ -111,13 +111,13 @@ euclidean_dist = np.squeeze(euclidean_dist.cpu().numpy())
 For more usage examples see:
 | Description  |  Python |  Colab link  |
 |--------------|---------|--------------|
-| **Simple 2D Geodesic and Euclidean Distance** | [`samples/simpledemo2d.py`](./samples/simpledemo2d.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/simpledemo2d.ipynb)  |
-| **Simple Signed 2D Geodesic and Euclidean Distance** | [`samples/simpledemo2d_signed.py`](./samples/simpledemo2d_signed.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/simpledemo2d_signed.ipynb) |
-| **Simple 3D Geodesic and Euclidean Distance** | [`samples/simpledemo3d.py`](./samples/simpledemo3d.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/simpledemo3d.ipynb)  |
-| **Simple Signed 3D Geodesic and Euclidean Distance** | [`samples/simpledemo3d_signed.py`](./samples/simpledemo3d_signed.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/simpledemo3d_signed.ipynb)  |
-| **2D Geodesic Distance** | [`samples/demo2d.py`](./samples/demo2d.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/demo2d.ipynb)  |
-| **3D Geodesic Distance** | [`samples/demo3d.py`](./samples/demo3d.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/demo3d.ipynb)  |
-| **2D GSF Segmentation Smoothing** |  [`samples/demoGSF2d_SmoothingSegExample.ipynb`](./samples/demoGSF2d_SmoothingSegExample.ipynb) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/demoGSF2d_SmoothingSegExample.ipynb) | 
+| **Simple 2D Geodesic and Euclidean Distance** | [`samples/simpledemo2d.py`](https://github.com/masadcv/FastGeodis/blob/master/samples/simpledemo2d.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/simpledemo2d.ipynb)  |
+| **Simple Signed 2D Geodesic and Euclidean Distance** | [`samples/simpledemo2d_signed.py`](https://github.com/masadcv/FastGeodis/blob/master/samples/simpledemo2d_signed.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/simpledemo2d_signed.ipynb) |
+| **Simple 3D Geodesic and Euclidean Distance** | [`samples/simpledemo3d.py`](https://github.com/masadcv/FastGeodis/blob/master/samples/simpledemo3d.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/simpledemo3d.ipynb)  |
+| **Simple Signed 3D Geodesic and Euclidean Distance** | [`samples/simpledemo3d_signed.py`](https://github.com/masadcv/FastGeodis/blob/master/samples/simpledemo3d_signed.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/simpledemo3d_signed.ipynb)  |
+| **2D Geodesic Distance** | [`samples/demo2d.py`](https://github.com/masadcv/FastGeodis/blob/master/samples/demo2d.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/demo2d.ipynb)  |
+| **3D Geodesic Distance** | [`samples/demo3d.py`](https://github.com/masadcv/FastGeodis/blob/master/samples/demo3d.py) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/demo3d.ipynb)  |
+| **2D GSF Segmentation Smoothing** |  [`samples/demoGSF2d_SmoothingSegExample.ipynb`](https://github.com/masadcv/FastGeodis/blob/master/samples/demoGSF2d_SmoothingSegExample.ipynb) | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/demoGSF2d_SmoothingSegExample.ipynb) | 
 
 # Unit Tests
 A number of unittests are provided, which can be run as:
@@ -129,6 +129,10 @@ python -m unittest
 
 # Documentation
 Further details of each function implemented in FastGeodis can be accessed at the documentation hosted at: [https://masadcv.github.io/FastGeodis/index.html](https://masadcv.github.io/FastGeodis/index.html). 
+
+# Contributing to FastGeodis
+Spotted a bug or have a feature request to improve the package? We would love to have your input! See our [guidelines for contributing](https://masadcv.github.io/FastGeodis/contributing.html).
+
 
 # Comparison of Execution Time and Accuracy
 FastGeodis (CPU/GPU) is compared with existing GeodisTK ([https://github.com/taigw/GeodisTK](https://github.com/taigw/GeodisTK)) in terms of execution speed as well as accuracy.
