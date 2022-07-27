@@ -68,7 +68,7 @@ For both forward and backward pass, an L shaped kernel is used in a single raste
 
 Performance Improvements
 ################################
-FastGeodis (CPU/GPU) is compared with existing GeodisTK (https://github.com/taigw/GeodisTK) in terms of execution speed as well as accuracy. We present our results below:
+FastGeodis (CPU/GPU) is compared with existing GeodisTK (https://github.com/taigw/GeodisTK) in terms of execution speed as well as accuracy. All our experiments were evaluated on Nvidia GeForce Titan X (12 GB) with 6-Core Intel Xeon E5-1650 CPU. We present our results below:
 
 Execution Speed
 ----------------
