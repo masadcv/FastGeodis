@@ -128,7 +128,7 @@ python -m unittest
 ```
 
 # Documentation
-Further details of each function implemented in FastGeodis can be accessed at the documentation hosted at: [fastgeodis.readthedocs.io](https://fastgeodis.readthedocs.io). 
+Further details of each function implemented in FastGeodis can be accessed at the documentation hosted at: [https://fastgeodis.readthedocs.io](https://fastgeodis.readthedocs.io).
 
 # Contributing to FastGeodis
 Spotted a bug or have a feature request to improve the package? We would love to have your input! See our [guidelines for contributing](https://fastgeodis.readthedocs.io/en/latest/contributing.html).

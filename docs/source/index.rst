@@ -42,6 +42,8 @@ Use table of contents below, or on the left panel to explore this documentation.
 
 .. toctree::
    :maxdepth: 2
+   
+   Introduction <self>
 
    methodology
 
