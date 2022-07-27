@@ -58,24 +58,3 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-
-# help from: https://github.com/PyLops/pylops/blob/dev/docs/source/conf.py
-html_context = {
-    "menu_links_name": "Repository",
-    "menu_links": [
-        (
-            '<i class="fa fa-github fa-fw"></i> Source Code',
-            "https://github.com/masadcv/FastGeodis",
-        ),
-        (
-            '<i class="fa fa-users fa-fw"></i> Contributing',
-            "https://github.com/masadcv/FastGeodis/blob/master/CONTRIBUTING.md",
-        ),
-    ],
-    # Custom variables to enable "Improve this page"" and "Download notebook"
-    # links
-    "doc_path": "docs/source",
-    "github_project": "masadcv",
-    "github_repo": "FastGeodis",
-    "github_version": "master",
-}
