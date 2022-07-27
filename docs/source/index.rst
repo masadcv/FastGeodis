@@ -49,10 +49,22 @@ Use table of contents below, or on the left panel to explore this documentation.
 
    usage_examples
 
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: Reference Documentation
+   
    api_docs
-
-   contributing
 
    license
 
    acknowledgement
+   
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: Getting Involved
+
+   Source Code <https://github.com/masadcv/FastGeodis>
+   Contributing <contributing>
+   Citing <citing>
