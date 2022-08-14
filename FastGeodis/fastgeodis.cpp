@@ -282,20 +282,20 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
     m.def("GSF2d_toivanen", &GSF2d_toivanen, "Geodesic Symmetric Filtering 2d using Toivanen's method");
     m.def("signed_generalised_geodesic2d_toivanen", &getDs2d_toivanen, "Signed Generalised Geodesic distance 2d using Toivanen's method");
     
-    m.def("generalised_geodesic2d_toivanen", &generalised_geodesic2d_toivanen, "Generalised Geodesic distance 2d using Toivanen's method");
-    // m.def("GSF2d_toivanen", &GSF2d_toivanen, "Geodesic Symmetric Filtering 2d using Toivanen's method");
-    // m.def("signed_generalised_geodesic2d_toivanen", &getDs2d_toivanen, "Signed Generalised Geodesic distance 2d using Toivanen's method");
+    m.def("generalised_geodesic2d_fastmarch", &generalised_geodesic2d_fastmarch, "Generalised Geodesic distance 2d using Fast Marching method");
+    // m.def("GSF2d_fastmarch", &GSF2d_fastmarch, "Geodesic Symmetric Filtering 2d using Fast Marching method");
+    // m.def("signed_generalised_geodesic2d_fastmarch", &getDs2d_fastmarch, "Signed Generalised Geodesic distance 2d using Fast Marching method");
     
     m.def("generalised_geodesic3d", &generalised_geodesic3d, "Generalised Geodesic distance 3d");
     m.def("GSF3d", &GSF3d, "Geodesic Symmetric Filtering 3d");
     m.def("signed_generalised_geodesic3d", &getDs3d, "Signed Generalised Geodesic distance 3d");
 
-    m.def("generalised_geodesic2d_toivanen", &generalised_geodesic2d_toivanen, "Generalised Geodesic distance 2d using Toivanen's method");
-    m.def("GSF2d_toivanen", &GSF2d_toivanen, "Geodesic Symmetric Filtering 2d using Toivanen's method");
-    m.def("signed_generalised_geodesic2d_toivanen", &getDs2d_toivanen, "Signed Generalised Geodesic distance 2d using Toivanen's method");
+    m.def("generalised_geodesic3d_toivanen", &generalised_geodesic3d_toivanen, "Generalised Geodesic distance 3d using Toivanen's method");
+    m.def("GSF3d_toivanen", &GSF3d_toivanen, "Geodesic Symmetric Filtering 3d using Toivanen's method");
+    m.def("signed_generalised_geodesic3d_toivanen", &getDs3d_toivanen, "Signed Generalised Geodesic distance 3d using Toivanen's method");
     
-    m.def("generalised_geodesic2d_toivanen", &generalised_geodesic2d_toivanen, "Generalised Geodesic distance 2d using Toivanen's method");
-    // m.def("GSF2d_toivanen", &GSF2d_toivanen, "Geodesic Symmetric Filtering 2d using Toivanen's method");
-    // m.def("signed_generalised_geodesic2d_toivanen", &getDs2d_toivanen, "Signed Generalised Geodesic distance 2d using Toivanen's method");
+    // m.def("generalised_geodesic3d_fastmarch", &generalised_geodesic3d_fastmarch, "Generalised Geodesic distance 3d using Fast Marching method");
+    // m.def("GSF3d_fastmarch", &GSF3d_fastmarch, "Geodesic Symmetric Filtering 3d using Fast Marching method");
+    // m.def("signed_generalised_geodesic3d_fastmarch", &getDs3d_fastmarch, "Signed Generalised Geodesic distance 3d using Fast Marching method");
     
 }
