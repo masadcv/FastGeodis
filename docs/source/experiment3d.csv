@@ -1,0 +1,6 @@
+Device,CPU,CPU,GPU,CPU,GPU
+Spatial Size,GeodisTK,FastGeodis,FastGeodis,Speed-up,Speed-up
+64 x 64 x64,0.13098 s,0.03933 s,0.00724 s,3.3 x,18.1 x
+128 x 128 x 128,1.09478 s,0.30489 s,0.01783 s,3.6 x,61.4 x
+256 x 256 x 256,8.60261 s,2.53498 s,0.12443 s,3.4 x,69.1 x
+512 x 512 x 512,69.08086 s,22.24171 s,0.92998 s,3.1 x,74.3 x
