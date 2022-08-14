@@ -175,6 +175,18 @@ torch::Tensor generalised_geodesic3d_toivanen(torch::Tensor &image, const torch:
     return generalised_geodesic3d_toivanen_cpu(image, mask, spacing, v, l_grad, l_eucl, iterations);
 }
 
+torch::Tensor generalised_geodesic2d_fastmarch(torch::Tensor &image, const torch::Tensor &mask, const float &v, const float &l_grad, const float &l_eucl)
+{
+
+    // check input dimensions
+    check_input_dimensions(image, mask, 4);
+
+    // fastmarch method is only implementable on cpu
+    check_cpu(image);    
+    check_cpu(mask);
+
+    return generalised_geodesic2d_fastmarch_cpu(image, mask, v, l_grad, l_eucl);
+}
 
 torch::Tensor getDs2d(torch::Tensor &image, const torch::Tensor &mask, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
 {
@@ -270,11 +282,20 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
     m.def("GSF2d_toivanen", &GSF2d_toivanen, "Geodesic Symmetric Filtering 2d using Toivanen's method");
     m.def("signed_generalised_geodesic2d_toivanen", &getDs2d_toivanen, "Signed Generalised Geodesic distance 2d using Toivanen's method");
     
+    m.def("generalised_geodesic2d_toivanen", &generalised_geodesic2d_toivanen, "Generalised Geodesic distance 2d using Toivanen's method");
+    // m.def("GSF2d_toivanen", &GSF2d_toivanen, "Geodesic Symmetric Filtering 2d using Toivanen's method");
+    // m.def("signed_generalised_geodesic2d_toivanen", &getDs2d_toivanen, "Signed Generalised Geodesic distance 2d using Toivanen's method");
+    
     m.def("generalised_geodesic3d", &generalised_geodesic3d, "Generalised Geodesic distance 3d");
     m.def("GSF3d", &GSF3d, "Geodesic Symmetric Filtering 3d");
     m.def("signed_generalised_geodesic3d", &getDs3d, "Signed Generalised Geodesic distance 3d");
 
-    m.def("generalised_geodesic3d_toivanen", &generalised_geodesic3d_toivanen, "Generalised Geodesic distance 3d using Toivanen's method");
-    m.def("GSF3d_toivanen", &GSF3d_toivanen, "Geodesic Symmetric Filtering 3d using Toivanen's method");
-    m.def("signed_generalised_geodesic3d_toivanen", &getDs3d_toivanen, "Signed Generalised Geodesic distance 3d using Toivanen's method");
+    m.def("generalised_geodesic2d_toivanen", &generalised_geodesic2d_toivanen, "Generalised Geodesic distance 2d using Toivanen's method");
+    m.def("GSF2d_toivanen", &GSF2d_toivanen, "Geodesic Symmetric Filtering 2d using Toivanen's method");
+    m.def("signed_generalised_geodesic2d_toivanen", &getDs2d_toivanen, "Signed Generalised Geodesic distance 2d using Toivanen's method");
+    
+    m.def("generalised_geodesic2d_toivanen", &generalised_geodesic2d_toivanen, "Generalised Geodesic distance 2d using Toivanen's method");
+    // m.def("GSF2d_toivanen", &GSF2d_toivanen, "Geodesic Symmetric Filtering 2d using Toivanen's method");
+    // m.def("signed_generalised_geodesic2d_toivanen", &getDs2d_toivanen, "Signed Generalised Geodesic distance 2d using Toivanen's method");
+    
 }

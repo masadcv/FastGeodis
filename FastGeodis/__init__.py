@@ -180,7 +180,7 @@ def generalised_geodesic2d_toivanen(
     "Geos: Geodesic image segmentation."
     European Conference on Computer Vision, Berlin, Heidelberg, 2008.
 
-    The function expects input as torch.Tensor, which can be run on CPU or GPU depending on Tensor's device location
+    The function expects input as torch.Tensor, which can be run on CPU only using Tensor's device location
 
     Args:
         image: input image, can be grayscale or multiple channels.
@@ -218,7 +218,7 @@ def generalised_geodesic3d_toivanen(
     "Geos: Geodesic image segmentation."
     European Conference on Computer Vision, Berlin, Heidelberg, 2008.
 
-    The function expects input as torch.Tensor, which can be run on CPU or GPU depending on Tensor's device location
+    The function expects input as torch.Tensor, which can be run on CPU only using Tensor's device location
 
     Args:
         image: input image, can be grayscale or multiple channels.
@@ -254,7 +254,7 @@ def signed_generalised_geodesic2d_toivanen(
     "Geos: Geodesic image segmentation."
     European Conference on Computer Vision, Berlin, Heidelberg, 2008.
 
-    The function expects input as torch.Tensor, which can be run on CPU or GPU depending on Tensor's device location
+    The function expects input as torch.Tensor, which can be run on CPU only using Tensor's device location
 
     Args:
         image: input image, can be grayscale or multiple channels.
@@ -291,7 +291,7 @@ def signed_generalised_geodesic3d_toivanen(
     "Geos: Geodesic image segmentation."
     European Conference on Computer Vision, Berlin, Heidelberg, 2008.
 
-    The function expects input as torch.Tensor, which can be run on CPU or GPU depending on Tensor's device location
+    The function expects input as torch.Tensor, which can be run on CPU only using Tensor's device location
 
     Args:
         image: input image, can be grayscale or multiple channels.
@@ -389,7 +389,7 @@ def GSF2d_toivanen(
     "Geos: Geodesic image segmentation."
     European Conference on Computer Vision, Berlin, Heidelberg, 2008.
 
-    The function expects input as torch.Tensor, which can be run on CPU or GPU depending on Tensor's device location
+    The function expects input as torch.Tensor, which can be run on CPU only using Tensor's device location
 
     Args:
         image: input image, can be grayscale or multiple channels.
@@ -425,7 +425,7 @@ def GSF3d_toivanen(
     "Geos: Geodesic image segmentation."
     European Conference on Computer Vision, Berlin, Heidelberg, 2008.
 
-    The function expects input as torch.Tensor, which can be run on CPU or GPU depending on Tensor's device location
+    The function expects input as torch.Tensor, which can be run on CPU only using Tensor's device location
 
     Args:
         image: input image, can be grayscale or multiple channels.
