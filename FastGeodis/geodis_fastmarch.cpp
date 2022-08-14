@@ -32,7 +32,7 @@
 #include <vector>
 // #include <iostream>
 
-float l1distance_toivanen(const float &in1, const float &in2)
+float l1distance_fastmarch(const float &in1, const float &in2)
 {
     return std::abs(in1 - in2);
 }
@@ -74,15 +74,23 @@ void update_point_in_list(std::vector<Point2D> * list, Point2D p)
 }
 
 void add_new_accepted_point(
-    const torch::TensorAccessor<float, 4> &img, 
-    torch::TensorAccessor<float, 4> &distance, 
-    torch::TensorAccessor<int, 2> &state, 
+    const torch::Tensor &image,
+    torch::Tensor &distance,
+    torch::Tensor &state, 
     std::vector<Point2D> * list, 
-    int height, 
-    int width, 
-    int channel, 
-    Point2D p)
+    Point2D p, 
+    float l_grad,
+    float l_eucl)
 {
+    // batch, channel, height, width
+    const int channel = image.size(1);
+    const int height = image.size(2);
+    const int width = image.size(3);
+
+    auto image_ptr = image.accessor<float, 4>();
+    auto distance_ptr = distance.accessor<float, 4>();
+    auto state_ptr = state.accessor<int, 2>();
+
     int w = p.w;
     int h = p.h;
     int nh, nw, temp_state;
@@ -113,20 +121,20 @@ void add_new_accepted_point(
                 l_dist = 0;
                 if (channel == 1)
                 {
-                    l_dist = l1distance_toivanen(
+                    l_dist = l1distance_fastmarch(
                         image_ptr[0][0][h][w], 
                         image_ptr[0][0][nh][nw]); 
                 }
                 else
                 {
-                    for (int c_i; c_i < channel; c_i++)
+                    for (int c_i=0; c_i < channel; c_i++)
                     {
-                        l_dist += l1distance_toivanen(
+                        l_dist += l1distance_fastmarch(
                             image_ptr[0][c_i][h][w], 
                             image_ptr[0][c_i][nh][nw]);     
                     }       
                 }
-                delta_dis = space_dis * l_dist;
+                delta_dis = l_eucl * space_dis + l_grad * l_dist;
                 old_dis   = distance_ptr[0][0][nh][nw];
                 new_dis   = distance_ptr[0][0][h][w] + delta_dis;
 
@@ -160,23 +168,22 @@ void geodesic2d_fastmarch_cpu(
     const float &l_eucl)
 {
     // batch, channel, height, width
-    const int channel = image.size(1);
+    // const int channel = image.size(1);
     const int height = image.size(2);
     const int width = image.size(3);
 
     // initialise state
     auto options = torch::TensorOptions()
-                    .dtype(torch::kInt8)
+                    .dtype(torch::kInt)
                     .device(torch::kCPU, 1)
                     .requires_grad(false);
     auto state = torch::zeros({height, width}, options);
 
     // state value: 0 == accepted, 1 == temp, 2 == far away
-    auto image_ptr = image.accessor<float, 4>();
+    // auto image_ptr = image.accessor<float, 4>();
     auto distance_ptr = distance.accessor<float, 4>();
     auto state_ptr = state.accessor<int, 2>();
 
-    float init_dis;
     int init_state;
     float seed_type;
     
@@ -205,14 +212,21 @@ void geodesic2d_fastmarch_cpu(
     {
         for (int w = 0; w < width; w++)
         {
-            temp_state = state[h][w];
+            temp_state = state_ptr[h][w];
             if (temp_state == 0)
             {
                 Point2D accepted_p;
                 accepted_p.distance = 0.0;
                 accepted_p.h = h;
                 accepted_p.w = w;
-                add_new_accepted_point(image_ptr, distance_ptr, state_ptr, &temporary_list, height, width, channel, accepted_p);
+                add_new_accepted_point(
+                    image, 
+                    distance, 
+                    state, 
+                    &temporary_list, 
+                    accepted_p,
+                    l_grad,
+                    l_eucl);
             }
         }
     }
@@ -223,9 +237,15 @@ void geodesic2d_fastmarch_cpu(
         Point2D temp_point = temporary_list[temporary_list.size() -1];
         temporary_list.pop_back();
         state[temp_point.h][temp_point.w] = 0;
-        add_new_accepted_point(image_ptr, distance_ptr, state_ptr, &temporary_list, height, width, channel, temp_point);
+        add_new_accepted_point(
+            image, 
+            distance, 
+            state, 
+            &temporary_list, 
+            temp_point,
+            l_grad,
+            l_eucl);
     }
-    delete state;
 }
 
 torch::Tensor generalised_geodesic2d_fastmarch_cpu(
@@ -334,7 +354,7 @@ torch::Tensor generalised_geodesic2d_fastmarch_cpu(
 //                     l_dist = 0.0;
 //                     if (channel == 1)
 //                     {
-//                         l_dist = l1distance_toivanen(
+//                         l_dist = l1distance_fastmarch(
 //                             image_ptr[0][0][z][h][w],
 //                             image_ptr[0][0][z_ind][h_ind][w_ind]);
 //                     }
@@ -342,7 +362,7 @@ torch::Tensor generalised_geodesic2d_fastmarch_cpu(
 //                     {
 //                         for (int c_i = 0; c_i < channel; c_i++)
 //                         {
-//                             l_dist += l1distance_toivanen(
+//                             l_dist += l1distance_fastmarch(
 //                                 image_ptr[0][c_i][z][h][w],
 //                                 image_ptr[0][c_i][z_ind][h_ind][w_ind]);
 //                         }
@@ -380,7 +400,7 @@ torch::Tensor generalised_geodesic2d_fastmarch_cpu(
 //                     l_dist = 0.0;
 //                     if (channel == 1)
 //                     {
-//                         l_dist = l1distance_toivanen(
+//                         l_dist = l1distance_fastmarch(
 //                             image_ptr[0][0][z][h][w],
 //                             image_ptr[0][0][z_ind][h_ind][w_ind]);
 //                     }
@@ -388,7 +408,7 @@ torch::Tensor generalised_geodesic2d_fastmarch_cpu(
 //                     {
 //                         for (int c_i = 0; c_i < channel; c_i++)
 //                         {
-//                             l_dist += l1distance_toivanen(
+//                             l_dist += l1distance_fastmarch(
 //                                 image_ptr[0][c_i][z][h][w],
 //                                 image_ptr[0][c_i][z_ind][h_ind][w_ind]);
 //                         }
