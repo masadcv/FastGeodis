@@ -74,3 +74,36 @@ plt.imshow(euclidean_dist_toivanen)
 plt.plot(100, 100, "mo")
 
 plt.show()
+
+
+# Fast Marching Method
+
+# Fast Marching method only support CPU
+image_pt = image_pt.to("cpu")
+mask_pt = mask_pt.to("cpu")
+
+lamb = 1.0  # <-- Geodesic distance transform
+geodesic_dist_fastmarch = FastGeodis.generalised_geodesic2d_fastmarch(
+    image_pt, mask_pt, v, lamb
+)
+geodesic_dist_fastmarch = np.squeeze(geodesic_dist_fastmarch.cpu().numpy())
+
+lamb = 0.0  # <-- Euclidean distance transform
+euclidean_dist_fastmarch = FastGeodis.generalised_geodesic2d_fastmarch(
+    image_pt, mask_pt, v, lamb
+)
+euclidean_dist_fastmarch = np.squeeze(euclidean_dist_fastmarch.cpu().numpy())
+
+plt.figure(figsize=(12, 4))
+plt.subplot(1, 3, 1)
+plt.imshow(image)
+
+plt.subplot(1, 3, 2)
+plt.imshow(geodesic_dist_fastmarch)
+plt.plot(100, 100, "mo")
+
+plt.subplot(1, 3, 3)
+plt.imshow(euclidean_dist_fastmarch)
+plt.plot(100, 100, "mo")
+
+plt.show()

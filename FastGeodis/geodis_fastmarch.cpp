@@ -47,7 +47,7 @@ struct Point2D
 void insert_point_to_list(std::vector<Point2D> * list, int start_position,  Point2D p)
 {
     int insert_idx = list->size();
-    for(int i = start_position; i < list->size(); i++)
+    for(int i = start_position; i < int(list->size()); i++)
     {
         if(list->at(i).distance < p.distance)
         {
@@ -61,7 +61,7 @@ void insert_point_to_list(std::vector<Point2D> * list, int start_position,  Poin
 void update_point_in_list(std::vector<Point2D> * list, Point2D p)
 {
     int remove_idx = -1;
-    for(int i = 0; i < list->size(); i++)
+    for(int i = 0; i < int(list->size()); i++)
     {
         if(list->at(i).w == p.w && list->at(i).h == p.h)
         {
@@ -74,91 +74,91 @@ void update_point_in_list(std::vector<Point2D> * list, Point2D p)
 }
 
 void add_new_accepted_point(
-    const torch::Tensor &image,
-    torch::Tensor &distance,
-    torch::Tensor &state, 
+    torch::TensorAccessor<float, 4> image_ptr, 
+    torch::TensorAccessor<float, 4> distance_ptr, 
+    torch::TensorAccessor<signed char, 2> state_ptr, 
     std::vector<Point2D> * list, 
-    Point2D p, 
-    float l_grad,
-    float l_eucl)
+    const Point2D &p,
+    const int &channel, 
+    const int &height, 
+    const int &width, 
+    const float &l_grad,
+    const float &l_eucl)
 {
-    // batch, channel, height, width
-    const int channel = image.size(1);
-    const int height = image.size(2);
-    const int width = image.size(3);
-
-    auto image_ptr = image.accessor<float, 4>();
-    auto distance_ptr = distance.accessor<float, 4>();
-    auto state_ptr = state.accessor<int, 2>();
-
     int w = p.w;
     int h = p.h;
     int nh, nw, temp_state;
     float l_dist, space_dis, delta_dis, old_dis, new_dis;
     
-    for (int dh = -1; dh <= 1; dh++)
+    const int dh_f[9] = {-1, -1, -1,  0,  0,  0,   1,  1,  1};
+    const int dw_f[9] = {-1,  0,  1, -1,  0,  1,  -1,  0,  1};
+
+    const float local_dist_f[9] = {sqrt(2), float(1), sqrt(2), float(1), 0, float(1), sqrt(2), float(1), sqrt(2)};
+    
+    for(int ind = 0; ind < 9; ind++)
     {
-        for(int dw = -1; dw <= 1; dw++)
+        int dh = dh_f[ind];
+        int dw = dw_f[ind];
+
+        space_dis = local_dist_f[ind];
+
+        if(dh == 0 && dw == 0) 
         {
-            if(dh == 0 && dw == 0) 
+            continue;
+        }
+
+        nh = dh + h;
+        nw = dw + w;
+        
+        if(nh >=0 && nh < height && nw >=0 && nw < width)
+        {
+            temp_state = state_ptr[nh][nw];
+
+            if(temp_state == 0)
             {
                 continue;
             }
-
-            nh = dh + h;
-            nw = dw + w;
             
-            if(nh >=0 && nh < height && nw >=0 && nw < width)
+            l_dist = 0.0;
+            if (channel == 1)
             {
-                temp_state = state_ptr[nh][nw];
-
-                if(temp_state == 0)
+                l_dist = l1distance_fastmarch(
+                    image_ptr[0][0][h][w], 
+                    image_ptr[0][0][nh][nw]); 
+            }
+            else
+            {
+                for (int c_i=0; c_i < channel; c_i++)
                 {
-                    continue;
-                }
+                    l_dist += l1distance_fastmarch(
+                        image_ptr[0][c_i][h][w], 
+                        image_ptr[0][c_i][nh][nw]);     
+                }       
+            }
+            delta_dis = l_eucl * space_dis + l_grad * l_dist;
+            old_dis   = distance_ptr[0][0][nh][nw];
+            new_dis   = distance_ptr[0][0][h][w] + delta_dis;
+
+            if(new_dis < old_dis)
+            {
+                distance_ptr[0][0][nh][nw] = new_dis;
+
+                Point2D new_point;
+                new_point.distance = new_dis;
+                new_point.h = nh;
+                new_point.w = nw;
                 
-                space_dis = sqrt(dw*dw + dh*dh);
-                l_dist = 0;
-                if (channel == 1)
+                if(temp_state == 2)
                 {
-                    l_dist = l1distance_fastmarch(
-                        image_ptr[0][0][h][w], 
-                        image_ptr[0][0][nh][nw]); 
+                    state_ptr[nh][nw] = 1;
+                    insert_point_to_list(list, 0, new_point);
                 }
-                else
-                {
-                    for (int c_i=0; c_i < channel; c_i++)
-                    {
-                        l_dist += l1distance_fastmarch(
-                            image_ptr[0][c_i][h][w], 
-                            image_ptr[0][c_i][nh][nw]);     
-                    }       
-                }
-                delta_dis = l_eucl * space_dis + l_grad * l_dist;
-                old_dis   = distance_ptr[0][0][nh][nw];
-                new_dis   = distance_ptr[0][0][h][w] + delta_dis;
-
-                if(new_dis < old_dis)
-                {
-                    distance_ptr[0][0][nh][nw] = new_dis;
-
-                    Point2D new_point;
-                    new_point.distance = new_dis;
-                    new_point.h = nh;
-                    new_point.w = nw;
-                    
-                    if(temp_state == 2)
-                    {
-                        state_ptr[nh][nw] = 1;
-                        insert_point_to_list(list, 0, new_point);
-                    }
-                    else{
-                        update_point_in_list(list, new_point);
-                    }
+                else{
+                    update_point_in_list(list, new_point);
                 }
             }
-        } // end for dw
-    } // end for dh
+        }
+    }
 }
 
 void geodesic2d_fastmarch_cpu(
@@ -168,21 +168,21 @@ void geodesic2d_fastmarch_cpu(
     const float &l_eucl)
 {
     // batch, channel, height, width
-    // const int channel = image.size(1);
+    const int channel = image.size(1);
     const int height = image.size(2);
     const int width = image.size(3);
 
     // initialise state
     auto options = torch::TensorOptions()
-                    .dtype(torch::kInt)
+                    .dtype(torch::kInt8)
                     .device(torch::kCPU, 1)
                     .requires_grad(false);
     auto state = torch::zeros({height, width}, options);
 
     // state value: 0 == accepted, 1 == temp, 2 == far away
-    // auto image_ptr = image.accessor<float, 4>();
+    auto image_ptr = image.accessor<float, 4>();
     auto distance_ptr = distance.accessor<float, 4>();
-    auto state_ptr = state.accessor<int, 2>();
+    auto state_ptr = state.accessor<signed char, 2>();
 
     int init_state;
     float seed_type;
@@ -220,11 +220,14 @@ void geodesic2d_fastmarch_cpu(
                 accepted_p.h = h;
                 accepted_p.w = w;
                 add_new_accepted_point(
-                    image, 
-                    distance, 
-                    state, 
+                    image_ptr, 
+                    distance_ptr, 
+                    state_ptr, 
                     &temporary_list, 
                     accepted_p,
+                    channel,
+                    height,
+                    width,
                     l_grad,
                     l_eucl);
             }
@@ -238,11 +241,14 @@ void geodesic2d_fastmarch_cpu(
         temporary_list.pop_back();
         state[temp_point.h][temp_point.w] = 0;
         add_new_accepted_point(
-            image, 
-            distance, 
-            state, 
+            image_ptr, 
+            distance_ptr, 
+            state_ptr, 
             &temporary_list, 
             temp_point,
+            channel,
+            height,
+            width,
             l_grad,
             l_eucl);
     }

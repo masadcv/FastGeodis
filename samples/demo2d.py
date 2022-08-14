@@ -34,6 +34,16 @@ def evaluate_geodesic_distance2d(image, seed_pos):
     )
 
     tic = time.time()
+    fastmarch_output = np.squeeze(
+        FastGeodis.generalised_geodesic2d_fastmarch(
+            input_image_pt, seed_image_pt, v, lamb
+        )
+        .cpu()
+        .numpy()
+    )
+    fastmarch_time = time.time() - tic
+
+    tic = time.time()
     toivanenraster_output = np.squeeze(
         FastGeodis.generalised_geodesic2d_toivanen(
             input_image_pt, seed_image_pt, v, lamb, iterations
@@ -70,14 +80,14 @@ def evaluate_geodesic_distance2d(image, seed_pos):
 
     print("Runtimes:")
     print(
-        "Toivanen's CPU raster: {:.6f} s \nFastGeodis CPU raster: {:.6f} s".format(
-            toivanenraster_time, fastraster_time_cpu
+        "Fast Marching CPU: {:.6f} s \nToivanen's CPU raster: {:.6f} s \nFastGeodis CPU raster: {:.6f} s".format(
+            fastmarch_time, toivanenraster_time, fastraster_time_cpu
         )
     )
 
     if device:
         print("FastGeodis GPU raster: {:.6f} s".format(fastraster_time_gpu))
-
+    
     plt.figure(figsize=(18, 6))
     plt.subplot(2, 4, 1)
     plt.imshow(image, cmap="gray")
@@ -85,16 +95,22 @@ def evaluate_geodesic_distance2d(image, seed_pos):
     plt.plot([seed_pos[0]], [seed_pos[1]], "ro")
     plt.axis("off")
     plt.title("(a) Input image")
+    
+    plt.subplot(2, 4, 5)
+    plt.imshow(fastmarch_output)
+    plt.axis("off")
+    plt.title("(b) Fast Marching (cpu) | ({:.4f} s)".format(fastmarch_time))
+
 
     plt.subplot(2, 4, 2)
     plt.imshow(toivanenraster_output)
     plt.axis("off")
-    plt.title("(b) Toivanen's Raster (cpu) | ({:.4f} s)".format(toivanenraster_time))
+    plt.title("(c) Toivanen's Raster (cpu) | ({:.4f} s)".format(toivanenraster_time))
 
     plt.subplot(2, 4, 3)
     plt.imshow(fastraster_output_cpu)
     plt.axis("off")
-    plt.title("(c) FastGeodis (cpu) | ({:.4f} s)".format(fastraster_time_cpu))
+    plt.title("(e) FastGeodis (cpu) | ({:.4f} s)".format(fastraster_time_cpu))
 
     plt.subplot(2, 4, 6)
     plt.imshow(toivanenraster_output)
@@ -105,33 +121,33 @@ def evaluate_geodesic_distance2d(image, seed_pos):
         plt.subplot(2, 4, 7)
         plt.imshow(fastraster_output_gpu)
         plt.axis("off")
-        plt.title("(e) FastGeodis (gpu) | ({:.4f} s)".format(fastraster_time_gpu))
+        plt.title("(f) FastGeodis (gpu) | ({:.4f} s)".format(fastraster_time_gpu))
 
     diff = (
-        abs(toivanenraster_output - fastraster_output_cpu)
-        / (toivanenraster_output + 1e-7)
+        abs(fastmarch_output - fastraster_output_cpu)
+        / (fastmarch_output + 1e-7)
         * 100
     )
     plt.subplot(2, 4, 4)
     plt.imshow(diff)
     plt.axis("off")
     plt.title(
-        "(f) Fast Marching vs. FastGeodis (cpu)\ndiff: max: {:.4f} | min: {:.4f}".format(
+        "(g) Fast Marching vs. FastGeodis (cpu)\ndiff: max: {:.4f} | min: {:.4f}".format(
             np.max(diff), np.min(diff)
         )
     )
 
     if device:
         diff = (
-            abs(toivanenraster_output - fastraster_output_gpu)
-            / (toivanenraster_output + 1e-7)
+            abs(fastmarch_output - fastraster_output_gpu)
+            / (fastmarch_output + 1e-7)
             * 100
         )
         plt.subplot(2, 4, 8)
         plt.imshow(diff)
         plt.axis("off")
         plt.title(
-            "(g) Fast Marching vs. FastGeodis (gpu)\ndiff: max: {:.4f} | min: {:.4f}".format(
+            "(h) Fast Marching vs. FastGeodis (gpu)\ndiff: max: {:.4f} | min: {:.4f}".format(
                 np.max(diff), np.min(diff)
             )
         )
@@ -141,25 +157,33 @@ def evaluate_geodesic_distance2d(image, seed_pos):
 
     if SHOW_JOINT_HIST:
         plt.figure(figsize=(12, 6))
-        plt.subplot(1, 2, 1)
-        plt.title("Joint histogram\nToivanen's Raster (cpu) vs. FastGeodis (cpu)")
+        plt.subplot(1, 3, 1)
+        plt.title("Joint histogram\nFast Marching (cpu) vs. Toivanen's Raster (cpu)")
         plt.hist2d(
-            toivanenraster_output.flatten(), fastraster_output_cpu.flatten(), bins=50
+            fastmarch_output.flatten(), toivanenraster_output.flatten(), bins=50
         )
-        plt.xlabel("Toivanen's Raster (cpu)")
+        plt.xlabel("FastGeodis (cpu)")
+        plt.ylabel("Toivanen's Raster (cpu)")
+
+        plt.subplot(1, 3, 2)
+        plt.title("Joint histogram\nFast Marching (cpu) vs. FastGeodis (cpu)")
+        plt.hist2d(
+            fastmarch_output.flatten(), fastraster_output_cpu.flatten(), bins=50
+        )
+        plt.xlabel("Fast Marching (cpu)")
         plt.ylabel("FastGeodis (cpu)")
         # plt.gca().set_aspect("equal", adjustable="box")
 
         if device:
-            plt.subplot(1, 2, 2)
+            plt.subplot(1, 3, 3)
             plt.hist2d(
-                toivanenraster_output.flatten(),
+                fastmarch_output.flatten(),
                 fastraster_output_gpu.flatten(),
                 bins=50,
             )
-            plt.xlabel("Toivanen's Raster (cpu)")
+            plt.xlabel("Fast Marching (cpu)")
             plt.ylabel("FastGeodis (gpu)")
-            plt.title("Joint histogram\nToivanen's Raster (cpu) vs. FastGeodis (gpu)")
+            plt.title("Joint histogram\nFast Marching (cpu) vs. FastGeodis (gpu)")
             # plt.gca().set_aspect("equal", adjustable="box")
 
         plt.tight_layout()
