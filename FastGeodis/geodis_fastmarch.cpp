@@ -93,7 +93,10 @@ void add_new_accepted_point(
     const int dh_f[9] = {-1, -1, -1,  0,  0,  0,   1,  1,  1};
     const int dw_f[9] = {-1,  0,  1, -1,  0,  1,  -1,  0,  1};
 
-    const float local_dist_f[9] = {sqrt(2), float(1), sqrt(2), float(1), float(0), float(1), sqrt(2), float(1), sqrt(2)};
+    const float local_dist_f[9] = {
+        sqrt(float(2.)), float(1), sqrt(float(2.)), 
+        float(1.), float(0.), float(1.), 
+        sqrt(float(2.)), float(1.), sqrt(float(2.))};
     
     for(int ind = 0; ind < 9; ind++)
     {
