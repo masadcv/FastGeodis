@@ -32,6 +32,14 @@ def demo_geodesic_distance3d(image_path, seed_pos):
     seed_image_pt = seed_image_pt.to(device)
 
     tic = time.time()
+    fastmarch_output = np.squeeze(
+        FastGeodis.generalised_geodesic3d_fastmarch(
+            input_image_pt, seed_image_pt, spacing, 1e10, 1.0
+        )
+    )
+    fastmarch_time = time.time() - tic
+
+    tic = time.time()
     toivanenraster_output = np.squeeze(
         FastGeodis.generalised_geodesic3d_toivanen(
             input_image_pt, seed_image_pt, spacing, 1e10, 1.0, 4

@@ -271,185 +271,242 @@ torch::Tensor generalised_geodesic2d_fastmarch_cpu(
     return distance;
 }
 
-// void geodesic3d_fastmarch_cpu(
-//     const torch::Tensor &image,
-//     torch::Tensor &distance,
-//     const std::vector<float> &spacing,
-//     const float &l_grad,
-//     const float &l_eucl)
-// {
-//     // batch, channel, depth, height, width
-//     const int channel = image.size(1);
-//     const int depth = image.size(2);
-//     const int height = image.size(3);
-//     const int width = image.size(4);
+struct Point3D
+{
+    float distance;
+    int d;
+    int w;
+    int h;
+};
 
-//     auto image_ptr = image.accessor<float, 5>();
-//     auto distance_ptr = distance.accessor<float, 5>();
+void insert_point_to_list(std::vector<Point3D> * list, int start_position,  Point3D p)
+{
+    int insert_idx = list->size();
+    for(int i = start_position; i < int(list->size()); i++)
+    {
+        if(list->at(i).distance < p.distance)
+        {
+            insert_idx = i;
+            break;
+        }
+    }
+    list->insert(insert_idx + list->begin(), p);
+}
 
-//     // distances for forward
-//     const int dz_f[13] = {-1, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1};
-//     const int dh_f[13] = {-1, -1, -1, 0, 0, -1, -1, -1, 0, -1, -1, -1, 0};
-//     const int dw_f[13] = {-1, 0, 1, -1, 0, -1, 0, 1, -1, -1, 0, 1, -1};
+void update_point_in_list(std::vector<Point3D> * list, Point3D p)
+{
+    int remove_idx = -1;
+    for(int i = 0; i < int(list->size()); i++)
+    {
+        if(list->at(i).d == p.d && list->at(i).h == p.h && list->at(i).w == p.w)
+        {
+            remove_idx = i;
+            break;
+        }
+    }
+    list->erase(remove_idx + list->begin());
+    insert_point_to_list(list, remove_idx, p);
+}
 
-//     float local_dist_f[13];
-//     for (int i = 0; i < 13; i++)
-//     {
-//         float ld = 0.0;
-//         if (dz_f[i] != 0)
-//         {
-//             ld += spacing[0] * spacing[0];
-//         }
+void add_new_accepted_point(
+    torch::TensorAccessor<float, 5> image_ptr, 
+    torch::TensorAccessor<float, 5> distance_ptr, 
+    torch::TensorAccessor<signed char, 3> state_ptr, 
+    std::vector<Point3D> * list,
+    Point3D p,
+    std::vector<float> spacing, 
+    int depth, 
+    int height, 
+    int width, 
+    int channel, 
+    const float &l_grad,
+    const float &l_eucl)
+{
+    int d = p.d;
+    int h = p.h;
+    int w = p.w;
+    float l_dist, delta_dis, old_dis, new_dis;
+    
+    for(int dd = -1; dd <= 1; dd++)
+    {
+        for(int dh = -1; dh <= 1; dh++)
+        {
+            for(int dw = -1; dw <= 1; dw++)
+            {
+                if(dd == 0 && dh == 0 && dw == 0) continue;
+                int nd = dd + d;
+                int nh = dh + h;
+                int nw = dw + w;
+                
+                if(nd >=0 && nd < depth && nh >=0 && nh < height && nw >=0 && nw < width )
+                {
+                    int temp_state = state_ptr[nd][nh][nw];
+                    if(temp_state == 0)
+                    {
+                        continue;
+                    }
 
-//         if (dh_f[i] != 0)
-//         {
-//             ld += spacing[1] * spacing[1];
-//         }
+                    float dd_sp = dd * spacing[0];
+                    float dh_sp = dh * spacing[1];
+                    float dw_sp = dw * spacing[2];
+                    
+                    float space_dis = sqrt(dd_sp*dd_sp + dh_sp*dh_sp + dw_sp*dw_sp);
+                    l_dist = 0.0;
+                    if (channel == 1)
+                    {
+                        l_dist = l1distance_fastmarch(
+                            image_ptr[0][0][d][h][w], 
+                            image_ptr[0][0][d][nh][nw]); 
+                    }
+                    else
+                    {
+                        for (int c_i=0; c_i < channel; c_i++)
+                        {
+                            l_dist += l1distance_fastmarch(
+                                image_ptr[0][c_i][d][h][w], 
+                                image_ptr[0][c_i][d][nh][nw]);     
+                        }       
+                    }                    
+                    delta_dis = l_eucl * space_dis + l_grad * l_dist;
+                    old_dis   = distance_ptr[0][0][nd][nh][nw];
+                    new_dis   = distance_ptr[0][0][d][h][w] + delta_dis;
 
-//         if (dw_f[i] != 0)
-//         {
-//             ld += spacing[2] * spacing[2];
-//         }
+                    if(new_dis < old_dis)
+                    {
+                        distance_ptr[0][0][nd][nh][nw] = new_dis;
+                        Point3D new_point;
+                        new_point.distance = new_dis;
+                        new_point.d = nd;
+                        new_point.h = nh;
+                        new_point.w = nw;
+                        if(temp_state == 2){
+                            state_ptr[nd][nh][nw] = 1;
+                            insert_point_to_list(list, 0, new_point);
+                        }
+                        else{
+                            update_point_in_list(list, new_point);
+                        }
+                    }
+                }
+            } // end for dw
+        } // end for dh
+    }// end for dd
+}
 
-//         local_dist_f[i] = sqrt(ld);
-//     }
 
-//     // distances for backward
-//     const int dz_b[13] = {-1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1, 1};
-//     const int dh_b[13] = {0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1};
-//     const int dw_b[13] = {1, -1, 0, 1, 1, -1, 0, 1, 0, 1, -1, 0, 1};
+void geodesic3d_fastmarch_cpu(
+    const torch::Tensor &image,
+    torch::Tensor &distance,
+    std::vector<float> spacing,
+    const float &l_grad,
+    const float &l_eucl)
+{
+    // batch, channel, depth, height, width
+    const int channel = image.size(1);
+    const int depth = image.size(2);
+    const int height = image.size(3);
+    const int width = image.size(4);
 
-//     float local_dist_b[13];
-//     for (int i = 0; i < 13; i++)
-//     {
-//         float ld = 0.0;
-//         if (dz_b[i] != 0)
-//         {
-//             ld += spacing[0] * spacing[0];
-//         }
+    // initialise state
+    auto options = torch::TensorOptions()
+                    .dtype(torch::kInt8)
+                    .device(torch::kCPU, 1)
+                    .requires_grad(false);
+    auto state = torch::zeros({depth, height, width}, options);
 
-//         if (dh_b[i] != 0)
-//         {
-//             ld += spacing[1] * spacing[1];
-//         }
+    // point state: 0--acceptd, 1--temporary, 2--far away
+    auto image_ptr = image.accessor<float, 5>();
+    auto distance_ptr = distance.accessor<float, 5>();
+    auto state_ptr = state.accessor<signed char, 3>();
+    
+    int init_state;
+    float seed_type;
 
-//         if (dw_b[i] != 0)
-//         {
-//             ld += spacing[2] * spacing[2];
-//         }
+    for(int d = 0; d < depth; d++)
+    {
+        for(int h = 0; h < height; h++)
+        {
+            for (int w = 0; w < width; w++)
+            {
+                seed_type = distance_ptr[0][0][d][h][w];
+                if(seed_type > 0){
+                    init_state = 2;
+                }
+                else{
+                    init_state = 0;
+                }
+                state_ptr[d][h][w] = init_state;
+            }
+        }
+    }
+    
+    // get initial temporary set, and save them in a list
+    std::vector<Point3D> temporary_list;
+    temporary_list.reserve(depth * height * width);
+    for(int d = 0; d < depth; d++)
+    {
+        for(int h = 0; h < height; h++)
+        {
+            for (int w = 0; w < width; w++)
+            {
+                int temp_state = state_ptr[d][h][w];
+                if(temp_state == 0)
+                {
+                    Point3D accepted_p;
+                    accepted_p.distance = 0.0;
+                    accepted_p.d = d;
+                    accepted_p.h = h;
+                    accepted_p.w = w;
+                    add_new_accepted_point(
+                        image_ptr, 
+                        distance_ptr, 
+                        state_ptr, 
+                        &temporary_list, 
+                        accepted_p, 
+                        spacing, 
+                        channel, 
+                        depth, 
+                        height, 
+                        width, 
+                        l_grad,
+                        l_eucl);
+                 }
+            }
+        }
+    }
 
-//         local_dist_b[i] = sqrt(ld);
-//     }
+    // update temporary set until it is empty
+    while(temporary_list.size() > 0){
+        Point3D temp_point = temporary_list[temporary_list.size() - 1];
+        temporary_list.pop_back();
+        state_ptr[temp_point.d][temp_point.h][temp_point.w] = 0;
+        add_new_accepted_point(
+            image_ptr, 
+            distance_ptr, 
+            state_ptr, 
+            &temporary_list, 
+            temp_point,
+            spacing, 
+            channel, 
+            depth, 
+            height, 
+            width, 
+            l_grad,
+            l_eucl);
+    }
+}
 
-//     // front-back
-//     for (int z = 0; z < depth; z++)
-//     {
-//         for (int h = 0; h < height; h++)
-//         {
-//             for (int w = 0; w < width; w++)
-//             {
-//                 float l_dist, cur_dist;
-//                 float new_dist = distance_ptr[0][0][z][h][w];
+torch::Tensor generalised_geodesic3d_fastmarch_cpu(
+    torch::Tensor &image,
+    const torch::Tensor &mask,
+    const std::vector<float> &spacing,
+    const float &v,
+    const float &l_grad,
+    const float &l_eucl)
+{
+    torch::Tensor distance = v * mask.clone();
 
-//                 for (int ind = 0; ind < 13; ind++)
-//                 {
-//                     const int z_ind = z + dz_f[ind];
-//                     const int h_ind = h + dh_f[ind];
-//                     const int w_ind = w + dw_f[ind];
+    geodesic3d_fastmarch_cpu(image, distance, spacing, l_grad, l_eucl);
 
-//                     if (z_ind < 0 || z_ind >= depth || w_ind < 0 || w_ind >= width || h_ind < 0 || h_ind >= height)
-//                         continue;
-
-//                     l_dist = 0.0;
-//                     if (channel == 1)
-//                     {
-//                         l_dist = l1distance_fastmarch(
-//                             image_ptr[0][0][z][h][w],
-//                             image_ptr[0][0][z_ind][h_ind][w_ind]);
-//                     }
-//                     else
-//                     {
-//                         for (int c_i = 0; c_i < channel; c_i++)
-//                         {
-//                             l_dist += l1distance_fastmarch(
-//                                 image_ptr[0][c_i][z][h][w],
-//                                 image_ptr[0][c_i][z_ind][h_ind][w_ind]);
-//                         }
-//                     }
-//                     cur_dist = distance_ptr[0][0][z_ind][h_ind][w_ind] +
-//                                l_eucl * local_dist_f[ind] +
-//                                l_grad * l_dist;
-
-//                     new_dist = std::min(new_dist, cur_dist);
-//                 }
-//                 distance_ptr[0][0][z][h][w] = new_dist;
-//             }
-//         }
-//     }
-
-//     // backward
-//     for (int z = depth - 1; z >= 0; z--)
-//     {
-//         for (int h = height - 1; h >= 0; h--)
-//         {
-//             for (int w = width - 1; w >= 0; w--)
-//             {
-//                 float l_dist, cur_dist;
-//                 float new_dist = distance_ptr[0][0][z][h][w];
-
-//                 for (int ind = 0; ind < 13; ind++)
-//                 {
-//                     const int z_ind = z + dz_b[ind];
-//                     const int h_ind = h + dh_b[ind];
-//                     const int w_ind = w + dw_b[ind];
-
-//                     if (z_ind < 0 || z_ind >= depth || w_ind < 0 || w_ind >= width || h_ind < 0 || h_ind >= height)
-//                         continue;
-
-//                     l_dist = 0.0;
-//                     if (channel == 1)
-//                     {
-//                         l_dist = l1distance_fastmarch(
-//                             image_ptr[0][0][z][h][w],
-//                             image_ptr[0][0][z_ind][h_ind][w_ind]);
-//                     }
-//                     else
-//                     {
-//                         for (int c_i = 0; c_i < channel; c_i++)
-//                         {
-//                             l_dist += l1distance_fastmarch(
-//                                 image_ptr[0][c_i][z][h][w],
-//                                 image_ptr[0][c_i][z_ind][h_ind][w_ind]);
-//                         }
-//                     }
-//                     cur_dist = distance_ptr[0][0][z_ind][h_ind][w_ind] +
-//                                l_eucl * local_dist_b[ind] +
-//                                l_grad * l_dist;
-
-//                     new_dist = std::min(new_dist, cur_dist);
-//                 }
-//                 distance_ptr[0][0][z][h][w] = new_dist;
-//             }
-//         }
-//     }
-// }
-
-// torch::Tensor generalised_geodesic3d_fastmarch_cpu(
-//     torch::Tensor &image,
-//     const torch::Tensor &mask,
-//     const std::vector<float> &spacing,
-//     const float &v,
-//     const float &l_grad,
-//     const float &l_eucl,
-//     const int &iterations)
-// {
-//     torch::Tensor distance = v * mask.clone();
-
-//     // iteratively run the distance transform
-//     for (int itr = 0; itr < iterations; itr++)
-//     {
-//         geodesic3d_fastmarch_cpu(image, distance, spacing, l_grad, l_eucl);
-//     }
-
-//     return distance;
-// }
+    return distance;
+}

@@ -188,6 +188,24 @@ torch::Tensor generalised_geodesic2d_fastmarch(torch::Tensor &image, const torch
     return generalised_geodesic2d_fastmarch_cpu(image, mask, v, l_grad, l_eucl);
 }
 
+torch::Tensor generalised_geodesic3d_fastmarch(torch::Tensor &image, const torch::Tensor &mask, const std::vector<float> &spacing, const float &v, const float &l_grad, const float &l_eucl)
+{
+    // check input dimensions
+    check_input_dimensions(image, mask, 5);
+
+    // fastmarch method is only implementable on cpu
+    check_cpu(image);    
+    check_cpu(mask);
+
+    if (spacing.size() != 3)
+    {
+        throw std::invalid_argument(
+            "function only supports 3D spacing inputs, received " + std::to_string(spacing.size()));
+    }
+
+    return generalised_geodesic3d_fastmarch_cpu(image, mask, spacing, v, l_grad, l_eucl);
+}
+
 torch::Tensor getDs2d(torch::Tensor &image, const torch::Tensor &mask, const float &v, const float &l_grad, const float &l_eucl, const int &iterations)
 {
     torch::Tensor D_M = generalised_geodesic2d(image, mask, v, l_grad, l_eucl, iterations);
@@ -293,26 +311,26 @@ torch::Tensor GSF2d_fastmarch(torch::Tensor &image, const torch::Tensor &mask, c
     return Dd_Md + De_Me;
 }
 
-// torch::Tensor getDs3d_fastmarch(torch::Tensor &image, const torch::Tensor &mask, const std::vector<float> &spacing, const float &v, const float &l_grad, const float &l_eucl)
-// {
-//     torch::Tensor D_M = generalised_geodesic3d_fastmarch(image, mask, spacing, v, l_grad, l_eucl);
-//     torch::Tensor D_Mb = generalised_geodesic3d_fastmarch(image, 1 - mask, spacing, v, l_grad, l_eucl);
+torch::Tensor getDs3d_fastmarch(torch::Tensor &image, const torch::Tensor &mask, const std::vector<float> &spacing, const float &v, const float &l_grad, const float &l_eucl)
+{
+    torch::Tensor D_M = generalised_geodesic3d_fastmarch(image, mask, spacing, v, l_grad, l_eucl);
+    torch::Tensor D_Mb = generalised_geodesic3d_fastmarch(image, 1 - mask, spacing, v, l_grad, l_eucl);
 
-//     return D_M - D_Mb;
-// }
+    return D_M - D_Mb;
+}
 
-// torch::Tensor GSF3d_fastmarch(torch::Tensor &image, const torch::Tensor &mask, const float &theta, const std::vector<float> &spacing, const float &v, const float &lambda)
-// {
-//     torch::Tensor Ds_M = getDs3d_fastmarch(image, mask, spacing, v, lambda, 1 - lambda);
+torch::Tensor GSF3d_fastmarch(torch::Tensor &image, const torch::Tensor &mask, const float &theta, const std::vector<float> &spacing, const float &v, const float &lambda)
+{
+    torch::Tensor Ds_M = getDs3d_fastmarch(image, mask, spacing, v, lambda, 1 - lambda);
 
-//     torch::Tensor Md = (Ds_M > theta).type_as(Ds_M);
-//     torch::Tensor Me = (Ds_M > -theta).type_as(Ds_M);
+    torch::Tensor Md = (Ds_M > theta).type_as(Ds_M);
+    torch::Tensor Me = (Ds_M > -theta).type_as(Ds_M);
 
-//     torch::Tensor Dd_Md = -getDs3d_fastmarch(image, 1 - Md, spacing, v, lambda, 1 - lambda);
-//     torch::Tensor De_Me = getDs3d_fastmarch(image, Me, spacing, v, lambda, 1 - lambda);
+    torch::Tensor Dd_Md = -getDs3d_fastmarch(image, 1 - Md, spacing, v, lambda, 1 - lambda);
+    torch::Tensor De_Me = getDs3d_fastmarch(image, Me, spacing, v, lambda, 1 - lambda);
 
-//     return Dd_Md + De_Me;
-// }
+    return Dd_Md + De_Me;
+}
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
 {
@@ -336,8 +354,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
     m.def("GSF3d_toivanen", &GSF3d_toivanen, "Geodesic Symmetric Filtering 3d using Toivanen's method");
     m.def("signed_generalised_geodesic3d_toivanen", &getDs3d_toivanen, "Signed Generalised Geodesic distance 3d using Toivanen's method");
     
-    // m.def("generalised_geodesic3d_fastmarch", &generalised_geodesic3d_fastmarch, "Generalised Geodesic distance 3d using Fast Marching method");
-    // m.def("GSF3d_fastmarch", &GSF3d_fastmarch, "Geodesic Symmetric Filtering 3d using Fast Marching method");
-    // m.def("signed_generalised_geodesic3d_fastmarch", &getDs3d_fastmarch, "Signed Generalised Geodesic distance 3d using Fast Marching method");
+    m.def("generalised_geodesic3d_fastmarch", &generalised_geodesic3d_fastmarch, "Generalised Geodesic distance 3d using Fast Marching method");
+    m.def("GSF3d_fastmarch", &GSF3d_fastmarch, "Geodesic Symmetric Filtering 3d using Fast Marching method");
+    m.def("signed_generalised_geodesic3d_fastmarch", &getDs3d_fastmarch, "Signed Generalised Geodesic distance 3d using Fast Marching method");
     
 }
