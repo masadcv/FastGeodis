@@ -8,7 +8,7 @@ from PIL import Image
 
 
 def evaluate_geodesic_distance2d(image, seed_pos):
-    SHOW_JOINT_HIST = False
+    SHOW_JOINT_HIST = True
     # get image and create seed image
     input_image = np.asanyarray(image, np.float32)
     Seed = np.zeros((input_image.shape[0], input_image.shape[1]), np.float32)
@@ -162,7 +162,7 @@ def evaluate_geodesic_distance2d(image, seed_pos):
         plt.hist2d(
             fastmarch_output.flatten(), toivanenraster_output.flatten(), bins=50
         )
-        plt.xlabel("FastGeodis (cpu)")
+        plt.xlabel("Fast Marching (cpu)")
         plt.ylabel("Toivanen's Raster (cpu)")
 
         plt.subplot(1, 3, 2)
@@ -176,6 +176,7 @@ def evaluate_geodesic_distance2d(image, seed_pos):
 
         if device:
             plt.subplot(1, 3, 3)
+            plt.title("Joint histogram\nFast Marching (cpu) vs. FastGeodis (gpu)")
             plt.hist2d(
                 fastmarch_output.flatten(),
                 fastraster_output_gpu.flatten(),
@@ -183,7 +184,6 @@ def evaluate_geodesic_distance2d(image, seed_pos):
             )
             plt.xlabel("Fast Marching (cpu)")
             plt.ylabel("FastGeodis (gpu)")
-            plt.title("Joint histogram\nFast Marching (cpu) vs. FastGeodis (gpu)")
             # plt.gca().set_aspect("equal", adjustable="box")
 
         plt.tight_layout()

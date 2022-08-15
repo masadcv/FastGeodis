@@ -87,21 +87,29 @@ void add_new_accepted_point(
 {
     int w = p.w;
     int h = p.h;
-    int nh, nw, temp_state;
+    int dh, dw, nh, nw, temp_state;
     float l_dist, space_dis, delta_dis, old_dis, new_dis;
     
-    const int dh_f[9] = {-1, -1, -1,  0,  0,  0,   1,  1,  1};
-    const int dw_f[9] = {-1,  0,  1, -1,  0,  1,  -1,  0,  1};
+    constexpr int dh_f[9] = {
+        -1, -1, -1,  
+         0,  0,  0,   
+         1,  1,  1
+        };
+    constexpr int dw_f[9] = {
+        -1,  0,  1, 
+        -1,  0,  1,  
+        -1,  0,  1
+        };
 
-    const float local_dist_f[9] = {
+    constexpr float local_dist_f[9] = {
         sqrt(float(2.)), float(1), sqrt(float(2.)), 
         float(1.), float(0.), float(1.), 
         sqrt(float(2.)), float(1.), sqrt(float(2.))};
     
     for(int ind = 0; ind < 9; ind++)
     {
-        int dh = dh_f[ind];
-        int dw = dw_f[ind];
+        dh = dh_f[ind];
+        dw = dw_f[ind];
 
         space_dis = local_dist_f[ind];
 
@@ -313,84 +321,133 @@ void add_new_accepted_point(
     torch::TensorAccessor<float, 5> distance_ptr, 
     torch::TensorAccessor<signed char, 3> state_ptr, 
     std::vector<Point3D> * list,
-    Point3D p,
-    std::vector<float> spacing, 
-    int depth, 
-    int height, 
-    int width, 
-    int channel, 
+    const Point3D &p,
+    const std::vector<float> &spacing, 
+    const int &channel, 
+    const int &depth, 
+    const int &height, 
+    const int &width, 
     const float &l_grad,
     const float &l_eucl)
 {
     int d = p.d;
     int h = p.h;
     int w = p.w;
-    float l_dist, delta_dis, old_dis, new_dis;
+    int dd, dh, dw, nd, nh, nw, temp_state;
+    float l_dist, space_dis, delta_dis, old_dis, new_dis;
+
+    constexpr int dd_f[27] = { 
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+        0,  0,  0,  0,  0,  0,  0,  0,  0, 
+        1,  1,  1,  1,  1,  1,  1,  1,  1
+        };
+    constexpr int dh_f[27] = {
+        -1, -1, -1,  0,  0,  0,  1,  1,  1, 
+        -1, -1, -1,  0,  0,  0,  1,  1,  1,
+        -1, -1, -1,  0,  0,  0,  1,  1,  1
+        };
+    constexpr int dw_f[27] = { 
+        -1,  0,  1, -1,  0,  1, -1,  0,  1, 
+        -1,  0,  1, -1,  0,  1, -1,  0,  1, 
+        -1,  0,  1, -1,  0,  1, -1,  0,  1
+        };
     
-    for(int dd = -1; dd <= 1; dd++)
+    float local_dist_f[27];
+    for (int ind = 0; ind < 27; ind++)
     {
-        for(int dh = -1; dh <= 1; dh++)
+        float ld = 0.0;
+        if (dd_f[ind] != 0)
         {
-            for(int dw = -1; dw <= 1; dw++)
+            ld += spacing[0] * spacing[0];
+        }
+
+        if (dh_f[ind] != 0)
+        {
+            ld += spacing[1] * spacing[1];
+        }
+
+        if (dw_f[ind] != 0)
+        {
+            ld += spacing[2] * spacing[2];
+        }
+
+        local_dist_f[ind] = sqrt(ld);
+    }
+    
+    for (int ind = 0; ind < 27; ind++)   
+    {
+        dd = dd_f[ind];
+        dh = dh_f[ind];
+        dw = dw_f[ind];
+
+        space_dis = local_dist_f[ind];
+
+        if(dd == 0 && dh == 0 && dw == 0)
+        {
+            continue;
+        }
+
+        nd = dd + d;
+        nh = dh + h;
+        nw = dw + w;
+        
+        if(nd >=0 && nd < depth && nh >=0 && nh < height && nw >=0 && nw < width )
+        {
+            temp_state = state_ptr[nd][nh][nw];
+
+            if(temp_state == 0)
             {
-                if(dd == 0 && dh == 0 && dw == 0) continue;
-                int nd = dd + d;
-                int nh = dh + h;
-                int nw = dw + w;
-                
-                if(nd >=0 && nd < depth && nh >=0 && nh < height && nw >=0 && nw < width )
+                continue;
+            }
+
+            // float dd_sp = dd * spacing[0];
+            // float dh_sp = dh * spacing[1];
+            // float dw_sp = dw * spacing[2];
+            
+            // space_dis = sqrt(dd_sp*dd_sp + dh_sp*dh_sp + dw_sp*dw_sp);
+            
+            l_dist = 0.0;
+            if (channel == 1)
+            {
+                l_dist = l1distance_fastmarch(
+                    image_ptr[0][0][d][h][w], 
+                    image_ptr[0][0][nd][nh][nw]); 
+            }
+            else
+            {
+                for (int c_i=0; c_i < channel; c_i++)
                 {
-                    int temp_state = state_ptr[nd][nh][nw];
-                    if(temp_state == 0)
-                    {
-                        continue;
-                    }
+                    l_dist += l1distance_fastmarch(
+                        image_ptr[0][c_i][d][h][w], 
+                        image_ptr[0][c_i][nd][nh][nw]);     
+                }       
+            }                    
+            delta_dis = l_eucl * space_dis + l_grad * l_dist;
+            old_dis   = distance_ptr[0][0][nd][nh][nw];
+            new_dis   = distance_ptr[0][0][d][h][w] + delta_dis;
 
-                    float dd_sp = dd * spacing[0];
-                    float dh_sp = dh * spacing[1];
-                    float dw_sp = dw * spacing[2];
-                    
-                    float space_dis = sqrt(dd_sp*dd_sp + dh_sp*dh_sp + dw_sp*dw_sp);
-                    l_dist = 0.0;
-                    if (channel == 1)
-                    {
-                        l_dist = l1distance_fastmarch(
-                            image_ptr[0][0][d][h][w], 
-                            image_ptr[0][0][d][nh][nw]); 
-                    }
-                    else
-                    {
-                        for (int c_i=0; c_i < channel; c_i++)
-                        {
-                            l_dist += l1distance_fastmarch(
-                                image_ptr[0][c_i][d][h][w], 
-                                image_ptr[0][c_i][d][nh][nw]);     
-                        }       
-                    }                    
-                    delta_dis = l_eucl * space_dis + l_grad * l_dist;
-                    old_dis   = distance_ptr[0][0][nd][nh][nw];
-                    new_dis   = distance_ptr[0][0][d][h][w] + delta_dis;
+            if(new_dis < old_dis)
+            {
+                distance_ptr[0][0][nd][nh][nw] = new_dis;
 
-                    if(new_dis < old_dis)
-                    {
-                        distance_ptr[0][0][nd][nh][nw] = new_dis;
-                        Point3D new_point;
-                        new_point.distance = new_dis;
-                        new_point.d = nd;
-                        new_point.h = nh;
-                        new_point.w = nw;
-                        if(temp_state == 2){
-                            state_ptr[nd][nh][nw] = 1;
-                            insert_point_to_list(list, 0, new_point);
-                        }
-                        else{
-                            update_point_in_list(list, new_point);
-                        }
-                    }
+                Point3D new_point;
+                new_point.distance = new_dis;
+                new_point.d = nd;
+                new_point.h = nh;
+                new_point.w = nw;
+
+                if(temp_state == 2)
+                {
+                    state_ptr[nd][nh][nw] = 1;
+                    insert_point_to_list(list, 0, new_point);
                 }
-            } // end for dw
-        } // end for dh
-    }// end for dd
+                else
+                {
+                    update_point_in_list(list, new_point);
+                }
+            }
+        }
+    }
 }
 
 
@@ -429,10 +486,12 @@ void geodesic3d_fastmarch_cpu(
             for (int w = 0; w < width; w++)
             {
                 seed_type = distance_ptr[0][0][d][h][w];
-                if(seed_type > 0){
+                if(seed_type > 0)
+                {
                     init_state = 2;
                 }
-                else{
+                else
+                {
                     init_state = 0;
                 }
                 state_ptr[d][h][w] = init_state;
@@ -440,16 +499,17 @@ void geodesic3d_fastmarch_cpu(
         }
     }
     
-    // get initial temporary set, and save them in a list
+    // get initial temporary set
     std::vector<Point3D> temporary_list;
     temporary_list.reserve(depth * height * width);
+    int temp_state;
     for(int d = 0; d < depth; d++)
     {
         for(int h = 0; h < height; h++)
         {
             for (int w = 0; w < width; w++)
             {
-                int temp_state = state_ptr[d][h][w];
+                temp_state = state_ptr[d][h][w];
                 if(temp_state == 0)
                 {
                     Point3D accepted_p;
@@ -476,7 +536,8 @@ void geodesic3d_fastmarch_cpu(
     }
 
     // update temporary set until it is empty
-    while(temporary_list.size() > 0){
+    while(temporary_list.size() > 0)
+    {
         Point3D temp_point = temporary_list[temporary_list.size() - 1];
         temporary_list.pop_back();
         state_ptr[temp_point.d][temp_point.h][temp_point.w] = 0;
