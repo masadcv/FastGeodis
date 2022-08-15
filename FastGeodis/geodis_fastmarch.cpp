@@ -79,6 +79,9 @@ void add_new_accepted_point(
     torch::TensorAccessor<signed char, 2> state_ptr, 
     std::vector<Point2D> * list, 
     const Point2D &p,
+    const int *dh_f,
+    const int *dw_f,
+    const float *local_dist_f,
     const int &channel, 
     const int &height, 
     const int &width, 
@@ -89,22 +92,6 @@ void add_new_accepted_point(
     int h = p.h;
     int dh, dw, nh, nw, temp_state;
     float l_dist, space_dis, delta_dis, old_dis, new_dis;
-    
-    constexpr int dh_f[9] = {
-        -1, -1, -1,  
-         0,  0,  0,   
-         1,  1,  1
-        };
-    constexpr int dw_f[9] = {
-        -1,  0,  1, 
-        -1,  0,  1,  
-        -1,  0,  1
-        };
-
-    constexpr float local_dist_f[9] = {
-        sqrt(float(2.)), float(1), sqrt(float(2.)), 
-        float(1.), float(0.), float(1.), 
-        sqrt(float(2.)), float(1.), sqrt(float(2.))};
     
     for(int ind = 0; ind < 9; ind++)
     {
@@ -195,6 +182,22 @@ void geodesic2d_fastmarch_cpu(
     auto distance_ptr = distance.accessor<float, 4>();
     auto state_ptr = state.accessor<signed char, 2>();
 
+    const int dh_f[9] = {
+        -1, -1, -1,  
+         0,  0,  0,   
+         1,  1,  1
+        };
+    const int dw_f[9] = {
+        -1,  0,  1, 
+        -1,  0,  1,  
+        -1,  0,  1
+        };
+
+    const float local_dist_f[9] = {
+        sqrt(float(2.)), float(1), sqrt(float(2.)), 
+        float(1.), float(0.), float(1.), 
+        sqrt(float(2.)), float(1.), sqrt(float(2.))};
+
     int init_state;
     float seed_type;
     
@@ -236,6 +239,9 @@ void geodesic2d_fastmarch_cpu(
                     state_ptr, 
                     &temporary_list, 
                     accepted_p,
+                    dh_f,
+                    dw_f,
+                    local_dist_f,
                     channel,
                     height,
                     width,
@@ -257,6 +263,9 @@ void geodesic2d_fastmarch_cpu(
             state_ptr, 
             &temporary_list, 
             temp_point,
+            dh_f,
+            dw_f,
+            local_dist_f,
             channel,
             height,
             width,
@@ -317,12 +326,16 @@ void update_point_in_list(std::vector<Point3D> * list, Point3D p)
 }
 
 void add_new_accepted_point(
-    torch::TensorAccessor<float, 5> image_ptr, 
+    const torch::TensorAccessor<float, 5> &image_ptr, 
     torch::TensorAccessor<float, 5> distance_ptr, 
     torch::TensorAccessor<signed char, 3> state_ptr, 
     std::vector<Point3D> * list,
     const Point3D &p,
     const std::vector<float> &spacing, 
+    const int *dd_f,
+    const int *dh_f,
+    const int *dw_f,
+    const float *local_dist_f,
     const int &channel, 
     const int &depth, 
     const int &height, 
@@ -335,44 +348,6 @@ void add_new_accepted_point(
     int w = p.w;
     int dd, dh, dw, nd, nh, nw, temp_state;
     float l_dist, space_dis, delta_dis, old_dis, new_dis;
-
-    constexpr int dd_f[27] = { 
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, 
-        0,  0,  0,  0,  0,  0,  0,  0,  0, 
-        1,  1,  1,  1,  1,  1,  1,  1,  1
-        };
-    constexpr int dh_f[27] = {
-        -1, -1, -1,  0,  0,  0,  1,  1,  1, 
-        -1, -1, -1,  0,  0,  0,  1,  1,  1,
-        -1, -1, -1,  0,  0,  0,  1,  1,  1
-        };
-    constexpr int dw_f[27] = { 
-        -1,  0,  1, -1,  0,  1, -1,  0,  1, 
-        -1,  0,  1, -1,  0,  1, -1,  0,  1, 
-        -1,  0,  1, -1,  0,  1, -1,  0,  1
-        };
-    
-    float local_dist_f[27];
-    for (int ind = 0; ind < 27; ind++)
-    {
-        float ld = 0.0;
-        if (dd_f[ind] != 0)
-        {
-            ld += spacing[0] * spacing[0];
-        }
-
-        if (dh_f[ind] != 0)
-        {
-            ld += spacing[1] * spacing[1];
-        }
-
-        if (dw_f[ind] != 0)
-        {
-            ld += spacing[2] * spacing[2];
-        }
-
-        local_dist_f[ind] = sqrt(ld);
-    }
     
     for (int ind = 0; ind < 27; ind++)   
     {
@@ -400,12 +375,6 @@ void add_new_accepted_point(
                 continue;
             }
 
-            // float dd_sp = dd * spacing[0];
-            // float dh_sp = dh * spacing[1];
-            // float dw_sp = dw * spacing[2];
-            
-            // space_dis = sqrt(dd_sp*dd_sp + dh_sp*dh_sp + dw_sp*dw_sp);
-            
             l_dist = 0.0;
             if (channel == 1)
             {
@@ -475,6 +444,44 @@ void geodesic3d_fastmarch_cpu(
     auto image_ptr = image.accessor<float, 5>();
     auto distance_ptr = distance.accessor<float, 5>();
     auto state_ptr = state.accessor<signed char, 3>();
+
+    const int dd_f[27] = { 
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+        0,  0,  0,  0,  0,  0,  0,  0,  0, 
+        1,  1,  1,  1,  1,  1,  1,  1,  1
+        };
+    const int dh_f[27] = {
+        -1, -1, -1,  0,  0,  0,  1,  1,  1, 
+        -1, -1, -1,  0,  0,  0,  1,  1,  1,
+        -1, -1, -1,  0,  0,  0,  1,  1,  1
+        };
+    const int dw_f[27] = { 
+        -1,  0,  1, -1,  0,  1, -1,  0,  1, 
+        -1,  0,  1, -1,  0,  1, -1,  0,  1, 
+        -1,  0,  1, -1,  0,  1, -1,  0,  1
+        };
+    
+    float local_dist_f[27];
+    for (int ind = 0; ind < 27; ind++)
+    {
+        float ld = 0.0;
+        if (dd_f[ind] != 0)
+        {
+            ld += spacing[0] * spacing[0];
+        }
+
+        if (dh_f[ind] != 0)
+        {
+            ld += spacing[1] * spacing[1];
+        }
+
+        if (dw_f[ind] != 0)
+        {
+            ld += spacing[2] * spacing[2];
+        }
+
+        local_dist_f[ind] = sqrt(ld);
+    }
     
     int init_state;
     float seed_type;
@@ -523,7 +530,11 @@ void geodesic3d_fastmarch_cpu(
                         state_ptr, 
                         &temporary_list, 
                         accepted_p, 
-                        spacing, 
+                        spacing,
+                        dd_f,
+                        dh_f,
+                        dw_f,
+                        local_dist_f, 
                         channel, 
                         depth, 
                         height, 
@@ -548,6 +559,10 @@ void geodesic3d_fastmarch_cpu(
             &temporary_list, 
             temp_point,
             spacing, 
+            dd_f,
+            dh_f,
+            dw_f,
+            local_dist_f,
             channel, 
             depth, 
             height, 
