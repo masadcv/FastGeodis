@@ -2,4 +2,5 @@
 numpy>=1.19.2
 matplotlib>=3.2.0
 parameterized>=0.7.0
-SimpleITK>=2.0.0
+SimpleITK>=2.0
+ninja>=1.10.0

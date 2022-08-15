@@ -66,6 +66,10 @@ In this method, a 2D pass operates as a raster scan that is sequentially applied
 
 For both forward and backward pass, an L shaped kernel is used in a single raster scan pass to propagate distance in forward and backward direction. In particular, this L shaped kernel along with the sequential pass limits this method to non-parallelisable CPU implementation, which we include in **FastGeodis** for comparison purposes.
 
+Sethian's Fast Marching-based Non-parallelisable Generalised Geodesic Distance Transform
+****************************************************************************************
+In addition to the above methods, we also implement fast marching based non-parallelisable Geodesic distance transform method from :cite:p:`sethian1999fast` using CPU. This method is used for comparison of accuracy as well as execution of the parallelised Geodesic distance transform algorithm presented above. It serves as golden reference as this method provides accuracy distance transform calculation. While being accurate, it is computationally expensive taking orders of magnitude more time and compute. 
+
 Performance Improvements
 ################################
 FastGeodis (CPU/GPU) is compared with existing GeodisTK (https://github.com/taigw/GeodisTK) in terms of execution speed as well as accuracy. All our experiments were evaluated on Nvidia GeForce Titan X (12 GB) with 6-Core Intel Xeon E5-1650 CPU. We present our results below:
@@ -103,6 +107,7 @@ For 3D images, **FastGeodis** leads to a speed-up of upto 3x on CPU and upto 74x
 
 Accuracy
 *******************
+For accuracy, we use Fast Marching-based implementation as golden reference. These results are visualised below for visual comparison as well as quantitative comparison using joint histograms.
 
 2D Image Data
 ================

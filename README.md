@@ -73,6 +73,17 @@ or (on conda environments with existing installation of PyTorch with CUDA)
 | Toivanen's Geodesic Symmetric Filtering 2D   |  Toivanen's geodesic symmetric filtering for CPU [2, 9]          |      [FastGeodis.GSF2d_toivanen](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.GSF2d_toivanen)         |
 | Toivanen's Geodesic Symmetric Filtering 3D   |  Toivanen's geodesic symmetric filtering for CPU [2, 9]          |      [FastGeodis.GSF3d_toivanen](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.GSF3d_toivanen)         |
 
+## Fast Marching Implementations for CPU based on [10]
+
+| Method | Description | Documentation |
+|--------|-------------|---------------|
+| Fast Marching Generalised Geodesic Distance 2D   |  Fast Marching generalised geodesic distance transform for CPU [9]          |      [FastGeodis.generalised_geodesic2d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.generalised_geodesic2d_fastmarch)         |
+| Fast Marching Generalised Geodesic Distance 3D   |  Fast Marching generalised geodesic distance transform for CPU [9]          |      [FastGeodis.generalised_geodesic3d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.generalised_geodesic3d_fastmarch)         |
+| Fast Marching Signed Generalised Geodesic Distance 2D   |  Fast Marching signed generalised geodesic distance transform for CPU/GPU [9]          |      [FastGeodis.signed_generalised_geodesic2d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_generalised_geodesic2d_fastmarch)         |
+| Fast Marching Signed Generalised Geodesic Distance 3D   |  Fast Marching signed generalised geodesic distance transform for CPU [9]          |      [FastGeodis.signed_generalised_geodesic3d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_generalised_geodesic3d_fastmarch)         |
+| Fast Marching Geodesic Symmetric Filtering 2D   |  Fast Marching geodesic symmetric filtering for CPU [2, 9]          |      [FastGeodis.GSF2d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.GSF2d_fastmarch)         |
+| Fast Marching Geodesic Symmetric Filtering 3D   |  Fast Marching geodesic symmetric filtering for CPU [2, 9]          |      [FastGeodis.GSF3d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.GSF3d_fastmarch)         |
+
 # Example usage
 
 ### Fast Geodesic Distance Transform
@@ -185,3 +196,5 @@ FastGeodis (CPU/GPU) is compared with existing GeodisTK ([https://github.com/tai
 - [8] [https://www.tensorflow.org/addons/api_docs/python/tfa/image/euclidean_dist_transform](https://www.tensorflow.org/addons/api_docs/python/tfa/image/euclidean_dist_transform)
 
 - [9] Toivanen, Pekka J. "New geodosic distance transforms for gray-scale images." Pattern Recognition Letters 17.5 (1996): 437-450.
+
+- [10] Sethian, James A. "Fast marching methods." SIAM review 41.2 (1999): 199-235.
