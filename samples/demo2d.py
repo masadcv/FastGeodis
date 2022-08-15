@@ -8,7 +8,7 @@ from PIL import Image
 
 
 def evaluate_geodesic_distance2d(image, seed_pos):
-    SHOW_JOINT_HIST = True
+    SHOW_JOINT_HIST = False
     # get image and create seed image
     input_image = np.asanyarray(image, np.float32)
     Seed = np.zeros((input_image.shape[0], input_image.shape[1]), np.float32)

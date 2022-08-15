@@ -11,7 +11,7 @@ import torch
 
 
 def demo_geodesic_distance3d(image_path, seed_pos):
-    SHOW_JOINT_HIST = True
+    SHOW_JOINT_HIST = False
     image_folder = os.path.dirname(image_path)
     image_sitk = sitk.ReadImage(image_path)
     input_image = sitk.GetArrayFromImage(image_sitk)
