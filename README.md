@@ -73,7 +73,7 @@ or (on conda environments with existing installation of PyTorch with CUDA)
 | Toivanen's Geodesic Symmetric Filtering 2D   |  Toivanen's geodesic symmetric filtering for CPU [2, 9]          |      [FastGeodis.GSF2d_toivanen](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.GSF2d_toivanen)         |
 | Toivanen's Geodesic Symmetric Filtering 3D   |  Toivanen's geodesic symmetric filtering for CPU [2, 9]          |      [FastGeodis.GSF3d_toivanen](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.GSF3d_toivanen)         |
 
-## Fast Marching Implementations for CPU based on [4] and [10]
+## Fast Marching Implementations for CPU based on [10]
 
 | Method | Description | Documentation |
 |--------|-------------|---------------|
