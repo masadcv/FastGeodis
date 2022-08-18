@@ -3,11 +3,9 @@ name: Build
 
 on:
   push:
-    branches: 
-      - '*'
+    branches: [ master ]
   pull_request:
-    branches: 
-      - '*'
+    branches: [ master ]
   workflow_dispatch:
     inputs:
       save_artifacts:
