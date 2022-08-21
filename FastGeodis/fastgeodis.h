@@ -36,7 +36,7 @@
 
 #ifdef WITH_CUDA
 torch::Tensor generalised_geodesic2d_cuda(
-    torch::Tensor &image,
+    const torch::Tensor &image,
     const torch::Tensor &mask,
     const float &v,
     const float &l_grad,
@@ -44,7 +44,7 @@ torch::Tensor generalised_geodesic2d_cuda(
     const int &iterations);
 
 torch::Tensor generalised_geodesic3d_cuda(
-    torch::Tensor &image,
+    const torch::Tensor &image,
     const torch::Tensor &mask,
     const std::vector<float> &spacing,
     const float &v,
@@ -54,7 +54,7 @@ torch::Tensor generalised_geodesic3d_cuda(
 #endif
 
 torch::Tensor generalised_geodesic2d_cpu(
-    torch::Tensor &image,
+    const torch::Tensor &image,
     const torch::Tensor &mask,
     const float &v,
     const float &l_grad,
@@ -62,7 +62,7 @@ torch::Tensor generalised_geodesic2d_cpu(
     const int &iterations);
 
 torch::Tensor generalised_geodesic3d_cpu(
-    torch::Tensor &image,
+    const torch::Tensor &image,
     const torch::Tensor &mask,
     const std::vector<float> &spacing,
     const float &v,
@@ -71,7 +71,7 @@ torch::Tensor generalised_geodesic3d_cpu(
     const int &iterations);
 
 torch::Tensor generalised_geodesic2d_toivanen_cpu(
-    torch::Tensor &image,
+    const torch::Tensor &image,
     const torch::Tensor &mask,
     const float &v,
     const float &l_grad,
@@ -79,7 +79,7 @@ torch::Tensor generalised_geodesic2d_toivanen_cpu(
     const int &iterations);
 
 torch::Tensor generalised_geodesic3d_toivanen_cpu(
-    torch::Tensor &image,
+    const torch::Tensor &image,
     const torch::Tensor &mask,
     const std::vector<float> &spacing,
     const float &v,
@@ -88,14 +88,14 @@ torch::Tensor generalised_geodesic3d_toivanen_cpu(
     const int &iterations);
 
 torch::Tensor generalised_geodesic2d_fastmarch_cpu(
-    torch::Tensor &image,
+    const torch::Tensor &image,
     const torch::Tensor &mask,
     const float &v,
     const float &l_grad,
     const float &l_eucl);
 
 torch::Tensor generalised_geodesic3d_fastmarch_cpu(
-    torch::Tensor &image,
+    const torch::Tensor &image,
     const torch::Tensor &mask,
     const std::vector<float> &spacing,
     const float &v,
@@ -104,7 +104,7 @@ torch::Tensor generalised_geodesic3d_fastmarch_cpu(
 
 
 torch::Tensor generalised_geodesic2d(
-    torch::Tensor &image,
+    const torch::Tensor &image,
     const torch::Tensor &mask,
     const float &v,
     const float &l_grad,
@@ -112,7 +112,7 @@ torch::Tensor generalised_geodesic2d(
     const int &iterations);
 
 torch::Tensor generalised_geodesic3d(
-    torch::Tensor &image,
+    const torch::Tensor &image,
     const torch::Tensor &mask,
     const std::vector<float> &spacing,
     const float &v,
@@ -121,7 +121,7 @@ torch::Tensor generalised_geodesic3d(
     const int &iterations);
 
 torch::Tensor generalised_geodesic2d_toivanen(
-    torch::Tensor &image,
+    const torch::Tensor &image,
     const torch::Tensor &mask,
     const float &v,
     const float &l_grad,
@@ -129,7 +129,7 @@ torch::Tensor generalised_geodesic2d_toivanen(
     const int &iterations);
 
 torch::Tensor generalised_geodesic3d_toivanen(
-    torch::Tensor &image,
+    const torch::Tensor &image,
     const torch::Tensor &mask,
     const std::vector<float> &spacing,
     const float &v,
@@ -138,16 +138,115 @@ torch::Tensor generalised_geodesic3d_toivanen(
     const int &iterations);
 
 torch::Tensor generalised_geodesic2d_fastmarch(
-    torch::Tensor &image,
+    const torch::Tensor &image,
     const torch::Tensor &mask,
     const float &v,
     const float &l_grad,
     const float &l_eucl);
 
 torch::Tensor generalised_geodesic3d_fastmarch(
-    torch::Tensor &image,
+    const torch::Tensor &image,
     const torch::Tensor &mask,
     const std::vector<float> &spacing,
     const float &v,
     const float &l_grad,
     const float &l_eucl);
+
+
+torch::Tensor signed_generalised_geodesic2d(
+    const torch::Tensor &image,
+    const torch::Tensor &mask,
+    const float &v,
+    const float &l_grad,
+    const float &l_eucl,
+    const int &iterations);
+
+torch::Tensor signed_generalised_geodesic3d(
+    const torch::Tensor &image,
+    const torch::Tensor &mask,
+    const std::vector<float> &spacing,
+    const float &v,
+    const float &l_grad,
+    const float &l_eucl,
+    const int &iterations);
+
+torch::Tensor signed_generalised_geodesic2d_toivanen(
+    const torch::Tensor &image,
+    const torch::Tensor &mask,
+    const float &v,
+    const float &l_grad,
+    const float &l_eucl,
+    const int &iterations);
+
+torch::Tensor signed_generalised_geodesic3d_toivanen(
+    const torch::Tensor &image,
+    const torch::Tensor &mask,
+    const std::vector<float> &spacing,
+    const float &v,
+    const float &l_grad,
+    const float &l_eucl,
+    const int &iterations);
+
+torch::Tensor signed_generalised_geodesic2d_fastmarch(
+    const torch::Tensor &image,
+    const torch::Tensor &mask,
+    const float &v,
+    const float &l_grad,
+    const float &l_eucl);
+
+torch::Tensor signed_generalised_geodesic3d_fastmarch(
+    const torch::Tensor &image,
+    const torch::Tensor &mask,
+    const std::vector<float> &spacing,
+    const float &v,
+    const float &l_grad,
+    const float &l_eucl);
+
+torch::Tensor GSF2d(
+    const torch::Tensor &image, 
+    const torch::Tensor &mask, 
+    const float &theta, 
+    const float &v, 
+    const float &lambda, 
+    const int &iterations);
+
+torch::Tensor GSF3d(
+    const torch::Tensor &image, 
+    const torch::Tensor &mask, 
+    const float &theta, 
+    const std::vector<float> &spacing, 
+    const float &v, 
+    const float &lambda, 
+    const int &iterations);
+
+torch::Tensor GSF2d_toivanen(
+    const torch::Tensor &image, 
+    const torch::Tensor &mask, 
+    const float &theta, 
+    const float &v, 
+    const float &lambda, 
+    const int &iterations);
+
+torch::Tensor GSF3d_toivanen(
+    const torch::Tensor &image, 
+    const torch::Tensor &mask, 
+    const float &theta, 
+    const std::vector<float> &spacing, 
+    const float &v, 
+    const float &lambda, 
+    const int &iterations);
+
+torch::Tensor GSF2d_fastmarch(
+    const torch::Tensor &image, 
+    const torch::Tensor &mask, 
+    const float &theta, 
+    const float &v, 
+    const float &lambda);
+
+torch::Tensor GSF3d_fastmarch(
+    const torch::Tensor &image, 
+    const torch::Tensor &mask, 
+    const float &theta, 
+    const std::vector<float> &spacing, 
+    const float &v, 
+    const float &lambda);
