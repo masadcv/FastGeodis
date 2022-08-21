@@ -130,8 +130,8 @@ __global__ void geodesic_updown_single_row_pass_kernel(
 __global__ void geodesic_updown_single_row_pass_ptr_kernel(
     float *image_ptr,
     float *distance_ptr,
-    float l_grad,
-    float l_eucl,
+    const float l_grad,
+    const float l_eucl,
     const int direction,
     const int channel,
     const int height,
@@ -275,7 +275,7 @@ void geodesic_updown_pass_cuda(
 }
 
 torch::Tensor generalised_geodesic2d_cuda(
-    torch::Tensor &image, 
+    const torch::Tensor &image, 
     const torch::Tensor &mask, 
     const float &v, 
     const float &l_grad, 
@@ -283,27 +283,28 @@ torch::Tensor generalised_geodesic2d_cuda(
     const int &iterations
     )
 {
+    torch::Tensor image_local = image.clone();
     torch::Tensor distance = v * mask.clone();
 
     // iteratively run the distance transform
     for (int itr = 0; itr < iterations; itr++)
     {
-        image = image.contiguous();
+        image_local = image_local.contiguous();
         distance = distance.contiguous();
 
         // top-bottom - width*, height
-        geodesic_updown_pass_cuda(image, distance, l_grad, l_eucl);
+        geodesic_updown_pass_cuda(image_local, distance, l_grad, l_eucl);
 
         // left-right - height*, width
-        image = image.transpose(2, 3);
+        image_local = image_local.transpose(2, 3);
         distance = distance.transpose(2, 3);
 
-        image = image.contiguous();
+        image_local = image_local.contiguous();
         distance = distance.contiguous();
-        geodesic_updown_pass_cuda(image, distance, l_grad, l_eucl);
+        geodesic_updown_pass_cuda(image_local, distance, l_grad, l_eucl);
 
         // tranpose back to original - width, height
-        image = image.transpose(2, 3);
+        image_local = image_local.transpose(2, 3);
         distance = distance.transpose(2, 3);
 
         // * indicates the current direction of pass
@@ -579,7 +580,7 @@ void geodesic_frontback_pass_cuda(
 }
 
 torch::Tensor generalised_geodesic3d_cuda(
-    torch::Tensor &image, 
+    const torch::Tensor &image, 
     const torch::Tensor &mask, 
     const std::vector<float> &spacing, 
     const float &v, 
@@ -588,25 +589,26 @@ torch::Tensor generalised_geodesic3d_cuda(
     const int &iterations
     )
 {
+    torch::Tensor image_local = image.clone();
     torch::Tensor distance = v * mask.clone();
 
     // iteratively run the distance transform
     for (int itr = 0; itr < iterations; itr++)
     {
-        image = image.contiguous();
+        image_local = image_local.contiguous();
         distance = distance.contiguous();
 
         // front-back - depth*, height, width
-        geodesic_frontback_pass_cuda(image, distance, spacing, l_grad, l_eucl);
+        geodesic_frontback_pass_cuda(image_local, distance, spacing, l_grad, l_eucl);
 
         // top-bottom - height*, depth, width
-        image = torch::transpose(image, 3, 2);
+        image_local = torch::transpose(image_local, 3, 2);
         distance = torch::transpose(distance, 3, 2);
 
-        image = image.contiguous();
+        image_local = image_local.contiguous();
         distance = distance.contiguous();
         geodesic_frontback_pass_cuda(
-            image, 
+            image_local, 
             distance, 
             {spacing[1], spacing[0], spacing[2]}, 
             l_grad, 
@@ -614,17 +616,17 @@ torch::Tensor generalised_geodesic3d_cuda(
             );
 
         // transpose back to original depth, height, width
-        image = torch::transpose(image, 3, 2);
+        image_local = torch::transpose(image_local, 3, 2);
         distance = torch::transpose(distance, 3, 2);
 
         // left-right - width*, height, depth
-        image = torch::transpose(image, 4, 2);
+        image_local = torch::transpose(image_local, 4, 2);
         distance = torch::transpose(distance, 4, 2);
 
-        image = image.contiguous();
+        image_local = image_local.contiguous();
         distance = distance.contiguous();
         geodesic_frontback_pass_cuda(
-            image, 
+            image_local, 
             distance, 
             {spacing[2], spacing[1], spacing[0]}, 
             l_grad, 
@@ -632,7 +634,7 @@ torch::Tensor generalised_geodesic3d_cuda(
             );
 
         // transpose back to original depth, height, width
-        image = torch::transpose(image, 4, 2);
+        image_local = torch::transpose(image_local, 4, 2);
         distance = torch::transpose(distance, 4, 2);
 
         // * indicates the current direction of pass

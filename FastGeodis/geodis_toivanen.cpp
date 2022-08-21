@@ -147,7 +147,7 @@ void geodesic2d_forback_toivanen_cpu(
 }
 
 torch::Tensor generalised_geodesic2d_toivanen_cpu(
-    torch::Tensor &image,
+    const torch::Tensor &image,
     const torch::Tensor &mask,
     const float &v,
     const float &l_grad,
@@ -329,7 +329,7 @@ void geodesic3d_forback_toivanen_cpu(
 }
 
 torch::Tensor generalised_geodesic3d_toivanen_cpu(
-    torch::Tensor &image,
+    const torch::Tensor &image,
     const torch::Tensor &mask,
     const std::vector<float> &spacing,
     const float &v,

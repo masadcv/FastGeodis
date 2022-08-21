@@ -102,7 +102,11 @@ The table below gives an exhaustive list of all available demo examples. It incl
 +------------------------------------------------+----------------------+----------------------------+
 | 2D Geodesic & Euclidean Distance	         | Demo2dPy_            | Demo2dColab_               |
 +------------------------------------------------+----------------------+----------------------------+
+| 2D Signed Geodesic & Euclidean Distance        | Demo2dSignedPy_      | Demo2dSignedColab_         |
++------------------------------------------------+----------------------+----------------------------+
 | 3D Geodesic & Euclidean Distance	         | Demo3dPy_            | Demo3dColab_               |
++------------------------------------------------+----------------------+----------------------------+
+| 3D Signed Geodesic & Euclidean Distance        | Demo3dSignedPy_      | Demo3dSignedColab_         |
 +------------------------------------------------+----------------------+----------------------------+
 | 2D 2D GSF Segmentation Smoothing	         | DemoGSF2dPy_         | DemoGSF2dColab_            |
 +------------------------------------------------+----------------------+----------------------------+
@@ -116,8 +120,12 @@ The table below gives an exhaustive list of all available demo examples. It incl
 .. _SimpleDemo3dSignedPy: https://github.com/masadcv/FastGeodis/blob/master/samples/simpledemo3d_signed.py
 .. _SimpleDemo3dSignedColab: https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/simpledemo3d_signed.ipynb
 .. _Demo2dPy: https://github.com/masadcv/FastGeodis/blob/master/samples/demo2d.py
+.. _Demo2dSignedPy: https://github.com/masadcv/FastGeodis/blob/master/samples/demo2d_signed.py
 .. _Demo2dColab: https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/demo2d.ipynb
+.. _Demo2dSignedColab: https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/demo2d_signed.ipynb
 .. _Demo3dPy: https://github.com/masadcv/FastGeodis/blob/master/samples/demo3d.py
+.. _Demo3dSignedPy: https://github.com/masadcv/FastGeodis/blob/master/samples/demo3d_signed.py
 .. _Demo3dColab: https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/demo3d.ipynb
+.. _Demo3dSignedColab: https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/demo3d_signed.ipynb
 .. _DemoGSF2dPy: https://github.com/masadcv/FastGeodis/blob/master/samples/demoGSF2d_SmoothingSegExample.ipynb
 .. _DemoGSF2dColab: https://colab.research.google.com/github/masadcv/FastGeodis/blob/master/samples/demoGSF2d_SmoothingSegExample.ipynb
