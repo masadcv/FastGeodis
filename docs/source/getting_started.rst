@@ -4,11 +4,10 @@ Getting Started
 
 About
 ########
-**FastGeodis** provides efficient CPU (OpenMP) and GPU (CUDA) implementations of Generalised Geodesic Distance Transform in PyTorch for 2D and 3D input data based on parallelisable raster scan ideas from [1, 2]. It includes methods for computing Geodesic, Euclidean distance transform and mixture of both.
+**FastGeodis** provides efficient CPU (OpenMP) and GPU (CUDA) implementations of Generalised Geodesic Distance Transform in PyTorch for 2D and 3D input data based on parallelisable raster scan ideas from [1]. It includes methods for computing Geodesic, Euclidean distance transform and mixture of both.
 See :doc:`methodology` section for more details of the implemented algorithm.
 
 1. Criminisi, Antonio, Toby Sharp, and Khan Siddiqui. "Interactive Geodesic Segmentation of n-Dimensional Medical Images on the Graphics Processor." Radiological Society of North America (RSNA), 2009.
-2. Weber, Ofir, et al. "Parallel algorithms for approximation of distance maps on parametric surfaces." ACM Transactions on Graphics (TOG), (2008). 
 
 
 Python Version Support
