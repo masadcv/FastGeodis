@@ -7,7 +7,7 @@
 <img src="https://img.shields.io/badge/Python-3.6%20|%203.7%20|%203.8%20|%203.9-3776ab.svg"/>
 <img src="https://img.shields.io/badge/PyTorch-%3E%3D%201.5.0-brightgreen.svg"/>
 
-This repository provides CPU (OpenMP) and GPU (CUDA) implementations of Generalised Geodesic Distance Transform in PyTorch for 2D and 3D input data based on parallelisable raster scan ideas from [1, 3]. It includes methods for computing Geodesic, Euclidean distance transform and mixture of both. 
+This repository provides CPU (OpenMP) and GPU (CUDA) implementations of Generalised Geodesic Distance Transform in PyTorch for 2D and 3D input data based on parallelisable raster scan ideas from [1]. It includes methods for computing Geodesic, Euclidean distance transform and mixture of both. 
 
 | 2D images, 1 of 4 passes | 3D volumes, 1 of 6 passes  |
 |-------------------|-------------------------|
@@ -51,13 +51,13 @@ or (on conda environments with existing installation of PyTorch with CUDA)
 `pip install FastGeodis --no-build-isolation`
 
 # Included methods
-## Optimised Fast Implementations for GPU/CPU based on [1, 3]
+## Optimised Fast Implementations for GPU/CPU based on [1]
 | Method | Description | Documentation |
 |--------|-------------|---------------|
-| Fast Generalised Geodesic Distance 2D   |  Paralellised generalised geodesic distance transform for CPU/GPU [1, 3]          |      [FastGeodis.generalised_geodesic2d](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.generalised_geodesic2d)         |
-| Fast Generalised Geodesic Distance 3D   |  Paralellised generalised geodesic distance transform for CPU/GPU [1, 3]          |      [FastGeodis.generalised_geodesic3d](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.generalised_geodesic3d)         |
-| Fast Signed Generalised Geodesic Distance 2D   |  Paralellised signed generalised geodesic distance transform for CPU/GPU [1, 3]          |      [FastGeodis.signed_generalised_geodesic2d](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_generalised_geodesic2d)         |
-| Fast Signed Generalised Geodesic Distance 3D   |  Paralellised signed generalised geodesic distance transform for CPU/GPU [1, 3]          |      [FastGeodis.signed_generalised_geodesic3d](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_generalised_geodesic3d)         |
+| Fast Generalised Geodesic Distance 2D   |  Paralellised generalised geodesic distance transform for CPU/GPU [1]          |      [FastGeodis.generalised_geodesic2d](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.generalised_geodesic2d)         |
+| Fast Generalised Geodesic Distance 3D   |  Paralellised generalised geodesic distance transform for CPU/GPU [1]          |      [FastGeodis.generalised_geodesic3d](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.generalised_geodesic3d)         |
+| Fast Signed Generalised Geodesic Distance 2D   |  Paralellised signed generalised geodesic distance transform for CPU/GPU [1]          |      [FastGeodis.signed_generalised_geodesic2d](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_generalised_geodesic2d)         |
+| Fast Signed Generalised Geodesic Distance 3D   |  Paralellised signed generalised geodesic distance transform for CPU/GPU [1]          |      [FastGeodis.signed_generalised_geodesic3d](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_generalised_geodesic3d)         |
 | Fast Geodesic Symmetric Filtering 2D   |  Paralellised geodesic symmetric filtering for CPU/GPU [2]          |      [FastGeodis.GSF2d](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.GSF2d)         |
 | Fast Geodesic Symmetric Filtering 3D   |  Paralellised geodesic symmetric filtering for CPU/GPU [2]          |      [FastGeodis.GSF3d](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.GSF3d)         |
 ----

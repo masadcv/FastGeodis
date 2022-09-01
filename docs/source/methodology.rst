@@ -52,6 +52,8 @@ As can be seen, this involves top-down and left-right passes. How we implement l
 
 Going beyond 2D images, we also implement the parallelisable Geodesic distance transform for 3D data. We provide both CPU (OpenMP) and GPU (CUDA) optimised implementations. Our 3D implementation operates on the same principle (we can process one plane at a time). However, in 3D case, since we have more data, we can utilise more compute on GPU and process a plane in parallel, however we still have the data dependency constraints that prevent us from processing all planes together.
 
+:cite:p:`weber2008parallel` presents a further optimised approach for computing Geodesic distance transforms on GPUs, however this method is protected by multiple patents and hence is not suitable for open-source implementation in **FastGeodis** package.
+
 
 Toivanen et al's Non-parallelisable Generalised Geodesic Distance Transform
 ***************************************************************************
