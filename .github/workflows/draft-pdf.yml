@@ -42,4 +42,4 @@ jobs:
           JOURNAL: joss
       - uses: actions/upload-artifact@v2
         with:
-          path: joss
+          path: paper/paper.tex
