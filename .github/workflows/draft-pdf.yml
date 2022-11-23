@@ -2,44 +2,34 @@ on:
  workflow_dispatch:
 
 jobs:
-  paper:
-    runs-on: ubuntu-latest
-    name: Paper Draft
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Build draft PDF
-        uses: openjournals/openjournals-draft-action@master
-        with:
-          journal: joss
-          # This should be the path to the paper within your repo.
-          paper-path: paper/paper.md
-      - name: Upload
-        uses: actions/upload-artifact@v1
-        with:
-          name: paper
-          # This is the output path where Pandoc will write the compiled
-          # PDF. Note, this should be the same directory as the input
-          # paper.md
-          path: paper/paper.pdf
-  arxiv:
+#   paper:
+#     runs-on: ubuntu-latest
+#     name: Paper Draft
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v2
+#       - name: Build draft PDF
+#         uses: openjournals/openjournals-draft-action@master
+#         with:
+#           journal: joss
+#           # This should be the path to the paper within your repo.
+#           paper-path: paper/paper.md
+#       - name: Upload
+#         uses: actions/upload-artifact@v1
+#         with:
+#           name: paper
+#           # This is the output path where Pandoc will write the compiled
+#           # PDF. Note, this should be the same directory as the input
+#           # paper.md
+#           path: paper/paper.pdf
+  tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: TeX
+      - name: TeX and PDF
         uses: docker://openjournals/paperdraft:latest
         with:
-          args: paper/paper.md --to=latex --output=paper.tex
+          args: '-k paper/paper.md'
         env:
           GIT_SHA: $GITHUB_SHA
           JOURNAL: joss
-      - name: PDF
-        uses: docker://openjournals/paperdraft:latest
-        with:
-          args: paper/paper.md
-        env:
-          GIT_SHA: $GITHUB_SHA
-          JOURNAL: joss
-      - uses: actions/upload-artifact@v2
-        with:
-          path: paper/paper.tex
