@@ -25,15 +25,21 @@ If you use this code in your research, then please consider citing:
 
 [![status](https://joss.theoj.org/papers/d0b6e3daa4b22fec471691c6f1c60e2a/status.svg)](https://joss.theoj.org/papers/d0b6e3daa4b22fec471691c6f1c60e2a)
 
-***Asad, Muhammad, Reuben Dorent, and Tom Vercauteren. "FastGeodis: Fast Generalised Geodesic Distance Transform." Under review at Journal of Open Source Software (JOSS), 2022.*** ([preprint](https://arxiv.org/pdf/2208.00001.pdf))
+***Asad, Muhammad, Reuben Dorent, and Tom Vercauteren. "FastGeodis: Fast Generalised Geodesic Distance Transform." Journal of Open Source Software (JOSS), 2022.*** ([paper link](https://doi.org/10.21105/joss.04532))
 
 Bibtex:
 ```
-@article{asad2022fastgeodis,
-  title={FastGeodis: Fast Generalised Geodesic Distance Transform},
-  author={Asad, Muhammad and Dorent, Reuben and Vercauteren, Tom},
-  journal={arXiv preprint arXiv:2208.00001},
-  year={2022}
+@article{asad2022fastgeodis, 
+  doi = {10.21105/joss.04532}, 
+  url = {https://doi.org/10.21105/joss.04532}, 
+  year = {2022}, 
+  publisher = {The Open Journal}, 
+  volume = {7}, 
+  number = {79}, 
+  pages = {4532}, 
+  author = {Muhammad Asad and Reuben Dorent and Tom Vercauteren}, 
+  title = {FastGeodis: Fast Generalised Geodesic Distance Transform}, 
+  journal = {Journal of Open Source Software} 
 }
 ```
 
