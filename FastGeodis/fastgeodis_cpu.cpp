@@ -226,7 +226,7 @@ void geodesic_frontback_pass_cpu(
             ld += float(std::abs(h_i - 1)) * spacing[1];
             ld += float(std::abs(w_i - 1)) * spacing[2];
 
-            local_dist[h_i * 3 + w_i] = ld;
+            local_dist[h_i * 3 + w_i] = sqrt(ld);
         }
     }
 
@@ -342,13 +342,16 @@ void geodesic_frontback_pass_cpu(
 torch::Tensor generalised_geodesic3d_cpu(
     const torch::Tensor &image, 
     const torch::Tensor &mask, 
-    const std::vector<float> &spacing, 
+    std::vector<float> spacing, 
     const float &v, 
     const float &l_grad, 
     const float &l_eucl, 
     const int &iterations
     )
 {
+    // square spacing with transform
+    std::transform(spacing.begin(), spacing.end(), spacing.begin(), spacing.begin(), std::multiplies<float>());
+
     torch::Tensor image_local = image.clone();
     torch::Tensor distance = v * mask.clone();
 

@@ -122,13 +122,13 @@ with open("requirements.txt", "r") as fp:
 
 setup(
     name="FastGeodis",
-    version="1.0.0",
+    version="1.0.1",
     description="Fast Implementation of Generalised Geodesic Distance Transform for CPU (OpenMP) and GPU (CUDA)",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/masadcv/FastGeodis",
     author="Muhammad Asad",
-    author_email="muhammad.asad@kcl.ac.uk",
+    author_email="masadcv@gmail.com",
     license="BSD-3-Clause License",
     classifiers=[
         "License :: OSI Approved :: BSD License",
