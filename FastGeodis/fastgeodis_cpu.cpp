@@ -226,7 +226,7 @@ void geodesic_frontback_pass_cpu(
             ld += float(std::abs(h_i - 1)) * spacing[1];
             ld += float(std::abs(w_i - 1)) * spacing[2];
 
-            local_dist[h_i * 3 + w_i] = ld;
+            local_dist[h_i * 3 + w_i] = sqrt(ld);
         }
     }
 
