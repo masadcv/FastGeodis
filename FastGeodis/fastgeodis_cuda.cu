@@ -582,13 +582,16 @@ void geodesic_frontback_pass_cuda(
 torch::Tensor generalised_geodesic3d_cuda(
     const torch::Tensor &image, 
     const torch::Tensor &mask, 
-    const std::vector<float> &spacing, 
+    std::vector<float> spacing, 
     const float &v, 
     const float &l_grad, 
     const float &l_eucl, 
     const int &iterations
     )
 {
+    // square spacing with transform
+    std::transform(spacing.begin(), spacing.end(), spacing.begin(), spacing.begin(), std::multiplies<float>());
+    
     torch::Tensor image_local = image.clone();
     torch::Tensor distance = v * mask.clone();
 

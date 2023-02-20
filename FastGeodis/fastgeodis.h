@@ -46,7 +46,7 @@ torch::Tensor generalised_geodesic2d_cuda(
 torch::Tensor generalised_geodesic3d_cuda(
     const torch::Tensor &image,
     const torch::Tensor &mask,
-    const std::vector<float> &spacing,
+    std::vector<float> spacing,
     const float &v,
     const float &l_grad,
     const float &l_eucl,
@@ -64,7 +64,7 @@ torch::Tensor generalised_geodesic2d_cpu(
 torch::Tensor generalised_geodesic3d_cpu(
     const torch::Tensor &image,
     const torch::Tensor &mask,
-    const std::vector<float> &spacing,
+    std::vector<float> spacing,
     const float &v,
     const float &l_grad,
     const float &l_eucl,

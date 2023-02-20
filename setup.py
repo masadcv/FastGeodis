@@ -128,7 +128,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/masadcv/FastGeodis",
     author="Muhammad Asad",
-    author_email="muhammad.asad@kcl.ac.uk",
+    author_email="masadcv@gmail.com",
     license="BSD-3-Clause License",
     classifiers=[
         "License :: OSI Approved :: BSD License",
