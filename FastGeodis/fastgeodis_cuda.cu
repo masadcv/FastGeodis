@@ -29,6 +29,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <torch/extension.h>
+#include <c10/cuda/CUDAGuard.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
 
@@ -283,6 +284,10 @@ torch::Tensor generalised_geodesic2d_cuda(
     const int &iterations
     )
 {
+    int device = image.get_device();
+    // std::cout << "Running with CUDA Device: " << device << std::endl;
+    c10::cuda::CUDAGuard device_guard(device);
+    
     torch::Tensor image_local = image.clone();
     torch::Tensor distance = v * mask.clone();
 
@@ -589,6 +594,10 @@ torch::Tensor generalised_geodesic3d_cuda(
     const int &iterations
     )
 {
+    int device = image.get_device();
+    // std::cout << "Running with CUDA Device: " << device << std::endl;
+    c10::cuda::CUDAGuard device_guard(device);
+
     // square spacing with transform
     std::transform(spacing.begin(), spacing.end(), spacing.begin(), spacing.begin(), std::multiplies<float>());
     

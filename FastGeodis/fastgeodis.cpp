@@ -29,7 +29,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <torch/extension.h>
-#include <c10/cuda/CUDAGuard.h>
 #include <iostream>
 #include <future>
 #include <vector>
@@ -76,12 +75,6 @@ torch::Tensor generalised_geodesic2d(const torch::Tensor &image, const torch::Te
                 "cuda.is_available() returned false, please check if the library was compiled successfully with CUDA support");
         }
         check_cuda(mask);
-
-        int device = image.get_device();
-        #if VERBOSE
-            std::cout << "Running with CUDA Device: " << device << std::endl;
-        #endif
-        c10::cuda::CUDAGuard device_guard(device);
 
         return generalised_geodesic2d_cuda(image, mask, v, l_grad, l_eucl, iterations);
 
@@ -138,11 +131,6 @@ torch::Tensor generalised_geodesic3d(const torch::Tensor &image, const torch::Te
                 "cuda.is_available() returned false, please check if the library was compiled successfully with CUDA support");
         }
         check_cuda(mask);
-        int device = image.get_device();
-        #if VERBOSE
-            std::cout << "Running with CUDA Device: " << device << std::endl;
-        #endif
-        c10::cuda::CUDAGuard device_guard(device);
         
         return generalised_geodesic3d_cuda(image, mask, spacing, v, l_grad, l_eucl, iterations);
 
