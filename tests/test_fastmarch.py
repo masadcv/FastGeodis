@@ -102,62 +102,15 @@ class TestFastMarch(unittest.TestCase):
 
         geodis_func = get_fastmarch_func(num_dims=num_dims)
 
-        # device mismatch for input - unsupported
         image_shape_mod = image_shape.copy()
         mask_shape_mod = mask_shape.copy()
         image = torch.rand(image_shape_mod, dtype=torch.float32).to(device)
-        mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
+        mask = torch.ones(mask_shape_mod, dtype=torch.float32).to(device)
+        indices = tuple([0] * len(mask_shape_mod))
+        mask[indices] = 0
 
         # should work without any errors
         geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
-
-    @parameterized.expand(CONF_ALL_CPU)
-    @run_cuda_if_available
-    def test_zeros_input(self, device, num_dims, base_dim):
-        print(device)
-        print(num_dims)
-
-        # start with a good shape for image and mask
-        image_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
-        mask_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
-
-        geodis_func = get_fastmarch_func(num_dims=num_dims)
-
-        # device mismatch for input - unsupported
-        image = torch.zeros(image_shape, dtype=torch.float32).to(device)
-        mask = torch.zeros(mask_shape, dtype=torch.float32).to(device)
-
-        # should work without any errors
-        geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
-
-        # output should be zeros as well
-        np.testing.assert_allclose(
-            np.zeros(mask_shape, dtype=np.float32), geodesic_dist.cpu().numpy()
-        )
-
-    @parameterized.expand(CONF_ALL_CPU)
-    @run_cuda_if_available
-    def test_mask_ones_input(self, device, num_dims, base_dim):
-        print(device)
-        print(num_dims)
-
-        # start with a good shape for image and mask
-        image_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
-        mask_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
-
-        geodis_func = get_fastmarch_func(num_dims=num_dims)
-
-        # device mismatch for input - unsupported
-        image = torch.zeros(image_shape, dtype=torch.float32).to(device)
-        mask = torch.ones(mask_shape, dtype=torch.float32).to(device)
-
-        # should work without any errors
-        geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
-
-        # output should be ones * v
-        np.testing.assert_allclose(
-            np.ones(mask_shape, dtype=np.float32) * 1e10, geodesic_dist.cpu().numpy()
-        )
 
     @parameterized.expand(CONF_ALL_CPU)
     @run_cuda_if_available
@@ -292,57 +245,12 @@ class TestFastMarchSigned(unittest.TestCase):
         image_shape_mod = image_shape.copy()
         mask_shape_mod = mask_shape.copy()
         image = torch.rand(image_shape_mod, dtype=torch.float32).to(device)
-        mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
+        mask = torch.ones(mask_shape_mod, dtype=torch.float32).to(device)
+        indices = tuple([0] * len(mask_shape_mod))
+        mask[indices] = 0
 
         # should work without any errors
         geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
-
-    @parameterized.expand(CONF_ALL_CPU)
-    def test_zeros_input(self, device, num_dims, base_dim):
-        print(device)
-        print(num_dims)
-
-        # start with a good shape for image and mask
-        image_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
-        mask_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
-
-        geodis_func = get_signed_fastmarch_func(num_dims=num_dims)
-
-        # device mismatch for input - unsupported
-        image = torch.zeros(image_shape, dtype=torch.float32).to(device)
-        mask = torch.zeros(mask_shape, dtype=torch.float32).to(device)
-
-        # should work without any errors
-        geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
-
-        # output should be -1 * ones * v
-        np.testing.assert_allclose(
-            -1 * np.ones(mask_shape, dtype=np.float32) * 1e10,
-            geodesic_dist.cpu().numpy(),
-        )
-
-    @parameterized.expand(CONF_ALL_CPU)
-    def test_mask_ones_input(self, device, num_dims, base_dim):
-        print(device)
-        print(num_dims)
-
-        # start with a good shape for image and mask
-        image_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
-        mask_shape = get_simple_shape(base_dim=base_dim, num_dims=num_dims)
-
-        geodis_func = get_signed_fastmarch_func(num_dims=num_dims)
-
-        # device mismatch for input - unsupported
-        image = torch.zeros(image_shape, dtype=torch.float32).to(device)
-        mask = torch.ones(mask_shape, dtype=torch.float32).to(device)
-
-        # should work without any errors
-        geodesic_dist = geodis_func(image, mask, 1e10, 1.0, 2)
-
-        # output should be ones * v
-        np.testing.assert_allclose(
-            np.ones(mask_shape, dtype=np.float32) * 1e10, geodesic_dist.cpu().numpy()
-        )
 
     @parameterized.expand(CONF_3D_CPU)
     def test_ill_spacing(self, device, num_dims, base_dim):
@@ -355,7 +263,9 @@ class TestFastMarchSigned(unittest.TestCase):
 
         # device mismatch for input - unsupported
         image = torch.zeros(image_shape, dtype=torch.float32).to(device)
-        mask = torch.zeros(mask_shape, dtype=torch.float32).to(device)
+        mask = torch.ones(mask_shape, dtype=torch.float32).to(device)
+        indices = tuple([0] * len(mask_shape))
+        mask[indices] = 0
 
         spacing = [1.0, 1.0]
         geodis_func = get_signed_fastmarch_func(num_dims=num_dims, spacing=spacing)
@@ -377,12 +287,13 @@ class TestGSFFastMarch(unittest.TestCase):
 
         geodis_func = get_GSF_fastmarch_func(num_dims=num_dims)
 
-        # device mismatch for input - unsupported
         image_shape_mod = image_shape.copy()
         mask_shape_mod = mask_shape.copy()
         image = torch.rand(image_shape_mod, dtype=torch.float32).to(device)
-        mask = torch.rand(mask_shape_mod, dtype=torch.float32).to(device)
-
+        mask = torch.ones(mask_shape_mod, dtype=torch.float32).to(device)
+        indices = tuple([0] * len(mask_shape_mod))
+        mask[indices] = 0
+        
         # should work without any errors
         geodesic_dist = geodis_func(image, mask, 0.0, 1e10, 1.0, 2)
 

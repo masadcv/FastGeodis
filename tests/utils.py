@@ -85,6 +85,17 @@ def toivanen_signed_generalised_geodesic_distance_3d(
     )
 
 
+def pixelqueue_signed_generalised_geodesic_distance_2d(image, softmask, v, lamb, iter):
+    return FastGeodis.signed_generalised_geodesic2d_pixelqueue(image, softmask, v, lamb)
+
+
+def pixelqueue_signed_generalised_geodesic_distance_3d(
+    image, softmask, v, lamb, iter, spacing
+):
+    return FastGeodis.signed_generalised_geodesic3d_pixelqueue(
+        image, softmask, spacing, v, lamb
+    )
+
 def fastmarch_signed_generalised_geodesic_distance_2d(image, softmask, v, lamb, iter):
     return FastGeodis.signed_generalised_geodesic2d_fastmarch(image, softmask, v, lamb)
 
@@ -96,7 +107,6 @@ def fastmarch_signed_generalised_geodesic_distance_3d(
         image, softmask, spacing, v, lamb
     )
 
-
 def toivanen_generalised_geodesic_distance_2d(image, softmask, v, lamb, iter):
     return FastGeodis.generalised_geodesic2d_toivanen(image, softmask, v, lamb, iter)
 
@@ -106,6 +116,15 @@ def toivanen_generalised_geodesic_distance_3d(image, softmask, v, lamb, iter, sp
         image, softmask, spacing, v, lamb, iter
     )
 
+
+def pixelqueue_generalised_geodesic_distance_2d(image, softmask, v, lamb, iter):
+    return FastGeodis.generalised_geodesic2d_pixelqueue(image, softmask, v, lamb)
+
+
+def pixelqueue_generalised_geodesic_distance_3d(image, softmask, v, lamb, iter, spacing):
+    return FastGeodis.generalised_geodesic3d_pixelqueue(
+        image, softmask, spacing, v, lamb
+    )
 
 def fastmarch_generalised_geodesic_distance_2d(image, softmask, v, lamb, iter):
     return FastGeodis.generalised_geodesic2d_fastmarch(image, softmask, v, lamb)
@@ -132,6 +151,13 @@ def toivanen_GSF_2d(image, softmask, theta, v, lamb, iter):
 def toivanen_GSF_3d(image, softmask, theta, v, lamb, iter, spacing):
     return FastGeodis.GSF3d_toivanen(image, softmask, theta, spacing, v, lamb, iter)
 
+
+def pixelqueue_GSF_2d(image, softmask, theta, v, lamb, iter):
+    return FastGeodis.GSF2d_pixelqueue(image, softmask, theta, v, lamb)
+
+
+def pixelqueue_GSF_3d(image, softmask, theta, v, lamb, iter, spacing):
+    return FastGeodis.GSF3d_pixelqueue(image, softmask, theta, spacing, v, lamb)
 
 def fastmarch_GSF_2d(image, softmask, theta, v, lamb, iter):
     return FastGeodis.GSF2d_fastmarch(image, softmask, theta, v, lamb)
@@ -187,6 +213,25 @@ def get_signed_toivanen_func(num_dims, spacing=[1.0, 1.0, 1.0]):
         raise ValueError("Unsupported num_dims received: {}".format(num_dims))
 
 
+def get_pixelqueue_func(num_dims, spacing=[1.0, 1.0, 1.0]):
+    if num_dims == 2:
+        return pixelqueue_generalised_geodesic_distance_2d
+    elif num_dims == 3:
+        return partial(pixelqueue_generalised_geodesic_distance_3d, spacing=spacing)
+    else:
+        raise ValueError("Unsupported num_dims received: {}".format(num_dims))
+
+
+def get_signed_pixelqueue_func(num_dims, spacing=[1.0, 1.0, 1.0]):
+    if num_dims == 2:
+        return pixelqueue_signed_generalised_geodesic_distance_2d
+    elif num_dims == 3:
+        return partial(
+            pixelqueue_signed_generalised_geodesic_distance_3d, spacing=spacing
+        )
+    else:
+        raise ValueError("Unsupported num_dims received: {}".format(num_dims))
+
 def get_fastmarch_func(num_dims, spacing=[1.0, 1.0, 1.0]):
     if num_dims == 2:
         return fastmarch_generalised_geodesic_distance_2d
@@ -223,6 +268,16 @@ def get_GSF_toivanen_func(num_dims, spacing=[1.0, 1.0, 1.0]):
         return partial(toivanen_GSF_3d, spacing=spacing)
     else:
         raise ValueError("Unsupported num_dims received: {}".format(num_dims))
+
+
+def get_GSF_pixelqueue_func(num_dims, spacing=[1.0, 1.0, 1.0]):
+    if num_dims == 2:
+        return pixelqueue_GSF_2d
+    elif num_dims == 3:
+        return partial(pixelqueue_GSF_3d, spacing=spacing)
+    else:
+        raise ValueError("Unsupported num_dims received: {}".format(num_dims))
+
 
 
 def get_GSF_fastmarch_func(num_dims, spacing=[1.0, 1.0, 1.0]):
