@@ -176,6 +176,37 @@ torch::Tensor generalised_geodesic3d_toivanen(const torch::Tensor &image, const 
     return generalised_geodesic3d_toivanen_cpu(image, mask, spacing, v, l_grad, l_eucl, iterations);
 }
 
+torch::Tensor generalised_geodesic2d_pixelqueue(const torch::Tensor &image, const torch::Tensor &mask, const float &v, const float &l_grad, const float &l_eucl)
+{
+
+    // check input dimensions
+    check_input_dimensions(image, mask, 4);
+
+    // pixelqueue method is only implementable on cpu
+    check_cpu(image);    
+    check_cpu(mask);
+
+    return generalised_geodesic2d_pixelqueue_cpu(image, mask, v, l_grad, l_eucl);
+}
+
+torch::Tensor generalised_geodesic3d_pixelqueue(const torch::Tensor &image, const torch::Tensor &mask, const std::vector<float> &spacing, const float &v, const float &l_grad, const float &l_eucl)
+{
+    // check input dimensions
+    check_input_dimensions(image, mask, 5);
+
+    // pixelqueue method is only implementable on cpu
+    check_cpu(image);    
+    check_cpu(mask);
+
+    if (spacing.size() != 3)
+    {
+        throw std::invalid_argument(
+            "function only supports 3D spacing inputs, received " + std::to_string(spacing.size()));
+    }
+
+    return generalised_geodesic3d_pixelqueue_cpu(image, mask, spacing, v, l_grad, l_eucl);
+}
+
 torch::Tensor generalised_geodesic2d_fastmarch(const torch::Tensor &image, const torch::Tensor &mask, const float &v, const float &l_grad, const float &l_eucl)
 {
 
@@ -242,6 +273,26 @@ torch::Tensor signed_generalised_geodesic3d_toivanen(const torch::Tensor &image,
     // torch::Tensor D_Mb = generalised_geodesic3d_toivanen(image, 1 - mask, spacing, v, l_grad, l_eucl, iterations);
     torch::Tensor D_Mb = secondcall.get();
     
+    return D_M - D_Mb;
+}
+
+torch::Tensor signed_generalised_geodesic2d_pixelqueue(const torch::Tensor &image, const torch::Tensor &mask, const float &v, const float &l_grad, const float &l_eucl)
+{
+    auto secondcall = std::async(std::launch::async, generalised_geodesic2d_pixelqueue, image, 1 - mask, v, l_grad, l_eucl);
+    torch::Tensor D_M = generalised_geodesic2d_pixelqueue(image, mask, v, l_grad, l_eucl);
+    // torch::Tensor D_Mb = generalised_geodesic2d_pixelqueue(image, 1 - mask, v, l_grad, l_eucl);
+    torch::Tensor D_Mb = secondcall.get();
+
+    return D_M - D_Mb;
+}
+
+torch::Tensor signed_generalised_geodesic3d_pixelqueue(const torch::Tensor &image, const torch::Tensor &mask, const std::vector<float> &spacing, const float &v, const float &l_grad, const float &l_eucl)
+{
+    auto secondcall = std::async(std::launch::async, generalised_geodesic3d_pixelqueue, image, 1 - mask, spacing, v, l_grad, l_eucl);
+    torch::Tensor D_M = generalised_geodesic3d_pixelqueue(image, mask, spacing, v, l_grad, l_eucl);
+    // torch::Tensor D_Mb = generalised_geodesic3d_pixelqueue(image, 1 - mask, spacing, v, l_grad, l_eucl);
+    torch::Tensor D_Mb = secondcall.get();
+
     return D_M - D_Mb;
 }
 
@@ -317,6 +368,32 @@ torch::Tensor GSF3d_toivanen(const torch::Tensor &image, const torch::Tensor &ma
     return Dd_Md + De_Me;
 }
 
+torch::Tensor GSF2d_pixelqueue(const torch::Tensor &image, const torch::Tensor &mask, const float &theta, const float &v, const float &lambda)
+{
+    torch::Tensor Ds_M = signed_generalised_geodesic2d_pixelqueue(image, mask, v, lambda, 1 - lambda);
+
+    torch::Tensor Md = (Ds_M > theta).type_as(Ds_M);
+    torch::Tensor Me = (Ds_M > -theta).type_as(Ds_M);
+
+    torch::Tensor Dd_Md = -signed_generalised_geodesic2d_pixelqueue(image, 1 - Md, v, lambda, 1 - lambda);
+    torch::Tensor De_Me = signed_generalised_geodesic2d_pixelqueue(image, Me, v, lambda, 1 - lambda);
+
+    return Dd_Md + De_Me;
+}
+
+torch::Tensor GSF3d_pixelqueue(const torch::Tensor &image, const torch::Tensor &mask, const float &theta, const std::vector<float> &spacing, const float &v, const float &lambda)
+{
+    torch::Tensor Ds_M = signed_generalised_geodesic3d_pixelqueue(image, mask, spacing, v, lambda, 1 - lambda);
+
+    torch::Tensor Md = (Ds_M > theta).type_as(Ds_M);
+    torch::Tensor Me = (Ds_M > -theta).type_as(Ds_M);
+
+    torch::Tensor Dd_Md = -signed_generalised_geodesic3d_pixelqueue(image, 1 - Md, spacing, v, lambda, 1 - lambda);
+    torch::Tensor De_Me = signed_generalised_geodesic3d_pixelqueue(image, Me, spacing, v, lambda, 1 - lambda);
+
+    return Dd_Md + De_Me;
+}
+
 torch::Tensor GSF2d_fastmarch(const torch::Tensor &image, const torch::Tensor &mask, const float &theta, const float &v, const float &lambda)
 {
     torch::Tensor Ds_M = signed_generalised_geodesic2d_fastmarch(image, mask, v, lambda, 1 - lambda);
@@ -349,6 +426,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
     m.def("generalised_geodesic3d", &generalised_geodesic3d, "Generalised Geodesic distance 3d");
     m.def("generalised_geodesic2d_toivanen", &generalised_geodesic2d_toivanen, "Generalised Geodesic distance 2d using Toivanen's method");
     m.def("generalised_geodesic3d_toivanen", &generalised_geodesic3d_toivanen, "Generalised Geodesic distance 3d using Toivanen's method");
+    m.def("generalised_geodesic2d_pixelqueue", &generalised_geodesic2d_pixelqueue, "Generalised Geodesic distance 2d using Pixel Queue method");
+    m.def("generalised_geodesic3d_pixelqueue", &generalised_geodesic3d_pixelqueue, "Generalised Geodesic distance 3d using Pixel Queue method");
     m.def("generalised_geodesic2d_fastmarch", &generalised_geodesic2d_fastmarch, "Generalised Geodesic distance 2d using Fast Marching method");
     m.def("generalised_geodesic3d_fastmarch", &generalised_geodesic3d_fastmarch, "Generalised Geodesic distance 3d using Fast Marching method");
 
@@ -356,6 +435,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
     m.def("signed_generalised_geodesic3d", &signed_generalised_geodesic3d, "Signed Generalised Geodesic distance 3d");
     m.def("signed_generalised_geodesic2d_toivanen", &signed_generalised_geodesic2d_toivanen, "Signed Generalised Geodesic distance 2d using Toivanen's method");
     m.def("signed_generalised_geodesic3d_toivanen", &signed_generalised_geodesic3d_toivanen, "Signed Generalised Geodesic distance 3d using Toivanen's method");
+    m.def("signed_generalised_geodesic2d_pixelqueue", &signed_generalised_geodesic2d_pixelqueue, "Signed Generalised Geodesic distance 2d using Pixel Queue method");
+    m.def("signed_generalised_geodesic3d_pixelqueue", &signed_generalised_geodesic3d_pixelqueue, "Signed Generalised Geodesic distance 3d using Pixel Queue method");
     m.def("signed_generalised_geodesic2d_fastmarch", &signed_generalised_geodesic2d_fastmarch, "Signed Generalised Geodesic distance 2d using Fast Marching method");
     m.def("signed_generalised_geodesic3d_fastmarch", &signed_generalised_geodesic3d_fastmarch, "Signed Generalised Geodesic distance 3d using Fast Marching method");
 
@@ -363,6 +444,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
     m.def("GSF3d", &GSF3d, "Geodesic Symmetric Filtering 3d");
     m.def("GSF2d_toivanen", &GSF2d_toivanen, "Geodesic Symmetric Filtering 2d using Toivanen's method");
     m.def("GSF3d_toivanen", &GSF3d_toivanen, "Geodesic Symmetric Filtering 3d using Toivanen's method");
+    m.def("GSF2d_pixelqueue", &GSF2d_pixelqueue, "Geodesic Symmetric Filtering 2d using Pixel Queue method");
+    m.def("GSF3d_pixelqueue", &GSF3d_pixelqueue, "Geodesic Symmetric Filtering 3d using Pixel Queue method");
     m.def("GSF2d_fastmarch", &GSF2d_fastmarch, "Geodesic Symmetric Filtering 2d using Fast Marching method");
     m.def("GSF3d_fastmarch", &GSF3d_fastmarch, "Geodesic Symmetric Filtering 3d using Fast Marching method");
     
