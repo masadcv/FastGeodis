@@ -241,10 +241,9 @@ class TestFastMarchSigned(unittest.TestCase):
 
         geodis_func = get_signed_fastmarch_func(num_dims=num_dims)
 
-        # device mismatch for input - unsupported
         image_shape_mod = image_shape.copy()
         mask_shape_mod = mask_shape.copy()
-        image = torch.rand(image_shape_mod, dtype=torch.float32).to(device)
+        image = torch.ones(image_shape_mod, dtype=torch.float32).to(device)
         mask = torch.ones(mask_shape_mod, dtype=torch.float32).to(device)
         indices = tuple([0] * len(mask_shape_mod))
         mask[indices] = 0
