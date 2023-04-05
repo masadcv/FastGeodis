@@ -35,8 +35,8 @@ def evaluate_geodesic_distance2d(image, seed_pos):
 
     tic = time.time()
     fastmarch_output = np.squeeze(
-        FastGeodis.generalised_geodesic2d_fastmarch(
-            input_image_pt, seed_image_pt, v, lamb
+        FastGeodis.geodesic2d_fastmarch(
+            input_image_pt, seed_image_pt, lamb
         )
         .cpu()
         .numpy()

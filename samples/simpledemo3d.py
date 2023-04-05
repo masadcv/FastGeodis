@@ -100,14 +100,14 @@ image_pt = image_pt.to("cpu")
 mask_pt = mask_pt.to("cpu")
 
 lamb = 1.0  # <-- Geodesic distance transform
-geodesic_dist_fastmarch = FastGeodis.generalised_geodesic3d_fastmarch(
-    image_pt, mask_pt, spacing, v, lamb
+geodesic_dist_fastmarch = FastGeodis.geodesic3d_fastmarch(
+    image_pt, mask_pt, spacing, lamb
 )
 geodesic_dist_fastmarch = np.squeeze(geodesic_dist_fastmarch.cpu().numpy())
 
 lamb = 0.0  # <-- Euclidean distance transform
-euclidean_dist_fastmarch = FastGeodis.generalised_geodesic3d_fastmarch(
-    image_pt, mask_pt, spacing, v, lamb
+euclidean_dist_fastmarch = FastGeodis.geodesic3d_fastmarch(
+    image_pt, mask_pt, spacing, lamb
 )
 euclidean_dist_fastmarch = np.squeeze(euclidean_dist_fastmarch.cpu().numpy())
 

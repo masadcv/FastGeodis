@@ -83,10 +83,10 @@ or (on conda environments with existing installation of PyTorch with CUDA)
 
 | Method | Description | Documentation |
 |--------|-------------|---------------|
-| Pixel Queue Generalised Geodesic Distance 2D   |  Pixel Queue generalised geodesic distance transform for CPU [11]          |      [FastGeodis.generalised_geodesic2d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.generalised_geodesic2d_pixelqueue)         |
-| Pixel Queue Generalised Geodesic Distance 3D   |  Pixel Queue generalised geodesic distance transform for CPU [11]          |      [FastGeodis.generalised_geodesic3d_pixelqueue](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.generalised_geodesic3d_pixelqueue)         |
-| Pixel Queue Signed Generalised Geodesic Distance 2D   |  Pixel Queue signed generalised geodesic distance transform for CPU [11]          |      [FastGeodis.signed_generalised_geodesic2d_pixelqueue](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_generalised_geodesic2d_pixelqueue)         |
-| Pixel Queue Signed Generalised Geodesic Distance 3D   |  Pixel Queue signed generalised geodesic distance transform for CPU [11]          |      [FastGeodis.signed_generalised_geodesic3d_pixelqueue](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_generalised_geodesic3d_pixelqueue)         |
+| Pixel Queue Geodesic Distance 2D   |  Pixel Queue geodesic distance transform for CPU [11]          |      [FastGeodis.geodesic2d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.geodesic2d_pixelqueue)         |
+| Pixel Queue Geodesic Distance 3D   |  Pixel Queue geodesic distance transform for CPU [11]          |      [FastGeodis.geodesic3d_pixelqueue](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.geodesic3d_pixelqueue)         |
+| Pixel Queue Signed Geodesic Distance 2D   |  Pixel Queue signed geodesic distance transform for CPU [11]          |      [FastGeodis.signed_geodesic2d_pixelqueue](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_geodesic2d_pixelqueue)         |
+| Pixel Queue Signed Geodesic Distance 3D   |  Pixel Queue signed geodesic distance transform for CPU [11]          |      [FastGeodis.signed_geodesic3d_pixelqueue](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_geodesic3d_pixelqueue)         |
 | Pixel Queue Geodesic Symmetric Filtering 2D   |  Pixel Queue geodesic symmetric filtering for CPU [2, 11]          |      [FastGeodis.GSF2d_pixelqueue](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.GSF2d_pixelqueue)         |
 | Pixel Queue Geodesic Symmetric Filtering 3D   |  Pixel Queue geodesic symmetric filtering for CPU [2, 11]          |      [FastGeodis.GSF3d_pixelqueue](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.GSF3d_pixelqueue)         |
 
@@ -94,10 +94,10 @@ or (on conda environments with existing installation of PyTorch with CUDA)
 
 | Method | Description | Documentation |
 |--------|-------------|---------------|
-| Fast Marching Generalised Geodesic Distance 2D   |  Fast Marching generalised geodesic distance transform for CPU [9]          |      [FastGeodis.generalised_geodesic2d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.generalised_geodesic2d_fastmarch)         |
-| Fast Marching Generalised Geodesic Distance 3D   |  Fast Marching generalised geodesic distance transform for CPU [9]          |      [FastGeodis.generalised_geodesic3d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.generalised_geodesic3d_fastmarch)         |
-| Fast Marching Signed Generalised Geodesic Distance 2D   |  Fast Marching signed generalised geodesic distance transform for CPU [9]          |      [FastGeodis.signed_generalised_geodesic2d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_generalised_geodesic2d_fastmarch)         |
-| Fast Marching Signed Generalised Geodesic Distance 3D   |  Fast Marching signed generalised geodesic distance transform for CPU [9]          |      [FastGeodis.signed_generalised_geodesic3d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_generalised_geodesic3d_fastmarch)         |
+| Fast Marching Geodesic Distance 2D   |  Fast Marching geodesic distance transform for CPU [9]          |      [FastGeodis.geodesic2d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.geodesic2d_fastmarch)         |
+| Fast Marching Geodesic Distance 3D   |  Fast Marching geodesic distance transform for CPU [9]          |      [FastGeodis.geodesic3d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.geodesic3d_fastmarch)         |
+| Fast Marching Signed Geodesic Distance 2D   |  Fast Marching signed geodesic distance transform for CPU [9]          |      [FastGeodis.signed_geodesic2d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_geodesic2d_fastmarch)         |
+| Fast Marching Signed Geodesic Distance 3D   |  Fast Marching signed geodesic distance transform for CPU [9]          |      [FastGeodis.signed_geodesic3d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_geodesic3d_fastmarch)         |
 | Fast Marching Geodesic Symmetric Filtering 2D   |  Fast Marching geodesic symmetric filtering for CPU [2, 9]          |      [FastGeodis.GSF2d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.GSF2d_fastmarch)         |
 | Fast Marching Geodesic Symmetric Filtering 3D   |  Fast Marching geodesic symmetric filtering for CPU [2, 9]          |      [FastGeodis.GSF3d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.GSF3d_fastmarch)         |
 

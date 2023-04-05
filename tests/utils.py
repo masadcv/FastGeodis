@@ -86,24 +86,24 @@ def toivanen_signed_generalised_geodesic_distance_3d(
 
 
 def pixelqueue_signed_generalised_geodesic_distance_2d(image, softmask, v, lamb, iter):
-    return FastGeodis.signed_generalised_geodesic2d_pixelqueue(image, softmask, v, lamb)
+    return FastGeodis.signed_geodesic2d_pixelqueue(image, softmask, v, lamb)
 
 
 def pixelqueue_signed_generalised_geodesic_distance_3d(
     image, softmask, v, lamb, iter, spacing
 ):
-    return FastGeodis.signed_generalised_geodesic3d_pixelqueue(
+    return FastGeodis.signed_geodesic3d_pixelqueue(
         image, softmask, spacing, v, lamb
     )
 
 def fastmarch_signed_generalised_geodesic_distance_2d(image, softmask, v, lamb, iter):
-    return FastGeodis.signed_generalised_geodesic2d_fastmarch(image, softmask, v, lamb)
+    return FastGeodis.signed_geodesic2d_fastmarch(image, softmask, v, lamb)
 
 
 def fastmarch_signed_generalised_geodesic_distance_3d(
     image, softmask, v, lamb, iter, spacing
 ):
-    return FastGeodis.signed_generalised_geodesic3d_fastmarch(
+    return FastGeodis.signed_geodesic3d_fastmarch(
         image, softmask, spacing, v, lamb
     )
 
@@ -118,20 +118,20 @@ def toivanen_generalised_geodesic_distance_3d(image, softmask, v, lamb, iter, sp
 
 
 def pixelqueue_generalised_geodesic_distance_2d(image, softmask, v, lamb, iter):
-    return FastGeodis.generalised_geodesic2d_pixelqueue(image, softmask, v, lamb)
+    return FastGeodis.geodesic2d_pixelqueue(image, softmask, v, lamb)
 
 
 def pixelqueue_generalised_geodesic_distance_3d(image, softmask, v, lamb, iter, spacing):
-    return FastGeodis.generalised_geodesic3d_pixelqueue(
+    return FastGeodis.geodesic3d_pixelqueue(
         image, softmask, spacing, v, lamb
     )
 
 def fastmarch_generalised_geodesic_distance_2d(image, softmask, v, lamb, iter):
-    return FastGeodis.generalised_geodesic2d_fastmarch(image, softmask, v, lamb)
+    return FastGeodis.geodesic2d_fastmarch(image, softmask, v, lamb)
 
 
 def fastmarch_generalised_geodesic_distance_3d(image, softmask, v, lamb, iter, spacing):
-    return FastGeodis.generalised_geodesic3d_fastmarch(
+    return FastGeodis.geodesic3d_fastmarch(
         image, softmask, spacing, v, lamb
     )
 

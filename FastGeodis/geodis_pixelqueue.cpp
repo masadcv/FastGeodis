@@ -199,7 +199,7 @@ void geodesic2d_pixelqueue_cpu(
         sqrt(float(2.)), float(1.), sqrt(float(2.))};
 
     int init_state;
-    float seed_type;
+    float seed_type, init_dis;
     
     for (int h = 0; h < height; h++)
     {
@@ -209,12 +209,15 @@ void geodesic2d_pixelqueue_cpu(
             if (seed_type > 0)
             {
                 init_state = 2;
+                init_dis = 1.0e10;
             }
             else
             {
                 init_state = 0;
+                init_dis = 0.0;
             }
             state[h][w] = init_state;
+            distance_ptr[0][0][h][w] = init_dis;
         }
     }
 
@@ -274,14 +277,13 @@ void geodesic2d_pixelqueue_cpu(
     }
 }
 
-torch::Tensor generalised_geodesic2d_pixelqueue_cpu(
+torch::Tensor geodesic2d_pixelqueue_cpu(
     const torch::Tensor &image,
     const torch::Tensor &mask,
-    const float &v,
     const float &l_grad,
     const float &l_eucl)
 {
-    torch::Tensor distance = v * mask.clone();
+    torch::Tensor distance = mask.clone();
 
     geodesic2d_pixelqueue_cpu(image, distance, l_grad, l_eucl);
 
@@ -484,7 +486,7 @@ void geodesic3d_pixelqueue_cpu(
     }
     
     int init_state;
-    float seed_type;
+    float seed_type, init_dis;
 
     for(int d = 0; d < depth; d++)
     {
@@ -496,12 +498,15 @@ void geodesic3d_pixelqueue_cpu(
                 if(seed_type > 0)
                 {
                     init_state = 2;
+                    init_dis = 1.0e10;
                 }
                 else
                 {
                     init_state = 0;
+                    init_dis = 0;
                 }
                 state_ptr[d][h][w] = init_state;
+                distance_ptr[0][0][d][h][w] = init_dis;
             }
         }
     }
@@ -572,15 +577,14 @@ void geodesic3d_pixelqueue_cpu(
     }
 }
 
-torch::Tensor generalised_geodesic3d_pixelqueue_cpu(
+torch::Tensor geodesic3d_pixelqueue_cpu(
     const torch::Tensor &image,
     const torch::Tensor &mask,
     const std::vector<float> &spacing,
-    const float &v,
     const float &l_grad,
     const float &l_eucl)
 {
-    torch::Tensor distance = v * mask.clone();
+    torch::Tensor distance = mask.clone();
 
     geodesic3d_pixelqueue_cpu(image, distance, spacing, l_grad, l_eucl);
 
