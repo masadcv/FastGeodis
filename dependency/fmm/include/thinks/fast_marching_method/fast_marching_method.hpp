@@ -18,8 +18,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// #ifndef INCLUDE_THINKS_FAST_MARCHING_METHOD_FAST_MARCHING_METHOD_HPP_
-// #define INCLUDE_THINKS_FAST_MARCHING_METHOD_FAST_MARCHING_METHOD_HPP_
+#ifndef INCLUDE_THINKS_FAST_MARCHING_METHOD_FAST_MARCHING_METHOD_HPP_
+#define INCLUDE_THINKS_FAST_MARCHING_METHOD_FAST_MARCHING_METHOD_HPP_
 
 #include <algorithm>
 #include <array>
@@ -60,7 +60,8 @@ std::size_t LinearSize(std::array<std::size_t, N> const& size) {
                          std::multiplies<std::size_t>());
 }
 
-//! Returns x * x.detail
+//! Returns x * x.
+//! Note: Not checking for overflow!
 template <typename T>
 constexpr T Squared(T const x) {
   return x * x;
@@ -1934,4 +1935,4 @@ std::vector<T> SignedArrivalTime(
 }  // namespace fast_marching_method
 }  // namespace thinks
 
-// #endif  // INCLUDE_THINKS_FAST_MARCHING_METHOD_FAST_MARCHING_METHOD_HPP_
+#endif  // INCLUDE_THINKS_FAST_MARCHING_METHOD_FAST_MARCHING_METHOD_HPP_

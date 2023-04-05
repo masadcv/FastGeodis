@@ -31,7 +31,7 @@
 #include <torch/extension.h>
 #include <vector>
 // #include <iostream>
-#include "fast_marching_method.cpp"
+#include "fmm/include/thinks/fast_marching_method/fast_marching_method.hpp"
 
 namespace fmm = thinks::fast_marching_method;
 namespace F = torch::nn::functional;
