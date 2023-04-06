@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-2019, macos-12, ubuntu-18.04]
+        os: [windows-2019, macos-12, ubuntu-20.04]
         python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
     steps:
     - uses: actions/checkout@v1
@@ -41,7 +41,7 @@ jobs:
       run: python -m unittest
 
   build_sdist:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python 3.8
@@ -71,7 +71,7 @@ jobs:
       run: python -m unittest
 
   publish_pypi:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs:
     - build
     - build_sdist
