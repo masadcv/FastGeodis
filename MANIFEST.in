@@ -3,3 +3,4 @@ include FastGeodis/*h
 include FastGeodis/*cpp
 include FastGeodis/*cu
 include FastGeodis/*py
+recursive-include dependency/ *
