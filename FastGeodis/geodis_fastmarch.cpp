@@ -44,11 +44,11 @@ std::vector<float> VaryingSpeedSignedArrivalTime(
     std::array<float, N> const& grid_spacing,
     std::vector<float> speed_buffer) {
 
-  auto eikonal_solver = fmm::VaryingSpeedEikonalSolver<float, N>
-    (grid_spacing, grid_size, speed_buffer);
+//   auto eikonal_solver = fmm::VaryingSpeedEikonalSolver<float, N>
+//     (grid_spacing, grid_size, speed_buffer);
 
-//   auto eikonal_solver = fmm::HighAccuracyVaryingSpeedEikonalSolver<float, N>(
-//       grid_spacing, grid_size, speed_buffer);
+  auto eikonal_solver = fmm::HighAccuracyVaryingSpeedEikonalSolver<float, N>(
+      grid_spacing, grid_size, speed_buffer);
 
   std::vector<float> arrival_times = fmm::SignedArrivalTime(
       grid_size, boundary_indices, boundary_times, eikonal_solver);
