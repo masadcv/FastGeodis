@@ -125,7 +125,7 @@ dep_dir = os.path.join(".", "dependency")
 
 setup(
     name="FastGeodis",
-    version="1.0.3rc1",
+    version="1.0.3",
     description="Fast Implementation of Generalised Geodesic Distance Transform for CPU (OpenMP) and GPU (CUDA)",
     long_description=long_description,
     long_description_content_type="text/markdown",
