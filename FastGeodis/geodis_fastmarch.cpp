@@ -179,8 +179,8 @@ void geodesic2d_fastmarch_cpu(
     auto imagegrad = torch::squeeze(gradient2d(image));
     auto imagegrad_ptr = imagegrad.accessor<float, 2>();
     
-
-    float feps = std::numeric_limits<float>::epsilon();
+    // being conservative with sqrt(eps) for numerical stability
+    float feps = std::sqrt(std::numeric_limits<float>::epsilon());
 
     // float upper = 2.0;
     // float lower = 0.05;
@@ -335,7 +335,9 @@ void geodesic3d_fastmarch_cpu(
     auto imagegrad = torch::squeeze(gradient3d(image));
     auto imagegrad_ptr = imagegrad.accessor<float, 3>();
 
-    float feps = std::numeric_limits<float>::epsilon();
+    // being conservative with sqrt(eps) for numerical stability
+    float feps = std::sqrt(std::numeric_limits<float>::epsilon());
+
     // float upper = 2.0;
     // float lower = 0.05;
     // extract the boundary (seed) points
