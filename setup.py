@@ -120,9 +120,12 @@ with open("README.md", "r") as fh:
 with open("requirements.txt", "r") as fp:
     install_requires = fp.read().splitlines()
 
+# add dependencies folder in include path
+dep_dir = os.path.join(".", "dependency")
+
 setup(
     name="FastGeodis",
-    version="1.0.2",
+    version="1.0.3rc1",
     description="Fast Implementation of Generalised Geodesic Distance Transform for CPU (OpenMP) and GPU (CUDA)",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -141,4 +144,5 @@ setup(
     packages=find_packages(exclude=("data", "docs", "examples", "scripts", "tests")),
     zip_safe=False,
     ext_modules=get_extensions(),
+    include_dirs=[dep_dir],
 )

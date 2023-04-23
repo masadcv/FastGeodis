@@ -308,143 +308,218 @@ def signed_generalised_geodesic3d_toivanen(
         image, softmask, spacing, v, lamb, 1 - lamb, iter
     )
 
-def generalised_geodesic2d_fastmarch(
+def geodesic2d_pixelqueue(
     image: torch.Tensor, 
-    softmask: torch.Tensor, 
-    v: float, 
+    seed: torch.Tensor, 
     lamb: float
 ):
-    r"""Computes Generalised Geodesic Distance using Fast Marching method from:
-
-    Sethian, James A. 
-    "Fast marching methods." 
-    SIAM review 41.2 (1999): 199-235.
+    r"""Computes Geodesic Distance using Pixel Queue method from:
     
-    For more details on generalised geodesic distance, check the following reference:
-
-    Criminisi, Antonio, Toby Sharp, and Andrew Blake.
-    "Geos: Geodesic image segmentation."
-    European Conference on Computer Vision, Berlin, Heidelberg, 2008.
-
+    Ikonen, L., & Toivanen, P. (2007). 
+    "Distance and nearest neighbor transforms on gray-level surfaces."
+    Pattern Recognition Letters, 28(5), 604-612.
+    
     The function expects input as torch.Tensor, which can be run on CPU only using Tensor's device location
 
     Args:
         image: input image, can be grayscale or multiple channels.
-        softmask: softmask in range [0, 1] with seed information.
-        v: weighting factor for establishing relationship between unary and spatial distances.
+        seed: seed in {0, 1} with seed information.
         lamb: weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance
 
     Returns:
         torch.Tensor with distance transform
     """
-    return FastGeodisCpp.generalised_geodesic2d_fastmarch(
-        image, softmask, v, lamb, 1 - lamb
+    return FastGeodisCpp.geodesic2d_pixelqueue(
+        image, seed, lamb, 1 - lamb
     )
 
 
-def generalised_geodesic3d_fastmarch(
+def geodesic3d_pixelqueue(
     image: torch.Tensor,
-    softmask: torch.Tensor,
+    seed: torch.Tensor,
     spacing: List,
-    v: float,
     lamb: float
 ):
-    r"""Computes Generalised Geodesic Distance using Fast Marching method from:
-
-    TSethian, James A. 
-    "Fast marching methods." 
-    SIAM review 41.2 (1999): 199-235.
+    r"""Computes Geodesic Distance using Pixel Queue method from:
     
-    For more details on generalised geodesic distance, check the following reference:
-
-    Criminisi, Antonio, Toby Sharp, and Andrew Blake.
-    "Geos: Geodesic image segmentation."
-    European Conference on Computer Vision, Berlin, Heidelberg, 2008.
-
+    Ikonen, L., & Toivanen, P. (2007). 
+    "Distance and nearest neighbor transforms on gray-level surfaces."
+    Pattern Recognition Letters, 28(5), 604-612.
+    
     The function expects input as torch.Tensor, which can be run on CPU only using Tensor's device location
 
     Args:
         image: input image, can be grayscale or multiple channels.
-        softmask: softmask in range [0, 1] with seed information.
+        seed: seed in {0, 1} with seed information.
         spacing: spacing for 3D data
-        v: weighting factor for establishing relationship between unary and spatial distances.
         lamb: weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance
 
     Returns:
         torch.Tensor with distance transform
     """
-    return FastGeodisCpp.generalised_geodesic3d_fastmarch(
-        image, softmask, spacing, v, lamb, 1 - lamb
+    return FastGeodisCpp.geodesic3d_pixelqueue(
+        image, seed, spacing, lamb, 1 - lamb
     )
 
-def signed_generalised_geodesic2d_fastmarch(
+def signed_geodesic2d_pixelqueue(
     image: torch.Tensor, 
-    softmask: torch.Tensor, 
-    v: float, 
+    seed: torch.Tensor, 
     lamb: float
 ):
-    r"""Computes Signed Generalised Geodesic Distance using Fast Marching method from:
-
-    Sethian, James A. 
-    "Fast marching methods." 
-    SIAM review 41.2 (1999): 199-235.
+    r"""Computes Signed Generalised Geodesic Distance using Pixel Queue method from:
     
-    For more details on generalised geodesic distance, check the following reference:
-
-    Criminisi, Antonio, Toby Sharp, and Andrew Blake.
-    "Geos: Geodesic image segmentation."
-    European Conference on Computer Vision, Berlin, Heidelberg, 2008.
-
+    Ikonen, L., & Toivanen, P. (2007). 
+    "Distance and nearest neighbor transforms on gray-level surfaces."
+    Pattern Recognition Letters, 28(5), 604-612.
+    
     The function expects input as torch.Tensor, which can be run on CPU only using Tensor's device location
 
     Args:
         image: input image, can be grayscale or multiple channels.
-        softmask: softmask in range [0, 1] with seed information.
-        v: weighting factor for establishing relationship between unary and spatial distances.
+        seed: seed in {0, 1} with seed information.
         lamb: weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance
 
     Returns:
         torch.Tensor with distance transform
     """
-    return FastGeodisCpp.signed_generalised_geodesic2d_fastmarch(
-        image, softmask, v, lamb, 1 - lamb
+    return FastGeodisCpp.signed_geodesic2d_pixelqueue(
+        image, seed, lamb, 1 - lamb
     )
 
 
-def signed_generalised_geodesic3d_fastmarch(
+def signed_geodesic3d_pixelqueue(
     image: torch.Tensor,
-    softmask: torch.Tensor,
+    seed: torch.Tensor,
     spacing: List,
-    v: float,
     lamb: float
 ):
-    r"""Computes Signed Generalised Geodesic Distance using Fast Marching method from:
-
-    Sethian, James A. 
-    "Fast marching methods." 
-    SIAM review 41.2 (1999): 199-235.
+    r"""Computes Signed Geodesic Distance using Pixel Queue method from:
     
-    For more details on generalised geodesic distance, check the following reference:
-
-    Criminisi, Antonio, Toby Sharp, and Andrew Blake.
-    "Geos: Geodesic image segmentation."
-    European Conference on Computer Vision, Berlin, Heidelberg, 2008.
-
+    Ikonen, L., & Toivanen, P. (2007). 
+    "Distance and nearest neighbor transforms on gray-level surfaces."
+    Pattern Recognition Letters, 28(5), 604-612.
+    
     The function expects input as torch.Tensor, which can be run on CPU only using Tensor's device location
 
     Args:
         image: input image, can be grayscale or multiple channels.
-        softmask: softmask in range [0, 1] with seed information.
+        seed: seed in {0, 1} with seed information.
         spacing: spacing for 3D data
-        v: weighting factor for establishing relationship between unary and spatial distances.
         lamb: weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance
         iter: number of passes of the iterative distance transform method
 
     Returns:
         torch.Tensor with distance transform
     """
-    return FastGeodisCpp.signed_generalised_geodesic3d_fastmarch(
-        image, softmask, spacing, v, lamb, 1 - lamb
+    return FastGeodisCpp.signed_geodesic3d_pixelqueue(
+        image, seed, spacing, lamb, 1 - lamb
+    )
+
+def geodesic2d_fastmarch(
+    image: torch.Tensor, 
+    seed: torch.Tensor, 
+    lamb: float
+):
+    r"""Computes Geodesic Distance using Fast Marching method from:
+
+    Sethian, James A. 
+    "Fast marching methods." 
+    SIAM review 41.2 (1999): 199-235.
+    
+    The function expects input as torch.Tensor, which can be run on CPU only using Tensor's device location
+
+    Args:
+        image: input image, can be grayscale or multiple channels.
+        seed: seed in {0, 1} with seed information.
+        lamb: weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance
+
+    Returns:
+        torch.Tensor with distance transform
+    """
+    return FastGeodisCpp.geodesic2d_fastmarch(
+        image, seed, lamb, 1 - lamb
+    )
+
+
+def geodesic3d_fastmarch(
+    image: torch.Tensor,
+    seed: torch.Tensor,
+    spacing: List,
+    lamb: float
+):
+    r"""Computes Geodesic Distance using Fast Marching method from:
+
+    TSethian, James A. 
+    "Fast marching methods." 
+    SIAM review 41.2 (1999): 199-235.
+    
+    The function expects input as torch.Tensor, which can be run on CPU only using Tensor's device location
+
+    Args:
+        image: input image, can be grayscale or multiple channels.
+        seed: seed in {0, 1} with seed information.
+        spacing: spacing for 3D data
+        lamb: weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance
+
+    Returns:
+        torch.Tensor with distance transform
+    """
+    return FastGeodisCpp.geodesic3d_fastmarch(
+        image, seed, spacing, lamb, 1 - lamb
+    )
+
+def signed_geodesic2d_fastmarch(
+    image: torch.Tensor, 
+    seed: torch.Tensor, 
+    lamb: float
+):
+    r"""Computes Signed Geodesic Distance using Fast Marching method from:
+
+    Sethian, James A. 
+    "Fast marching methods." 
+    SIAM review 41.2 (1999): 199-235.
+    
+    The function expects input as torch.Tensor, which can be run on CPU only using Tensor's device location
+
+    Args:
+        image: input image, can be grayscale or multiple channels.
+        seed: seed in {0, 1} with seed information.
+        lamb: weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance
+
+    Returns:
+        torch.Tensor with distance transform
+    """
+    return FastGeodisCpp.signed_geodesic2d_fastmarch(
+        image, seed, lamb, 1 - lamb
+    )
+
+
+def signed_geodesic3d_fastmarch(
+    image: torch.Tensor,
+    seed: torch.Tensor,
+    spacing: List,
+    lamb: float
+):
+    r"""Computes Signed Geodesic Distance using Fast Marching method from:
+
+    Sethian, James A. 
+    "Fast marching methods." 
+    SIAM review 41.2 (1999): 199-235.
+    
+    The function expects input as torch.Tensor, which can be run on CPU only using Tensor's device location
+
+    Args:
+        image: input image, can be grayscale or multiple channels.
+        seed: seed in {0, 1} with seed information.
+        spacing: spacing for 3D data
+        lamb: weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance
+        iter: number of passes of the iterative distance transform method
+
+    Returns:
+        torch.Tensor with distance transform
+    """
+    return FastGeodisCpp.signed_geodesic3d_fastmarch(
+        image, seed, spacing, lamb, 1 - lamb
     )
 
 def GSF2d(
@@ -579,11 +654,72 @@ def GSF3d_toivanen(
     """
     return FastGeodisCpp.GSF3d_toivanen(image, softmask, theta, spacing, v, lamb, iter)
 
+def GSF2d_pixelqueue(
+    image: torch.Tensor,
+    seed: torch.Tensor,
+    theta: float,
+    lamb: float
+):
+    r"""Computes Geodesic Symmetric Filtering (GSF) using Pixel Queue method from:
+
+    Ikonen, L., & Toivanen, P. (2007). 
+    "Distance and nearest neighbor transforms on gray-level surfaces."
+    Pattern Recognition Letters, 28(5), 604-612.
+
+    For more details on GSF, check the following reference:
+
+    Criminisi, Antonio, Toby Sharp, and Andrew Blake.
+    "Geos: Geodesic image segmentation."
+    European Conference on Computer Vision, Berlin, Heidelberg, 2008.
+
+    The function expects input as torch.Tensor, which can be run on CPU only using Tensor's device location
+
+    Args:
+        image: input image, can be grayscale or multiple channels.
+        seed: seed in {0, 1} with seed information.
+        lamb: weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance
+
+    Returns:
+        torch.Tensor with distance transform
+    """
+    return FastGeodisCpp.GSF2d_pixelqueue(image, seed, theta, lamb)
+
+def GSF3d_pixelqueue(
+    image: torch.Tensor,
+    seed: torch.Tensor,
+    theta: float,
+    spacing: List,
+    lamb: float,
+):
+    r"""Computes Geodesic Symmetric Filtering (GSF) using Pixel Queue method from:
+
+    Ikonen, L., & Toivanen, P. (2007). 
+    "Distance and nearest neighbor transforms on gray-level surfaces."
+    Pattern Recognition Letters, 28(5), 604-612.
+
+    For more details on GSF, check the following reference:
+
+    Criminisi, Antonio, Toby Sharp, and Andrew Blake.
+    "Geos: Geodesic image segmentation."
+    European Conference on Computer Vision, Berlin, Heidelberg, 2008.
+
+    The function expects input as torch.Tensor, which can be run on CPU only using Tensor's device location
+
+    Args:
+        image: input image, can be grayscale or multiple channels.
+        seed: seed in range {0, 1} with seed information.
+        spacing: spacing for 3D data
+        lamb: weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance
+
+    Returns:
+        torch.Tensor with distance transform
+    """
+    return FastGeodisCpp.GSF3d_pixelqueue(image, seed, theta, spacing, lamb)
+
 def GSF2d_fastmarch(
     image: torch.Tensor,
-    softmask: torch.Tensor,
+    seed: torch.Tensor,
     theta: float,
-    v: float,
     lamb: float
 ):
     r"""Computes Geodesic Symmetric Filtering (GSF) using Fast Marching method from:
@@ -602,22 +738,20 @@ def GSF2d_fastmarch(
 
     Args:
         image: input image, can be grayscale or multiple channels.
-        softmask: softmask in range [0, 1] with seed information.
-        v: weighting factor for establishing relationship between unary and spatial distances.
+        seed: seed in {0, 1} with seed information.
         lamb: weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance
 
     Returns:
         torch.Tensor with distance transform
     """
-    return FastGeodisCpp.GSF2d_fastmarch(image, softmask, theta, v, lamb)
+    return FastGeodisCpp.GSF2d_fastmarch(image, seed, theta, lamb)
 
 
 def GSF3d_fastmarch(
     image: torch.Tensor,
-    softmask: torch.Tensor,
+    seed: torch.Tensor,
     theta: float,
     spacing: List,
-    v: float,
     lamb: float,
 ):
     r"""Computes Geodesic Symmetric Filtering (GSF) using Fast Marching method from:
@@ -636,12 +770,11 @@ def GSF3d_fastmarch(
 
     Args:
         image: input image, can be grayscale or multiple channels.
-        softmask: softmask in range [0, 1] with seed information.
+        seed: seed in {0, 1} with seed information.
         spacing: spacing for 3D data
-        v: weighting factor for establishing relationship between unary and spatial distances.
         lamb: weighting factor between 0.0 and 1.0. 0.0 returns euclidean distance, whereas 1.0 returns geodesic distance
 
     Returns:
         torch.Tensor with distance transform
     """
-    return FastGeodisCpp.GSF3d_fastmarch(image, softmask, theta, spacing, v, lamb)
+    return FastGeodisCpp.GSF3d_fastmarch(image, seed, theta, spacing, lamb)

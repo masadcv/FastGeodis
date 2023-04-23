@@ -33,8 +33,8 @@ def demo_geodesic_distance3d(image_path, seed_pos):
 
     tic = time.time()
     fastmarch_output = np.squeeze(
-        FastGeodis.signed_generalised_geodesic3d_fastmarch(
-            input_image_pt, seed_image_pt, spacing, 1e10, 1.0
+        FastGeodis.signed_geodesic3d_fastmarch(
+            input_image_pt, seed_image_pt, spacing, 1.0
         )
         .cpu()
         .numpy()

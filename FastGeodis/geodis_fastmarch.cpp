@@ -31,133 +31,130 @@
 #include <torch/extension.h>
 #include <vector>
 // #include <iostream>
+#include "fmm/include/thinks/fast_marching_method/fast_marching_method.hpp"
 
-float l1distance_fastmarch(const float &in1, const float &in2)
-{
-    return std::abs(in1 - in2);
+namespace fmm = thinks::fast_marching_method;
+namespace F = torch::nn::functional;
+
+template <std::size_t N>
+std::vector<float> VaryingSpeedSignedArrivalTime(
+    std::array<std::size_t, N> const& grid_size,
+    std::vector<std::array<std::int32_t, N>> const& boundary_indices,
+    std::vector<float> const& boundary_times, 
+    std::array<float, N> const& grid_spacing,
+    std::vector<float> speed_buffer) {
+
+//   auto eikonal_solver = fmm::VaryingSpeedEikonalSolver<float, N>
+//     (grid_spacing, grid_size, speed_buffer);
+
+  auto eikonal_solver = fmm::HighAccuracyVaryingSpeedEikonalSolver<float, N>(
+      grid_spacing, grid_size, speed_buffer);
+
+  std::vector<float> arrival_times = fmm::SignedArrivalTime(
+      grid_size, boundary_indices, boundary_times, eikonal_solver);
+
+  return arrival_times;
 }
 
-struct Point2D
+torch::Tensor gradient2d(torch::Tensor image)
 {
-    float distance;
-    int w;
-    int h;
-};
-
-void insert_point_to_list(std::vector<Point2D> * list, int start_position,  Point2D p)
-{
-    int insert_idx = list->size();
-    for(int i = start_position; i < int(list->size()); i++)
-    {
-        if(list->at(i).distance < p.distance)
-        {
-            insert_idx = i;
-            break;
-        }
-    }
-    list->insert(insert_idx + list->begin(), p);
-}
-
-void update_point_in_list(std::vector<Point2D> * list, Point2D p)
-{
-    int remove_idx = -1;
-    for(int i = 0; i < int(list->size()); i++)
-    {
-        if(list->at(i).w == p.w && list->at(i).h == p.h)
-        {
-            remove_idx = i;
-            break;
-        }
-    }
-    list->erase(remove_idx + list->begin());
-    insert_point_to_list(list, remove_idx, p);
-}
-
-void add_new_accepted_point(
-    torch::TensorAccessor<float, 4> image_ptr, 
-    torch::TensorAccessor<float, 4> distance_ptr, 
-    torch::TensorAccessor<signed char, 2> state_ptr, 
-    std::vector<Point2D> * list, 
-    const Point2D &p,
-    const int *dh_f,
-    const int *dw_f,
-    const float *local_dist_f,
-    const int &channel, 
-    const int &height, 
-    const int &width, 
-    const float &l_grad,
-    const float &l_eucl)
-{
-    int w = p.w;
-    int h = p.h;
-    int dh, dw, nh, nw, temp_state;
-    float l_dist, space_dis, delta_dis, old_dis, new_dis;
+    const int channel = image.size(1);
+    auto options = torch::TensorOptions()
+            .dtype(torch::kFloat32)
+            .device(torch::kCPU, 1)
+            .requires_grad(false);
     
-    for(int ind = 0; ind < 9; ind++)
-    {
-        dh = dh_f[ind];
-        dw = dw_f[ind];
+    auto gx = torch::zeros({1, 1, 1, 2}, options);
+    auto gy = torch::zeros({1, 1, 2, 1}, options);
 
-        space_dis = local_dist_f[ind];
+    auto gx_ptr = gx.accessor<float, 4>();
+    auto gy_ptr = gy.accessor<float, 4>();
 
-        if(dh == 0 && dw == 0) 
-        {
-            continue;
-        }
+    gx_ptr[0][0][0][0] = -1.0;
+    gx_ptr[0][0][0][1] = 1.0;
 
-        nh = dh + h;
-        nw = dw + w;
-        
-        if(nh >=0 && nh < height && nw >=0 && nw < width)
-        {
-            temp_state = state_ptr[nh][nw];
+    gy_ptr[0][0][0][0] = -1.0;
+    gy_ptr[0][0][1][0] = 1.0;
 
-            if(temp_state == 0)
-            {
-                continue;
-            }
-            
-            l_dist = 0.0;
-            if (channel == 1)
-            {
-                l_dist = l1distance_fastmarch(
-                    image_ptr[0][0][h][w], 
-                    image_ptr[0][0][nh][nw]); 
-            }
-            else
-            {
-                for (int c_i=0; c_i < channel; c_i++)
-                {
-                    l_dist += l1distance_fastmarch(
-                        image_ptr[0][c_i][h][w], 
-                        image_ptr[0][c_i][nh][nw]);     
-                }       
-            }
-            delta_dis = l_eucl * space_dis + l_grad * l_dist;
-            old_dis   = distance_ptr[0][0][nh][nw];
-            new_dis   = distance_ptr[0][0][h][w] + delta_dis;
+    // tile if channel>1 to have num_filters==channel
+    gx = torch::tile(gx, {channel, 1, 1, 1});
+    gy = torch::tile(gy, {channel, 1, 1, 1});
 
-            if(new_dis < old_dis)
-            {
-                distance_ptr[0][0][nh][nw] = new_dis;
+    auto imagegx = F::conv2d(image, 
+                             gx, 
+                             F::Conv2dFuncOptions()
+                             .stride(1)
+                             .padding(torch::kSame)
+                             .groups(channel)
+                            );
 
-                Point2D new_point;
-                new_point.distance = new_dis;
-                new_point.h = nh;
-                new_point.w = nw;
-                
-                if(temp_state == 2)
-                {
-                    state_ptr[nh][nw] = 1;
-                    insert_point_to_list(list, 0, new_point);
-                }
-                else{
-                    update_point_in_list(list, new_point);
-                }
-            }
-        }
-    }
+    auto imagegy = F::conv2d(image, 
+                             gy, 
+                             F::Conv2dFuncOptions()
+                             .stride(1)
+                             .padding(torch::kSame)
+                             .groups(channel)
+                            );
+    
+    auto imagegrad = 0.5 * (
+        torch::abs(imagegx) + 
+        torch::abs(imagegy)
+        );
+    
+    // reduce sum over channel if multiple channels gradient 
+    auto imagegradret = torch::sum(imagegrad, 1);
+
+    return imagegradret;
 }
+
+// torch::Tensor gradient2dsobel(torch::Tensor image)
+// {
+//     // sobel filter
+//     auto options = torch::TensorOptions()
+//             .dtype(torch::kFloat32)
+//             .device(torch::kCPU, 1)
+//             .requires_grad(false);
+    
+//     auto gx = torch::zeros({1, 1, 3, 3}, options);
+//     auto gy = torch::zeros({1, 1, 3, 3}, options);
+
+//     auto gx_ptr = gx.accessor<float, 4>();
+//     auto gy_ptr = gy.accessor<float, 4>();
+
+//     gx_ptr[0][0][0][0] = 1;
+//     gx_ptr[0][0][1][0] = 2;
+//     gx_ptr[0][0][2][0] = 1;
+
+//     gx_ptr[0][0][0][2] = -1;
+//     gx_ptr[0][0][1][2] = -2;
+//     gx_ptr[0][0][2][2] = -1;
+
+//     gy_ptr[0][0][0][0] = 1;
+//     gy_ptr[0][0][0][1] = 2;
+//     gy_ptr[0][0][0][2] = 1;
+
+//     gy_ptr[0][0][2][0] = -1;
+//     gy_ptr[0][0][2][1] = -2;
+//     gy_ptr[0][0][2][2] = -1;
+
+//     auto imagegx = F::conv2d(image, 
+//                              gx, 
+//                              F::Conv2dFuncOptions()
+//                              .stride(1)
+//                              .padding(torch::kSame)
+//                             );
+
+//     auto imagegy = F::conv2d(image, 
+//                              gy, 
+//                              F::Conv2dFuncOptions()
+//                              .stride(1)
+//                              .padding(torch::kSame)
+//                             );
+    
+//     auto imagegrad = 0.5 * (torch::abs(imagegx) + torch::abs(imagegy));
+
+//     return imagegrad;
+// }
 
 void geodesic2d_fastmarch_cpu(
     const torch::Tensor &image,
@@ -166,259 +163,152 @@ void geodesic2d_fastmarch_cpu(
     const float &l_eucl)
 {
     // batch, channel, height, width
-    const int channel = image.size(1);
+    // const int channel = image.size(1);
     const int height = image.size(2);
     const int width = image.size(3);
 
-    // initialise state
-    auto options = torch::TensorOptions()
-                    .dtype(torch::kInt8)
-                    .device(torch::kCPU, 1)
-                    .requires_grad(false);
-    auto state = torch::zeros({height, width}, options);
-
-    // state value: 0 == accepted, 1 == temp, 2 == far away
-    auto image_ptr = image.accessor<float, 4>();
     auto distance_ptr = distance.accessor<float, 4>();
-    auto state_ptr = state.accessor<signed char, 2>();
 
-    const int dh_f[9] = {
-        -1, -1, -1,  
-         0,  0,  0,   
-         1,  1,  1
-        };
-    const int dw_f[9] = {
-        -1,  0,  1, 
-        -1,  0,  1,  
-        -1,  0,  1
-        };
+    constexpr int nDim = 2;
+    std::array<size_t, nDim> grid_size = {size_t(height), size_t(width)};
+    std::vector<std::array<std::int32_t, nDim>> boundary_indices;
+    std::vector<float> speed_buffer;
+    std::vector<float>  boundary_times;
 
-    const float local_dist_f[9] = {
-        sqrt(float(2.)), float(1), sqrt(float(2.)), 
-        float(1.), float(0.), float(1.), 
-        sqrt(float(2.)), float(1.), sqrt(float(2.))};
-
-    int init_state;
-    float seed_type;
+    // get image gradient
+    auto imagegrad = torch::squeeze(gradient2d(image));
+    auto imagegrad_ptr = imagegrad.accessor<float, 2>();
     
+    // being conservative with sqrt(eps) for numerical stability
+    float feps = std::sqrt(std::numeric_limits<float>::epsilon());
+
+    // float upper = 2.0;
+    // float lower = 0.05;
+    // extract the boundary (seed) points
+    for (int w = 0; w < width; w++)
+    {
+        for (int h = 0; h < height; h++)
+        {
+            if(distance_ptr[0][0][h][w] == 0)
+            {   
+                std::array<std::int32_t, nDim> c_point = {h, w};
+                boundary_indices.push_back(c_point);
+                boundary_times.push_back(0.0);
+            }
+            // vectorize speed
+            float c_speed =  (
+                l_grad * imagegrad_ptr[h][w] 
+                + l_eucl
+                + feps
+                );
+            // optional, clip gradient with lower/upper bounds
+            // c_speed = std::max(lower, std::min(c_speed, upper));
+            speed_buffer.push_back(1/c_speed);
+            
+        }
+    }
+    // std::cout << "Number of seed points: " << boundary_times.size() << std::endl;
+    
+    // it is a 2d image so spacing is constant
+    std::array<float, nDim> spacing = {1.0, 1.0};
+
+    std::vector<float> arrival_times = VaryingSpeedSignedArrivalTime<nDim>(
+        grid_size, 
+        boundary_indices,
+        boundary_times,
+        spacing,
+        speed_buffer
+    );
+
+    // write back the values for arrival_times (distances)
     for (int h = 0; h < height; h++)
     {
         for (int w = 0; w < width; w++)
         {
-            seed_type = distance_ptr[0][0][h][w];
-            if (seed_type > 0)
-            {
-                init_state = 2;
-            }
-            else
-            {
-                init_state = 0;
-            }
-            state[h][w] = init_state;
+            distance_ptr[0][0][h][w] = arrival_times[w * height + h];
+            // distance_ptr[0][0][h][w] = arrival_times[h * width + w];
         }
-    }
-
-    // get initial temporary set
-    std::vector<Point2D> temporary_list;
-    temporary_list.reserve(width * height);
-    int temp_state;
-    for (int h = 0; h < height; h++)
-    {
-        for (int w = 0; w < width; w++)
-        {
-            temp_state = state_ptr[h][w];
-            if (temp_state == 0)
-            {
-                Point2D accepted_p;
-                accepted_p.distance = 0.0;
-                accepted_p.h = h;
-                accepted_p.w = w;
-                add_new_accepted_point(
-                    image_ptr, 
-                    distance_ptr, 
-                    state_ptr, 
-                    &temporary_list, 
-                    accepted_p,
-                    dh_f,
-                    dw_f,
-                    local_dist_f,
-                    channel,
-                    height,
-                    width,
-                    l_grad,
-                    l_eucl);
-            }
-        }
-    }
-
-    // update temporary set until it is empty
-    while (temporary_list.size() > 0)
-    {
-        Point2D temp_point = temporary_list[temporary_list.size() -1];
-        temporary_list.pop_back();
-        state[temp_point.h][temp_point.w] = 0;
-        add_new_accepted_point(
-            image_ptr, 
-            distance_ptr, 
-            state_ptr, 
-            &temporary_list, 
-            temp_point,
-            dh_f,
-            dw_f,
-            local_dist_f,
-            channel,
-            height,
-            width,
-            l_grad,
-            l_eucl);
     }
 }
 
-torch::Tensor generalised_geodesic2d_fastmarch_cpu(
+torch::Tensor geodesic2d_fastmarch_cpu(
     const torch::Tensor &image,
     const torch::Tensor &mask,
-    const float &v,
     const float &l_grad,
     const float &l_eucl)
 {
-    torch::Tensor distance = v * mask.clone();
+    torch::Tensor distance = mask.clone();
 
     geodesic2d_fastmarch_cpu(image, distance, l_grad, l_eucl);
 
     return distance;
 }
 
-struct Point3D
+torch::Tensor gradient3d(torch::Tensor image)
 {
-    float distance;
-    int d;
-    int w;
-    int h;
-};
-
-void insert_point_to_list(std::vector<Point3D> * list, int start_position,  Point3D p)
-{
-    int insert_idx = list->size();
-    for(int i = start_position; i < int(list->size()); i++)
-    {
-        if(list->at(i).distance < p.distance)
-        {
-            insert_idx = i;
-            break;
-        }
-    }
-    list->insert(insert_idx + list->begin(), p);
-}
-
-void update_point_in_list(std::vector<Point3D> * list, Point3D p)
-{
-    int remove_idx = -1;
-    for(int i = 0; i < int(list->size()); i++)
-    {
-        if(list->at(i).d == p.d && list->at(i).h == p.h && list->at(i).w == p.w)
-        {
-            remove_idx = i;
-            break;
-        }
-    }
-    list->erase(remove_idx + list->begin());
-    insert_point_to_list(list, remove_idx, p);
-}
-
-void add_new_accepted_point(
-    const torch::TensorAccessor<float, 5> &image_ptr, 
-    torch::TensorAccessor<float, 5> distance_ptr, 
-    torch::TensorAccessor<signed char, 3> state_ptr, 
-    std::vector<Point3D> * list,
-    const Point3D &p,
-    const std::vector<float> &spacing, 
-    const int *dd_f,
-    const int *dh_f,
-    const int *dw_f,
-    const float *local_dist_f,
-    const int &channel, 
-    const int &depth, 
-    const int &height, 
-    const int &width, 
-    const float &l_grad,
-    const float &l_eucl)
-{
-    int d = p.d;
-    int h = p.h;
-    int w = p.w;
-    int dd, dh, dw, nd, nh, nw, temp_state;
-    float l_dist, space_dis, delta_dis, old_dis, new_dis;
+    const int channel = image.size(1);
+    auto options = torch::TensorOptions()
+            .dtype(torch::kFloat32)
+            .device(torch::kCPU, 1)
+            .requires_grad(false);
     
-    for (int ind = 0; ind < 27; ind++)   
-    {
-        dd = dd_f[ind];
-        dh = dh_f[ind];
-        dw = dw_f[ind];
+    auto gx = torch::zeros({1, 1, 1, 1, 2}, options);
+    auto gy = torch::zeros({1, 1, 1, 2, 1}, options);
+    auto gz = torch::zeros({1, 1, 2, 1, 1}, options);
 
-        space_dis = local_dist_f[ind];
+    auto gx_ptr = gx.accessor<float, 5>();
+    auto gy_ptr = gy.accessor<float, 5>();
+    auto gz_ptr = gy.accessor<float, 5>();
 
-        if(dd == 0 && dh == 0 && dw == 0)
-        {
-            continue;
-        }
+    gx_ptr[0][0][0][0][0] = -1.0;
+    gx_ptr[0][0][0][0][1] = 1.0;
 
-        nd = dd + d;
-        nh = dh + h;
-        nw = dw + w;
-        
-        if(nd >=0 && nd < depth && nh >=0 && nh < height && nw >=0 && nw < width )
-        {
-            temp_state = state_ptr[nd][nh][nw];
+    gy_ptr[0][0][0][0][0] = -1.0;
+    gy_ptr[0][0][0][1][0] = 1.0;
 
-            if(temp_state == 0)
-            {
-                continue;
-            }
+    gz_ptr[0][0][0][0][0] = -1.0;
+    gz_ptr[0][0][1][0][0] = 1.0;
 
-            l_dist = 0.0;
-            if (channel == 1)
-            {
-                l_dist = l1distance_fastmarch(
-                    image_ptr[0][0][d][h][w], 
-                    image_ptr[0][0][nd][nh][nw]); 
-            }
-            else
-            {
-                for (int c_i=0; c_i < channel; c_i++)
-                {
-                    l_dist += l1distance_fastmarch(
-                        image_ptr[0][c_i][d][h][w], 
-                        image_ptr[0][c_i][nd][nh][nw]);     
-                }       
-            }                    
-            delta_dis = l_eucl * space_dis + l_grad * l_dist;
-            old_dis   = distance_ptr[0][0][nd][nh][nw];
-            new_dis   = distance_ptr[0][0][d][h][w] + delta_dis;
+    // tile if channel>1 to have num_filters==channel
+    gx = torch::tile(gx, {channel, 1, 1, 1, 1});
+    gy = torch::tile(gy, {channel, 1, 1, 1, 1});
+    gz = torch::tile(gz, {channel, 1, 1, 1, 1});
 
-            if(new_dis < old_dis)
-            {
-                distance_ptr[0][0][nd][nh][nw] = new_dis;
+    auto imagegx = F::conv3d(image, 
+                             gx, 
+                             F::Conv3dFuncOptions()
+                             .stride(1)
+                             .padding(torch::kSame)
+                             .groups(channel)
+                            );
 
-                Point3D new_point;
-                new_point.distance = new_dis;
-                new_point.d = nd;
-                new_point.h = nh;
-                new_point.w = nw;
+    auto imagegy = F::conv3d(image, 
+                             gy, 
+                             F::Conv3dFuncOptions()
+                             .stride(1)
+                             .padding(torch::kSame)
+                             .groups(channel)
+                            );
 
-                if(temp_state == 2)
-                {
-                    state_ptr[nd][nh][nw] = 1;
-                    insert_point_to_list(list, 0, new_point);
-                }
-                else
-                {
-                    update_point_in_list(list, new_point);
-                }
-            }
-        }
-    }
+    auto imagegz = F::conv3d(image, 
+                             gz, 
+                             F::Conv3dFuncOptions()
+                             .stride(1)
+                             .padding(torch::kSame)
+                             .groups(channel)
+                            );
+    
+    auto imagegrad = (1.0/3.0) * (
+        torch::abs(imagegx) + 
+        torch::abs(imagegy) + 
+        torch::abs(imagegz)
+        );
+
+    // reduce sum over channel if multiple channels gradient 
+    auto imagegradret = torch::sum(imagegrad, 1);
+
+    return imagegradret;
 }
-
 
 void geodesic3d_fastmarch_cpu(
     const torch::Tensor &image,
@@ -428,159 +318,86 @@ void geodesic3d_fastmarch_cpu(
     const float &l_eucl)
 {
     // batch, channel, depth, height, width
-    const int channel = image.size(1);
+    // const int channel = image.size(1);
     const int depth = image.size(2);
     const int height = image.size(3);
     const int width = image.size(4);
 
-    // initialise state
-    auto options = torch::TensorOptions()
-                    .dtype(torch::kInt8)
-                    .device(torch::kCPU, 1)
-                    .requires_grad(false);
-    auto state = torch::zeros({depth, height, width}, options);
-
-    // point state: 0--acceptd, 1--temporary, 2--far away
-    auto image_ptr = image.accessor<float, 5>();
     auto distance_ptr = distance.accessor<float, 5>();
-    auto state_ptr = state.accessor<signed char, 3>();
 
-    const int dd_f[27] = { 
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, 
-        0,  0,  0,  0,  0,  0,  0,  0,  0, 
-        1,  1,  1,  1,  1,  1,  1,  1,  1
-        };
-    const int dh_f[27] = {
-        -1, -1, -1,  0,  0,  0,  1,  1,  1, 
-        -1, -1, -1,  0,  0,  0,  1,  1,  1,
-        -1, -1, -1,  0,  0,  0,  1,  1,  1
-        };
-    const int dw_f[27] = { 
-        -1,  0,  1, -1,  0,  1, -1,  0,  1, 
-        -1,  0,  1, -1,  0,  1, -1,  0,  1, 
-        -1,  0,  1, -1,  0,  1, -1,  0,  1
-        };
-    
-    float local_dist_f[27];
-    for (int ind = 0; ind < 27; ind++)
-    {
-        float ld = 0.0;
-        if (dd_f[ind] != 0)
-        {
-            ld += spacing[0] * spacing[0];
-        }
+    constexpr int nDim = 3;
+    std::array<size_t, nDim> grid_size = {size_t(depth), size_t(height), size_t(width)};
+    std::vector<std::array<std::int32_t, nDim>> boundary_indices;
+    std::vector<float> speed_buffer;
+    std::vector<float>  boundary_times;
 
-        if (dh_f[ind] != 0)
-        {
-            ld += spacing[1] * spacing[1];
-        }
+    // get image gradient
+    auto imagegrad = torch::squeeze(gradient3d(image));
+    auto imagegrad_ptr = imagegrad.accessor<float, 3>();
 
-        if (dw_f[ind] != 0)
-        {
-            ld += spacing[2] * spacing[2];
-        }
+    // being conservative with sqrt(eps) for numerical stability
+    float feps = std::sqrt(std::numeric_limits<float>::epsilon());
 
-        local_dist_f[ind] = sqrt(ld);
-    }
-    
-    int init_state;
-    float seed_type;
-
-    for(int d = 0; d < depth; d++)
+    // float upper = 2.0;
+    // float lower = 0.05;
+    // extract the boundary (seed) points
+    for (int w = 0; w < width; w++)
     {
         for(int h = 0; h < height; h++)
         {
-            for (int w = 0; w < width; w++)
+            for(int d = 0; d < depth; d++)
             {
-                seed_type = distance_ptr[0][0][d][h][w];
-                if(seed_type > 0)
-                {
-                    init_state = 2;
+                if(distance_ptr[0][0][d][h][w] == 0)
+                {   
+                    std::array<std::int32_t, nDim> c_point = {d, h, w};
+                    boundary_indices.push_back(c_point);
+                    boundary_times.push_back(0.0);
                 }
-                else
-                {
-                    init_state = 0;
-                }
-                state_ptr[d][h][w] = init_state;
+                // vectorize speed
+                float c_speed =  (
+                    l_grad * imagegrad_ptr[d][h][w] 
+                    + l_eucl
+                    + feps
+                    );
+                // optional, clip gradient with lower/upper bounds
+                // c_speed = std::max(lower, std::min(c_speed, upper));
+                speed_buffer.push_back(1/c_speed);
             }
         }
     }
+    // std::cout << "Number of seed points: " << boundary_times.size() << std::endl;
+    std::array<float, nDim> grid_spacing = {spacing[0], spacing[1], spacing[2]};
+
+    std::vector<float> arrival_times = VaryingSpeedSignedArrivalTime<nDim>(
+        grid_size, 
+        boundary_indices,
+        boundary_times,
+        grid_spacing,
+        speed_buffer
+    );
     
-    // get initial temporary set
-    std::vector<Point3D> temporary_list;
-    temporary_list.reserve(depth * height * width);
-    int temp_state;
-    for(int d = 0; d < depth; d++)
+    // write back the values for arrival_times (distances)
+    for (int w = 0; w < width; w++)
     {
-        for(int h = 0; h < height; h++)
+        for (int h = 0; h < height; h++)
         {
-            for (int w = 0; w < width; w++)
+            for(int d = 0; d < depth; d++)
             {
-                temp_state = state_ptr[d][h][w];
-                if(temp_state == 0)
-                {
-                    Point3D accepted_p;
-                    accepted_p.distance = 0.0;
-                    accepted_p.d = d;
-                    accepted_p.h = h;
-                    accepted_p.w = w;
-                    add_new_accepted_point(
-                        image_ptr, 
-                        distance_ptr, 
-                        state_ptr, 
-                        &temporary_list, 
-                        accepted_p, 
-                        spacing,
-                        dd_f,
-                        dh_f,
-                        dw_f,
-                        local_dist_f, 
-                        channel, 
-                        depth, 
-                        height, 
-                        width, 
-                        l_grad,
-                        l_eucl);
-                 }
+                distance_ptr[0][0][d][h][w] = arrival_times[w * height * depth + h * depth + d];
             }
         }
     }
 
-    // update temporary set until it is empty
-    while(temporary_list.size() > 0)
-    {
-        Point3D temp_point = temporary_list[temporary_list.size() - 1];
-        temporary_list.pop_back();
-        state_ptr[temp_point.d][temp_point.h][temp_point.w] = 0;
-        add_new_accepted_point(
-            image_ptr, 
-            distance_ptr, 
-            state_ptr, 
-            &temporary_list, 
-            temp_point,
-            spacing, 
-            dd_f,
-            dh_f,
-            dw_f,
-            local_dist_f,
-            channel, 
-            depth, 
-            height, 
-            width, 
-            l_grad,
-            l_eucl);
-    }
 }
 
-torch::Tensor generalised_geodesic3d_fastmarch_cpu(
+torch::Tensor geodesic3d_fastmarch_cpu(
     const torch::Tensor &image,
     const torch::Tensor &mask,
     const std::vector<float> &spacing,
-    const float &v,
     const float &l_grad,
     const float &l_eucl)
 {
-    torch::Tensor distance = v * mask.clone();
+    torch::Tensor distance = mask.clone();
 
     geodesic3d_fastmarch_cpu(image, distance, spacing, l_grad, l_eucl);
 
