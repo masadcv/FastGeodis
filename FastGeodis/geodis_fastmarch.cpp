@@ -80,22 +80,26 @@ torch::Tensor gradient2d(torch::Tensor image)
     gx = torch::tile(gx, {channel, 1, 1, 1});
     gy = torch::tile(gy, {channel, 1, 1, 1});
 
-    auto imagegx = F::conv2d(image, 
+    // padding to enable 'same' padding for even kernel size
+    // help from: https://github.com/masadcv/PyTorchSamePaddingExplainer
+    auto imagepadx = torch::constant_pad_nd(image, {0, 1, 0, 0}, 0);
+    auto imagepady = torch::constant_pad_nd(image, {0, 0, 0, 1}, 0);
+
+    // dx and dy gradients
+    auto imagegx = F::conv2d(imagepadx, 
                              gx, 
                              F::Conv2dFuncOptions()
                              .stride(1)
-                             .padding(torch::kSame)
                              .groups(channel)
                             );
-
-    auto imagegy = F::conv2d(image, 
+    auto imagegy = F::conv2d(imagepady, 
                              gy, 
                              F::Conv2dFuncOptions()
                              .stride(1)
-                             .padding(torch::kSame)
                              .groups(channel)
                             );
     
+    // combine dx and dy to get gradient
     auto imagegrad = 0.5 * (
         torch::abs(imagegx) + 
         torch::abs(imagegy)
@@ -274,30 +278,35 @@ torch::Tensor gradient3d(torch::Tensor image)
     gy = torch::tile(gy, {channel, 1, 1, 1, 1});
     gz = torch::tile(gz, {channel, 1, 1, 1, 1});
 
-    auto imagegx = F::conv3d(image, 
+    // padding to enable 'same' padding for even kernel size
+    // help from: https://github.com/masadcv/PyTorchSamePaddingExplainer
+    auto imagepadx = torch::constant_pad_nd(image, {0, 1, 0, 0, 0, 0}, 0);
+    auto imagepady = torch::constant_pad_nd(image, {0, 0, 0, 1, 0, 0}, 0);
+    auto imagepadz = torch::constant_pad_nd(image, {0, 0, 0, 0, 0, 1}, 0);
+
+    // dx, dy and dz gradients
+    auto imagegx = F::conv3d(imagepadx, 
                              gx, 
                              F::Conv3dFuncOptions()
                              .stride(1)
-                             .padding(torch::kSame)
                              .groups(channel)
                             );
 
-    auto imagegy = F::conv3d(image, 
+    auto imagegy = F::conv3d(imagepady, 
                              gy, 
                              F::Conv3dFuncOptions()
                              .stride(1)
-                             .padding(torch::kSame)
                              .groups(channel)
                             );
 
-    auto imagegz = F::conv3d(image, 
+    auto imagegz = F::conv3d(imagepadz, 
                              gz, 
                              F::Conv3dFuncOptions()
                              .stride(1)
-                             .padding(torch::kSame)
                              .groups(channel)
                             );
     
+    // combine dx, dy and dz to get gradient
     auto imagegrad = (1.0/3.0) * (
         torch::abs(imagegx) + 
         torch::abs(imagegy) + 
