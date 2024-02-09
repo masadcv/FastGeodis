@@ -30,6 +30,7 @@
 
 from typing import List
 import torch
+from _version import __version__
 import FastGeodisCpp
 
 
