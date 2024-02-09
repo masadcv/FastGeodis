@@ -113,6 +113,21 @@ def get_extensions():
     ]
     return ext_modules
 
+def get_version():
+    # following guidance from: https://stackoverflow.com/a/7071358
+    VERSIONFILE="FastGeodis/_version.py"
+    verstrline = open(VERSIONFILE, "rt").read()
+    VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
+    mo = re.search(VSRE, verstrline, re.M)
+    if mo:
+        verstr = mo.group(1)
+    else:
+        raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
+    return verstr
+
+# get current version
+version = get_version()
+print(f"FastGeodis building version: {version}")
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -125,7 +140,7 @@ dep_dir = os.path.join(".", "dependency")
 
 setup(
     name="FastGeodis",
-    version="1.0.4",
+    version=version,
     description="Fast Implementation of Generalised Geodesic Distance Transform for CPU (OpenMP) and GPU (CUDA)",
     long_description=long_description,
     long_description_content_type="text/markdown",
