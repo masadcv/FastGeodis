@@ -18,7 +18,7 @@ The above raster scan method can be parallelised for each row/plane on an availa
 
 In addition, implementation of generalised version of Geodesic distance transforms along with Geodesic Symmetric Filtering (GSF) is provided for use in interactive segmentation methods, that were originally proposed in [1, 2, 5].
 
-> The raster scan based implementation provides a balance towards speed rather than accuracy of Geodesic distance transform and hence results in efficient hardware utilisation. On the other hand, in case of Euclidean distance transform, exact results can be achieved with other packages (albeit not on necessarilly on GPU) [6, 7, 8]
+> The raster scan based implementation provides a balance towards speed rather than accuracy of Geodesic distance transform and hence results in efficient hardware utilisation. For exact Euclidean distance transform on GPU, FastGeodis now includes the PBA+ algorithm [12], which provides exact results matching scipy [7]. For CPU-only exact EDT, see also [6, 7, 8].
 
 # Citation
 If you use this code in your research, then please consider citing:
@@ -100,6 +100,15 @@ or (on conda environments with existing installation of PyTorch with CUDA)
 | Fast Marching Signed Geodesic Distance 3D   |  Fast Marching signed geodesic distance transform for CPU [9]          |      [FastGeodis.signed_geodesic3d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_geodesic3d_fastmarch)         |
 | Fast Marching Geodesic Symmetric Filtering 2D   |  Fast Marching geodesic symmetric filtering for CPU [2, 9]          |      [FastGeodis.GSF2d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.GSF2d_fastmarch)         |
 | Fast Marching Geodesic Symmetric Filtering 3D   |  Fast Marching geodesic symmetric filtering for CPU [2, 9]          |      [FastGeodis.GSF3d_fastmarch](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.GSF3d_fastmarch)         |
+
+## Exact Euclidean Distance Transform for GPU based on [12]
+
+| Method | Description | Documentation |
+|--------|-------------|---------------|
+| Exact Euclidean Distance 2D   |  PBA+ exact Euclidean distance transform for GPU [12]          |      [FastGeodis.exact_euclidean2d](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.exact_euclidean2d)         |
+| Exact Euclidean Distance 3D   |  PBA+ exact Euclidean distance transform for GPU [12]          |      [FastGeodis.exact_euclidean3d](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.exact_euclidean3d)         |
+| Signed Exact Euclidean Distance 2D   |  PBA+ signed exact Euclidean distance transform for GPU [12]          |      [FastGeodis.signed_exact_euclidean2d](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_exact_euclidean2d)         |
+| Signed Exact Euclidean Distance 3D   |  PBA+ signed exact Euclidean distance transform for GPU [12]          |      [FastGeodis.signed_exact_euclidean3d](https://fastgeodis.readthedocs.io/en/latest/api_docs.html#FastGeodis.signed_exact_euclidean3d)         |
 
 # Example usage
 
@@ -219,3 +228,5 @@ FastGeodis (CPU/GPU) is compared with existing GeodisTK ([https://github.com/tai
 - [10] Sethian, James A. "Fast marching methods." SIAM review 41.2 (1999): 199-235.
 
 - [11] Ikonen, L., & Toivanen, P. (2007). Distance and nearest neighbor transforms on gray-level surfaces. Pattern Recognition Letters, 28(5), 604-612. [[doi](https://doi.org/10.1016/j.patrec.2006.10.010)]
+
+- [12] Cao, Thanh-Tung, Ke Tang, Anis Mohamed, and Tiow-Seng Tan. "Parallel banding algorithm to compute exact distance transform with the GPU." In Proceedings of the 2010 ACM SIGGRAPH symposium on Interactive 3D Graphics and Games, pp. 83-90. 2010. [[doi](https://doi.org/10.1145/1730804.1730818)]
