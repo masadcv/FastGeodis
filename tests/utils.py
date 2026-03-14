@@ -28,7 +28,6 @@ CONF_3D_CPU_FM = [CONF_3D_CPU[0]]
 CONF_ALL_CPU_FM = CONF_2D_CPU_FM + CONF_3D_CPU_FM
 
 
-
 def skip_if_no_cuda(obj):
     return unittest.skipUnless(torch.cuda.is_available(), "Skipping CUDA-based tests")(
         obj
@@ -92,9 +91,8 @@ def pixelqueue_signed_generalised_geodesic_distance_2d(image, softmask, lamb, it
 def pixelqueue_signed_generalised_geodesic_distance_3d(
     image, softmask, lamb, iter, spacing
 ):
-    return FastGeodis.signed_geodesic3d_pixelqueue(
-        image, softmask, spacing, lamb
-    )
+    return FastGeodis.signed_geodesic3d_pixelqueue(image, softmask, spacing, lamb)
+
 
 def fastmarch_signed_generalised_geodesic_distance_2d(image, softmask, lamb, iter):
     return FastGeodis.signed_geodesic2d_fastmarch(image, softmask, lamb)
@@ -103,9 +101,8 @@ def fastmarch_signed_generalised_geodesic_distance_2d(image, softmask, lamb, ite
 def fastmarch_signed_generalised_geodesic_distance_3d(
     image, softmask, lamb, iter, spacing
 ):
-    return FastGeodis.signed_geodesic3d_fastmarch(
-        image, softmask, spacing, lamb
-    )
+    return FastGeodis.signed_geodesic3d_fastmarch(image, softmask, spacing, lamb)
+
 
 def toivanen_generalised_geodesic_distance_2d(image, softmask, v, lamb, iter):
     return FastGeodis.generalised_geodesic2d_toivanen(image, softmask, v, lamb, iter)
@@ -122,18 +119,15 @@ def pixelqueue_geodesic_distance_2d(image, softmask, lamb, iter):
 
 
 def pixelqueue_geodesic_distance_3d(image, softmask, lamb, iter, spacing):
-    return FastGeodis.geodesic3d_pixelqueue(
-        image, softmask, spacing, lamb
-    )
+    return FastGeodis.geodesic3d_pixelqueue(image, softmask, spacing, lamb)
+
 
 def fastmarch_geodesic_distance_2d(image, softmask, lamb, iter):
     return FastGeodis.geodesic2d_fastmarch(image, softmask, lamb)
 
 
 def fastmarch_geodesic_distance_3d(image, softmask, lamb, iter, spacing):
-    return FastGeodis.geodesic3d_fastmarch(
-        image, softmask, spacing, lamb
-    )
+    return FastGeodis.geodesic3d_fastmarch(image, softmask, spacing, lamb)
 
 
 def fastgeodis_GSF_2d(image, softmask, theta, v, lamb, iter):
@@ -158,6 +152,7 @@ def pixelqueue_GSF_2d(image, softmask, theta, lamb, iter):
 
 def pixelqueue_GSF_3d(image, softmask, theta, lamb, iter, spacing):
     return FastGeodis.GSF3d_pixelqueue(image, softmask, theta, spacing, lamb)
+
 
 def fastmarch_GSF_2d(image, softmask, theta, lamb, iter):
     return FastGeodis.GSF2d_fastmarch(image, softmask, theta, lamb)
@@ -232,6 +227,7 @@ def get_signed_pixelqueue_func(num_dims, spacing=[1.0, 1.0, 1.0]):
     else:
         raise ValueError("Unsupported num_dims received: {}".format(num_dims))
 
+
 def get_fastmarch_func(num_dims, spacing=[1.0, 1.0, 1.0]):
     if num_dims == 2:
         return fastmarch_geodesic_distance_2d
@@ -279,7 +275,6 @@ def get_GSF_pixelqueue_func(num_dims, spacing=[1.0, 1.0, 1.0]):
         raise ValueError("Unsupported num_dims received: {}".format(num_dims))
 
 
-
 def get_GSF_fastmarch_func(num_dims, spacing=[1.0, 1.0, 1.0]):
     if num_dims == 2:
         return fastmarch_GSF_2d
@@ -288,3 +283,37 @@ def get_GSF_fastmarch_func(num_dims, spacing=[1.0, 1.0, 1.0]):
     else:
         raise ValueError("Unsupported num_dims received: {}".format(num_dims))
 
+
+# PBA+ Exact Euclidean Distance Transform functions
+def exact_euclidean_2d(mask, spacing):
+    return FastGeodis.exact_euclidean2d(mask, spacing)
+
+
+def exact_euclidean_3d(mask, spacing):
+    return FastGeodis.exact_euclidean3d(mask, spacing)
+
+
+def signed_exact_euclidean_2d(mask, spacing):
+    return FastGeodis.signed_exact_euclidean2d(mask, spacing)
+
+
+def signed_exact_euclidean_3d(mask, spacing):
+    return FastGeodis.signed_exact_euclidean3d(mask, spacing)
+
+
+def get_exact_euclidean_func(num_dims, spacing=[1.0, 1.0, 1.0]):
+    if num_dims == 2:
+        return partial(exact_euclidean_2d, spacing=spacing[:2])
+    elif num_dims == 3:
+        return partial(exact_euclidean_3d, spacing=spacing)
+    else:
+        raise ValueError("Unsupported num_dims received: {}".format(num_dims))
+
+
+def get_signed_exact_euclidean_func(num_dims, spacing=[1.0, 1.0, 1.0]):
+    if num_dims == 2:
+        return partial(signed_exact_euclidean_2d, spacing=spacing[:2])
+    elif num_dims == 3:
+        return partial(signed_exact_euclidean_3d, spacing=spacing)
+    else:
+        raise ValueError("Unsupported num_dims received: {}".format(num_dims))

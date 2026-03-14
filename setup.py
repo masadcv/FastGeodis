@@ -9,6 +9,7 @@ import pkg_resources
 from setuptools import find_packages, setup
 
 FORCE_CUDA = os.getenv("FORCE_CUDA", "0") == "1"
+DISABLE_CUDA = os.getenv("DISABLE_CUDA", "0") == "1"
 
 BUILD_CPP = BUILD_CUDA = False
 TORCH_VERSION = 0
@@ -21,7 +22,12 @@ try:
     BUILD_CPP = True
     from torch.utils.cpp_extension import CUDA_HOME, CUDAExtension
 
-    BUILD_CUDA = (CUDA_HOME is not None) if torch.cuda.is_available() else FORCE_CUDA
+    if DISABLE_CUDA:
+        BUILD_CUDA = False
+    else:
+        BUILD_CUDA = (
+            (CUDA_HOME is not None) if torch.cuda.is_available() else FORCE_CUDA
+        )
 
     _pt_version = pkg_resources.parse_version(torch.__version__)._version.release
     if _pt_version is None or len(_pt_version) < 3:
@@ -97,10 +103,10 @@ def get_extensions():
             extra_compile_args["cxx"] += omp_flags()
     if extension is None or not sources:
         return []  # compile nothing
-    
+
     # compile release
     extra_compile_args["cxx"] += ["-g0"]
-    
+
     ext_modules = [
         extension(
             name="FastGeodisCpp",
@@ -113,9 +119,10 @@ def get_extensions():
     ]
     return ext_modules
 
+
 def get_version():
     # following guidance from: https://stackoverflow.com/a/7071358
-    VERSIONFILE="FastGeodis/_version.py"
+    VERSIONFILE = "FastGeodis/_version.py"
     verstrline = open(VERSIONFILE, "rt").read()
     VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
     mo = re.search(VSRE, verstrline, re.M)
@@ -124,6 +131,7 @@ def get_version():
     else:
         raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
     return verstr
+
 
 # get current version
 version = get_version()

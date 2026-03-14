@@ -33,6 +33,7 @@
 #include <torch/extension.h>
 #include <vector>
 #include "common.h"
+#include "geodis_pba.h"
 
 #ifdef WITH_CUDA
 torch::Tensor generalised_geodesic2d_cuda(
@@ -294,3 +295,20 @@ torch::Tensor GSF3d_fastmarch(
     const float &theta, 
     const std::vector<float> &spacing, 
     const float &lambda);
+
+// Exact Euclidean Distance Transform using PBA+ algorithm
+torch::Tensor exact_euclidean2d(
+    const torch::Tensor &mask,
+    const std::vector<float> &spacing);
+
+torch::Tensor exact_euclidean3d(
+    const torch::Tensor &mask,
+    const std::vector<float> &spacing);
+
+torch::Tensor signed_exact_euclidean2d(
+    const torch::Tensor &mask,
+    const std::vector<float> &spacing);
+
+torch::Tensor signed_exact_euclidean3d(
+    const torch::Tensor &mask,
+    const std::vector<float> &spacing);
