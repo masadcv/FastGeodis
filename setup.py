@@ -21,7 +21,14 @@ try:
     BUILD_CPP = True
     from torch.utils.cpp_extension import CUDA_HOME, CUDAExtension
 
-    BUILD_CUDA = (CUDA_HOME is not None) if torch.cuda.is_available() else FORCE_CUDA
+    # Check for ROCm/HIP support via ROCM_HOME when CUDA_HOME is not set
+    ROCM_HOME = None
+    try:
+        from torch.utils.cpp_extension import ROCM_HOME
+    except ImportError:
+        pass
+
+    BUILD_CUDA = (CUDA_HOME is not None or ROCM_HOME is not None) if torch.cuda.is_available() else FORCE_CUDA
 
     _pt_version = pkg_resources.parse_version(torch.__version__)._version.release
     if _pt_version is None or len(_pt_version) < 3:
