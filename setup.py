@@ -21,7 +21,14 @@ try:
     BUILD_CPP = True
     from torch.utils.cpp_extension import CUDA_HOME, CUDAExtension
 
-    BUILD_CUDA = (CUDA_HOME is not None) if torch.cuda.is_available() else FORCE_CUDA
+    # Check for ROCm/HIP support via ROCM_HOME when CUDA_HOME is not set
+    ROCM_HOME = None
+    try:
+        from torch.utils.cpp_extension import ROCM_HOME
+    except ImportError:
+        pass
+
+    BUILD_CUDA = (CUDA_HOME is not None or ROCM_HOME is not None) if torch.cuda.is_available() else FORCE_CUDA
 
     _pt_version = pkg_resources.parse_version(torch.__version__)._version.release
     if _pt_version is None or len(_pt_version) < 3:
@@ -95,6 +102,20 @@ def get_extensions():
         extra_compile_args = {"cxx": [], "nvcc": []}
         if torch_parallel_backend() == "AT_PARALLEL_OPENMP":
             extra_compile_args["cxx"] += omp_flags()
+    if sys.platform == "win32" and BUILD_CUDA:
+        # c10.dll built with clang does not export the inherited constructor
+        # c10::ValueError(SourceLocation, string).  MSVC-compiled callers get
+        # LNK2001 for the dllimport thunk.  Redirect it to Error(SourceLocation,
+        # string) which IS exported; ValueError IS-A Error with no extra members.
+        _val_imp = (
+            "__imp_??0ValueError@c10@@QEAA@USourceLocation@1@"
+            "V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z"
+        )
+        _err_imp = (
+            "__imp_??0Error@c10@@QEAA@USourceLocation@1@"
+            "V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z"
+        )
+        extra_link_args.append(f"/ALTERNATENAME:{_val_imp}={_err_imp}")
     if extension is None or not sources:
         return []  # compile nothing
     
